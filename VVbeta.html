@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.2</title>
+    <title>VV App | Premium Beta 1.3 (GPS Enabled)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
@@ -51,14 +52,6 @@
         .btn-launch { width: 100%; padding: 16px; background: var(--vv-blue); color: #fff; border: none; border-radius: 12px; font-weight: 900; font-size: 15px; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: auto; flex-shrink: 0; }
         .btn-launch:active { transform: scale(0.95); }
 
-        /* REGULAMENT */
-        .legal-text-scroll { flex-grow: 1; overflow-y: auto; padding-right: 15px; margin-bottom: 20px; }
-        .legal-title { font-size: 24px; font-weight: 900; margin-bottom: 5px; color: #fff; text-align: center; text-transform: uppercase; letter-spacing: 1px;}
-        .legal-subtitle { font-size: 10px; color: #888; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; text-align: center;}
-        .legal-section { margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 18px; border-radius: 12px; border-left: 3px solid var(--vv-blue); text-align: left;}
-        .section-title { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; color: #fff;}
-        .section-text { font-size: 12px; color: #bbb; line-height: 1.6; }
-
         /* INTRO CINEMATIC */
         #intro-screen { position: fixed; inset: 0; background: #000; z-index: 99997; display: none; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
         .big-vv-container { display: flex; gap: 15px; font-size: 120px; font-weight: 900; line-height: 1; margin-bottom: 25px; transform: scale(0.8); opacity: 0; transition: all 2.5s cubic-bezier(0.19, 1, 0.22, 1); }
@@ -78,14 +71,12 @@
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: 0.3s; }
         .dot.active { background: var(--vv-blue); width: 24px; border-radius: 4px; box-shadow: 0 0 10px rgba(10,132,255,0.5);}
         .tut-btn-next { width: 100%; max-width: 320px; padding: 18px; background: #222; color: #fff; font-weight: 900; border-radius: 15px; border: none; font-size: 15px; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
-        .tut-btn-skip { color: #666; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
 
         /* ================= HARTA & HUD ================= */
         #map-view { position: absolute; inset: 0; z-index: 10; opacity: 1; transition: opacity 0.4s; pointer-events: auto; }
         #map { position: absolute; inset: 0; background: #050505; z-index: 1; }
         .leaflet-control-attribution, .leaflet-control-zoom { display: none !important; }
 
-        /* PIN-URI VECTORIALE PREMIUM (HIBRID APPLE) */
         .vv-map-pin { width: 34px; height: 34px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.8); opacity: 0.9; transition: 0.2s; }
         .vv-pin-night { background: linear-gradient(135deg, #FF453A, #cc1f16); }
         .vv-pin-retail { background: linear-gradient(135deg, #0A84FF, #0056b3); }
@@ -132,8 +123,6 @@
         .beta-action { background: rgba(10,132,255,0.1); color: var(--vv-blue); font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 12px; text-align: center; border-radius: 10px; letter-spacing: 1px; cursor: pointer; border: 1px solid rgba(10,132,255,0.2); transition: 0.3s; margin-top: 15px;}
 
         /* INPUTS & MODALS */
-        .vv-input-group { margin-bottom: 15px; text-align: left; }
-        .vv-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; font-weight: bold;}
         .vv-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid #333; padding: 14px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: 0.3s; }
         .vv-input:focus { border-color: var(--vv-blue); background: rgba(10, 132, 255, 0.05); }
 
@@ -312,28 +301,85 @@
 
         let globalAlias = "AGENT VV";
         let currentSlide = 1;
+        let isInitialLoad = true;
+        
+        // VARIABILE PENTRU RADAR GPS
+        let currentLat = null;
+        let currentLng = null;
 
-        // BAZA DE DATE LOCATII (La fel ca pe panoul CEO)
+        // --- SISTEM PERSISTENT (MEMORIE TELEFON) ---
+        auth.onAuthStateChanged(user => {
+            if (user && localStorage.getItem('vv_agent_key') && isInitialLoad) {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('alias-screen').style.display = 'none';
+                document.getElementById('intro-screen').style.display = 'none';
+                document.getElementById('tutorial-screen').style.display = 'none';
+                
+                let app = document.getElementById('app-container'); 
+                app.style.display = 'block';
+                document.getElementById('main-dock').style.display = 'flex';
+                
+                setTimeout(() => { 
+                    app.style.opacity = '1'; 
+                    initMap(); 
+                }, 50);
+                
+                db.collection('users').doc(user.uid).onSnapshot(snap => {
+                    if(snap.exists) {
+                        const data = snap.data();
+                        globalAlias = data.alias;
+                        document.getElementById('display-name').innerText = globalAlias; 
+                        document.getElementById('card-engraved-name').innerText = globalAlias;
+                        document.getElementById('hud-balance').innerText = data.balance + " VV";
+                        document.getElementById('card-balance').innerText = "BALANCE: " + data.balance + ".00 VV";
+                    }
+                });
+            }
+            isInitialLoad = false;
+        });
+
         const systemLocations = [
             { name: "Vintage", lat: 44.4312, lng: 26.1018, type: "nightlife", icon: "fas fa-glass-martini-alt" },
             { name: "The Urbanist", lat: 44.4325, lng: 26.1005, type: "nightlife", icon: "fas fa-music" },
             { name: "Beluga Music", lat: 44.4310, lng: 26.0990, type: "nightlife", icon: "fas fa-glass-cheers" },
             { name: "Face Club", lat: 44.4789, lng: 26.0623, type: "nightlife", icon: "fas fa-fire" },
-            
             { name: "Mega Mall", lat: 44.4421, lng: 26.1534, type: "retail", icon: "fas fa-shopping-bag" },
             { name: "AFI Cotroceni", lat: 44.4301, lng: 26.0524, type: "retail", icon: "fas fa-shopping-bag" },
             { name: "Băneasa Shopping", lat: 44.5065, lng: 26.0880, type: "retail", icon: "fas fa-shopping-bag" },
-            
             { name: "Miau Cafe", lat: 44.4268, lng: 26.1025, type: "cozy", icon: "fas fa-coffee" }
         ];
 
-        // START
-        function startBootSequence() {
-            let key = document.getElementById('access-key').value;
-            if(key.length < 3) return alert("⚠ Cheie Invalidă!");
-            document.getElementById('splash-screen').style.display = 'none';
-            document.getElementById('alias-screen').style.display = 'flex';
-            setTimeout(() => { document.getElementById('alias-screen').style.opacity = '1'; }, 50);
+        async function startBootSequence() {
+            let keyInput = document.getElementById('access-key').value.trim().toUpperCase();
+            let btn = document.querySelector('#splash-screen .btn-main');
+
+            if(keyInput.length < 5) return alert("⚠ Introdu o cheie validă generată de CEO!");
+            
+            btn.innerText = "SE VERIFICĂ...";
+            
+            try {
+                const snapshot = await db.collection('access_keys').where('key', '==', keyInput).get();
+                
+                if(snapshot.empty) {
+                    alert("❌ Cheie invalidă sau inexistentă!");
+                    btn.innerText = "Decriptează";
+                } else {
+                    let keyData = snapshot.docs[0].data();
+                    localStorage.setItem('vv_agent_key', keyInput);
+                    localStorage.setItem('vv_agent_type', keyData.type || 'STANDARD');
+
+                    document.getElementById('splash-screen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('splash-screen').style.display = 'none';
+                        document.getElementById('alias-screen').style.display = 'flex';
+                        setTimeout(() => { document.getElementById('alias-screen').style.opacity = '1'; }, 50);
+                    }, 500);
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Eroare de conexiune la server. Verifică netul.");
+                btn.innerText = "Decriptează";
+            }
         }
 
         function openModal(id) { document.getElementById(id).classList.add('active'); }
@@ -372,7 +418,6 @@
             }, 3000); 
         }
 
-        // TUTORIAL
         function nextTutorial() {
             if (currentSlide === 2) { finishTutorial(); return; }
             document.getElementById(`slide-${currentSlide}`).classList.remove('active');
@@ -394,7 +439,6 @@
             }, 500);
         }
 
-        // HARTA & PINI HIBRID
         let map;
         function initMap() {
             if(!map) {
@@ -405,10 +449,31 @@
                     let cssClass = loc.type === 'nightlife' ? 'vv-pin-night' : (loc.type === 'retail' ? 'vv-pin-retail' : 'vv-pin-cozy');
                     let html = `<div class="vv-map-pin ${cssClass}"><i class="${loc.icon}"></i></div>`;
                     let icon = L.divIcon({ className: '', html: html, iconSize: [34, 34] });
-                    
-                    L.marker([loc.lat, loc.lng], {icon: icon}).addTo(map)
-                     .bindPopup(`<b>${loc.name}</b><br><span style="font-size:10px;color:#aaa;">Zonă cu potențial VIP. Fii pe fază!</span>`);
+                    L.marker([loc.lat, loc.lng], {icon: icon}).addTo(map).bindPopup(`<b>${loc.name}</b>`);
                 });
+
+                // ====== RADAR GPS (Urmărește agentul) ======
+                map.locate({setView: true, watch: true, maxZoom: 16});
+                
+                let userMarker = null;
+                map.on('locationfound', function(e) {
+                    currentLat = e.latlng.lat;
+                    currentLng = e.latlng.lng;
+                    
+                    if(!userMarker) {
+                        // Creăm punctul albastru pe hartă
+                        userMarker = L.circleMarker(e.latlng, {
+                            radius: 8, fillColor: "#0A84FF", color: "#fff", weight: 3, opacity: 1, fillOpacity: 0.9
+                        }).addTo(map).bindPopup("Locația ta actuală");
+                    } else {
+                        userMarker.setLatLng(e.latlng); // Mutăm punctul dacă agentul se plimbă
+                    }
+                });
+
+                map.on('locationerror', function(e) {
+                    console.log("Eroare GPS. Agentul nu a dat permisiune.");
+                });
+                // ============================================
             }
             setTimeout(() => { map.invalidateSize(); }, 400); 
         }
@@ -429,20 +494,16 @@
             }
         }
 
-        // FEEDBACK CEO
         async function sendFeedbackDB() {
             let text = document.getElementById('feedback-text').value;
             if(!text) return alert("Scrie un mesaj mai întâi!");
-            
             let uid = auth.currentUser ? auth.currentUser.uid : globalAlias;
             await db.collection('feedback').add({ agentId: uid, message: text, timestamp: Date.now() });
-            
             alert('Mesaj trimis cu succes către CEO!');
             document.getElementById('feedback-text').value = "";
             closeModal('feedback-modal');
         }
 
-        // CAMERA & TRIMITERE LA CEO
         let currentStream = null;
         let tempPhotoBlob = null;
 
@@ -469,11 +530,8 @@
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-
-            video.pause(); // Îngheață imaginea
-            
+            video.pause(); 
             canvas.toBlob((blob) => { tempPhotoBlob = blob; }, 'image/jpeg', 0.6);
-
             document.getElementById('shutter-container').style.display = 'none';
             document.getElementById('post-photo-menu').style.display = 'flex';
             setTimeout(() => { document.getElementById('post-photo-menu').classList.add('active'); }, 50);
@@ -502,7 +560,6 @@
             let isUrgent = document.getElementById('urgent-btn').classList.contains('active');
             const uid = auth.currentUser.uid;
             
-            // UI Feedback
             document.getElementById('post-photo-menu').innerHTML = "<h3 style='color:var(--safe-green); text-align:center;'>Se trimite către panoul CEO...</h3>";
 
             try {
@@ -511,23 +568,23 @@
                 await photoRef.put(tempPhotoBlob);
                 const downloadUrl = await photoRef.getDownloadURL();
                 
-                // Trimitere către Baza de Date a CEO-ului
+                // --- AICI TRIMITEM SI LOCAȚIA GPS LA TINE ÎN PANOU ---
                 await db.collection('photos').add({
                     url: downloadUrl,
                     agentId: uid,
                     message: msg,
                     flagged: isUrgent,
-                    timestamp: timestamp
+                    timestamp: timestamp,
+                    lat: currentLat, // <-- Adăugat
+                    lng: currentLng  // <-- Adăugat
                 });
 
-                // Recompensă pe loc pt agent
                 await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(15) });
                 
                 alert("✅ Raport trimis cu succes la CEO! (+15 VV)");
                 closeCamera();
             } catch(e) { alert("Eroare la trimitere: " + e.message); closeCamera(); }
         }
-
     </script>
 </body>
 </html>
