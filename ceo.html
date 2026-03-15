@@ -40,7 +40,7 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         /* GRID LAYOUT */
-        .main-grid { display: grid; grid-template-columns: 320px 1fr 350px; height: calc(100vh - 67px); }
+        .main-grid { display: grid; grid-template-columns: 320px 1fr 300px; height: calc(100vh - 67px); }
 
         /* PANOU STANGA - GENERATOR CHEI & NOTIFICARI */
         .side-panel { border-right: 1px solid var(--border); background: rgba(255,255,255,0.01); display: flex; flex-direction: column; }
@@ -76,27 +76,29 @@
 
         /* PANOU DREAPTA - INCOMING FEED */
         .feed-panel { border-left: 1px solid var(--border); background: rgba(255,255,255,0.01); display: flex; flex-direction: column; }
-        .feed-list { padding: 15px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
+        .feed-list { padding: 12px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
         
-        .feed-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: 0.3s; }
+        .feed-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: 0.3s; }
         .feed-item:hover { border-color: var(--text-sec); }
-        .feed-img-box { width: 100%; height: 160px; background: #111; position: relative; }
-        .feed-img-box img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
-        .urgent-tag { position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 10px rgba(255,69,58,0.5); }
         
-        .feed-details { padding: 12px; }
+        /* POZE MAI MICI SI COMPACTE IN FEED */
+        .feed-img-box { width: 100%; height: 110px; background: #111; position: relative; }
+        .feed-img-box img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .urgent-tag { position: absolute; top: 8px; right: 8px; background: var(--danger); color: #fff; font-size: 9px; font-weight: 700; padding: 4px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 10px rgba(255,69,58,0.5); }
+        
+        .feed-details { padding: 10px; }
         .feed-agent { font-size: 11px; color: var(--text-sec); display: flex; justify-content: space-between; margin-bottom: 6px; font-family: monospace; }
-        .feed-msg { font-size: 13px; color: #fff; line-height: 1.4; word-wrap: break-word; }
-        .feed-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .btn-action { flex: 1; background: rgba(255,255,255,0.05); border: none; padding: 8px; border-radius: 6px; color: var(--text-sec); font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .feed-msg { font-size: 12px; color: #fff; line-height: 1.3; word-wrap: break-word; }
+        .feed-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-action { flex: 1; background: rgba(255,255,255,0.05); border: none; padding: 6px; border-radius: 6px; color: var(--text-sec); font-size: 11px; cursor: pointer; transition: 0.2s; }
         .btn-action:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .btn-action.del:hover { background: rgba(255,69,58,0.1); color: var(--danger); }
 
-        /* MODAL POZA MARE */
-        #photo-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 20px; }
-        #modal-img { max-width: 100%; max-height: 90vh; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
-        .close-modal { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 30px; cursor: pointer; opacity: 0.7; transition: 0.2s; }
-        .close-modal:hover { opacity: 1; }
+        /* MODAL POZA MARE - IMBUNATATIT PENTRU IPAD */
+        #photo-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 100000; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        #modal-img { max-width: 100%; max-height: 75vh; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px; }
+        .btn-close-large { background: var(--danger); color: #fff; border: none; padding: 16px 40px; border-radius: 12px; font-size: 15px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 69, 58, 0.4); transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .btn-close-large:active { transform: scale(0.95); }
 
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
@@ -166,8 +168,8 @@
     </div>
 
     <div id="photo-modal" onclick="closePhotoModal()">
-        <span class="close-modal">&times;</span>
         <img id="modal-img" src="" onclick="event.stopPropagation()">
+        <button class="btn-close-large" onclick="closePhotoModal()"><i class="fas fa-arrow-left"></i> ÎNAPOI LA PANOU</button>
     </div>
 
     <script>
@@ -183,36 +185,22 @@
 
         // --- PROTOCOL AUTODISTRUGERE (24 ORE) ---
         async function runCleanSlateProtocol() {
-            const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000); // Timpul de acum - 24h
-            
+            const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
             try {
-                // Căutăm toate pozele mai vechi de 24 ore
                 const oldPhotos = await db.collection('photos').where('timestamp', '<', twentyFourHoursAgo).get();
-                
                 if(!oldPhotos.empty) {
-                    console.log(`🧹 Protocol Clean Slate activat. Se șterg ${oldPhotos.size} rapoarte vechi.`);
                     const batch = db.batch();
-                    oldPhotos.forEach(doc => {
-                        batch.delete(doc.ref); // Le marcăm pentru ștergere
-                        // Nota: Teoretic ar trebui stearsa si poza fizica din Firebase Storage. 
-                        // Dar pt Beta, stergerea din BD e de ajuns ca sa nu mai apara pe harta.
-                    });
+                    oldPhotos.forEach(doc => batch.delete(doc.ref));
                     await batch.commit();
                 }
-            } catch(e) {
-                console.error("Eroare la Protocolul Clean Slate:", e);
-            }
+            } catch(e) { console.error("Eroare la Clean Slate:", e); }
         }
-
-        // Rulăm curățenia imediat ce se încarcă panoul
         runCleanSlateProtocol();
-
 
         // --- HARTA TACTICA (LEAFLET) ---
         let adminMap = L.map('admin-map', {zoomControl: false}).setView([44.4325, 26.1038], 13);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(adminMap);
-        
-        let mapMarkers = {}; // Aici ținem minte pin-urile ca să le putem șterge/actualiza
+        let mapMarkers = {};
 
         // --- SISTEM AFISARE CHEI ---
         db.collection('access_keys').orderBy('createdAt', 'desc').limit(10).onSnapshot(snap => {
@@ -222,7 +210,6 @@
                 const data = doc.data();
                 const usedClass = data.used ? 'used' : '';
                 const badge = data.type === 'PREMIUM' ? '<span class="key-badge badge-premium">VIP</span>' : '<span class="key-badge" style="background:#333;color:#aaa;">STD</span>';
-                
                 container.innerHTML += `
                     <div class="key-item ${usedClass}" onclick="!${data.used} && copyToClipboard('${data.key}')" title="${data.used ? 'Folosită' : 'Click pt copiere'}">
                         <span>${data.key}</span>
@@ -232,8 +219,7 @@
             });
         });
 
-        // --- SISTEM INCOMING INTEL (POZE + RADAR) ---
-        // Adăugăm agentName pentru a lua alias-ul, dar ne bazăm pe agentId ca fallback.
+        // --- SISTEM INCOMING INTEL ---
         db.collection('photos').orderBy('timestamp', 'desc').onSnapshot(async snap => {
             const container = document.getElementById('feed-container');
             if (snap.empty) {
@@ -245,7 +231,6 @@
             container.innerHTML = '';
             document.getElementById('intel-count').innerText = `${snap.size} Rapoarte`;
 
-            // Curățăm harta de pin-uri vechi la fiecare refresh de date
             for (let id in mapMarkers) { adminMap.removeLayer(mapMarkers[id]); }
             mapMarkers = {};
 
@@ -255,9 +240,6 @@
                 const time = new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 const isUrgent = data.flagged ? '<div class="urgent-tag">URGENT</div>' : '';
                 
-                // Cautam numele agentului in users pt a-l afisa frumos. Daca nu exista (teoretic imposibil acum), punem ID-ul
-                let agentDisplayName = "Agent Unknown";
-                
                 container.innerHTML += `
                     <div class="feed-item" id="item-${docId}">
                         <div class="feed-img-box">
@@ -266,10 +248,10 @@
                         </div>
                         <div class="feed-details">
                             <div class="feed-agent">
-                                <span style="color:var(--primary); cursor:pointer;" onclick="focusOnMap(${data.lat || 44.43}, ${data.lng || 26.10})">📍 Vezi Locația</span> 
+                                <span style="color:var(--primary); cursor:pointer;" onclick="focusOnMap(${data.lat || 44.43}, ${data.lng || 26.10})">📍 Zboară la Locație</span> 
                                 <span>${time}</span>
                             </div>
-                            <div class="feed-msg">${data.message || 'Fără mesaj adăugat.'}</div>
+                            <div class="feed-msg">${data.message || 'Fără mesaj.'}</div>
                             <div class="feed-actions">
                                 <button class="btn-action del" onclick="deleteReport('${docId}')"><i class="fas fa-trash"></i> Șterge</button>
                             </div>
@@ -277,47 +259,38 @@
                     </div>
                 `;
 
-                // PUNEM POZA PE HARTA (Daca are GPS)
                 if(data.lat && data.lng) {
                     let pinHtml = `<div class="tactical-pin"></div>`;
                     let customIcon = L.divIcon({ className: '', html: pinHtml, iconSize: [20, 20] });
-                    
                     let marker = L.marker([data.lat, data.lng], {icon: customIcon}).addTo(adminMap);
                     
-                    // Cand apesi pe pin-ul rosu, se deschide poza
                     marker.bindPopup(`
                         <div style="background:#000; padding:5px; border-radius:8px; text-align:center;">
                             <img src="${data.url}" style="width:150px; border-radius:4px; margin-bottom:5px; cursor:pointer;" onclick="openPhotoModal('${data.url}')">
                             <div style="color:#fff; font-size:10px;">${data.message ? data.message.substring(0,30)+'...' : 'Raport Teren'}</div>
                         </div>
                     `);
-                    
                     mapMarkers[docId] = marker;
                 }
             });
         });
 
-        // --- UTILS ---
+        // --- UTILS & MODALE ---
         function generateRandomString(len) { 
-            const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; 
-            let r = ''; 
-            for(let i=0;i<len;i++) r+=c.charAt(Math.floor(Math.random()*c.length)); 
-            return r; 
+            const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let r = ''; 
+            for(let i=0;i<len;i++) r+=c.charAt(Math.floor(Math.random()*c.length)); return r; 
         }
         
         async function generateKeys(count, type) { 
             let prefix = type === 'PREMIUM' ? 'VIP' : 'VV'; 
             for(let i=0; i<count; i++) {
                 let formattedKey = `${prefix}-${generateRandomString(4)}-${generateRandomString(4)}`;
-                await db.collection('access_keys').add({ 
-                    key: formattedKey, type: type, used: false, createdAt: Date.now() 
-                }); 
+                await db.collection('access_keys').add({ key: formattedKey, type: type, used: false, createdAt: Date.now() }); 
             }
         }
         
         function copyToClipboard(txt) { navigator.clipboard.writeText(txt).then(() => alert('Codul a fost copiat.')); }
 
-        // --- ACTIUNI POZE ---
         function openPhotoModal(url) {
             document.getElementById('modal-img').src = url;
             document.getElementById('photo-modal').style.display = 'flex';
@@ -327,22 +300,16 @@
         async function deleteReport(docId) {
             if(confirm('Sigur vrei să ștergi acest raport definitiv?')) {
                 await db.collection('photos').doc(docId).delete();
-                // Pin-ul de pe harta se va sterge automat pt ca ascultam onSnapshot
             }
         }
 
-        // Duce harta fix pe coordonatele agentului cand apesi din lista
-        function focusOnMap(lat, lng) {
-            adminMap.flyTo([lat, lng], 16, {animate: true, duration: 1.5});
-        }
+        function focusOnMap(lat, lng) { adminMap.flyTo([lat, lng], 16, {animate: true, duration: 1.5}); }
 
-        // --- NOTIFICARI ---
         async function sendBroadcast() {
             const t = document.getElementById('broadcast-title').value, m = document.getElementById('broadcast-msg').value;
-            if(!t || !m) return alert("Vă rugăm să completați titlul și mesajul.");
+            if(!t || !m) return alert("Completează titlul și mesajul.");
             await db.collection('system_broadcasts').add({ title: t, message: m, timestamp: Date.now(), active: true });
-            alert("Notificarea a fost trimisă cu succes."); 
-            document.getElementById('broadcast-title').value = ''; document.getElementById('broadcast-msg').value = '';
+            alert("Emis cu succes."); document.getElementById('broadcast-title').value = ''; document.getElementById('broadcast-msg').value = '';
         }
 
     </script>
