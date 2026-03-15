@@ -44,7 +44,6 @@
         .login-title { font-size: 20px; font-weight: 500; margin-bottom: 8px; }
         .login-subtitle { color: var(--text-secondary); font-size: 13px; margin-bottom: 30px; }
         
-        /* HACK PENTRU TIINY HOST: text-security ascunde caracterele fara sa folosim type="password" */
         .pin-input {
             width: 100%; padding: 15px; font-size: 28px; text-align: center; letter-spacing: 15px;
             background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; border-radius: 16px; margin-bottom: 25px; outline: none; transition: border 0.3s;
@@ -53,7 +52,7 @@
         .pin-input:focus { border-color: var(--accent-blue); }
 
         /* MENIU LATERAL */
-        .sidebar { width: 260px; background: rgba(15, 15, 18, 0.8); border-right: 1px solid var(--border); padding: 40px 20px; display: flex; flex-direction: column; z-index: 10; }
+        .sidebar { width: 260px; background: rgba(15, 15, 18, 0.8); border-right: 1px solid var(--border); padding: 40px 20px; display: flex; flex-direction: column; z-index: 10; overflow-y: auto; }
         .brand { font-size: 22px; font-weight: 600; margin-bottom: 50px; display: flex; align-items: center; gap: 12px; padding-left: 10px; }
         .brand-icon { width: 36px; height: 36px; background: var(--white-pure); color: #000; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; }
         .nav-item { padding: 14px 18px; margin-bottom: 8px; border-radius: 12px; color: var(--text-secondary); font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 14px; border: 1px solid transparent; }
@@ -85,24 +84,28 @@
         .btn-primary:active { transform: scale(0.98); }
         .btn-secondary { background: transparent; color: var(--text-primary); border: 1px solid var(--border); padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; }
         .btn-secondary:hover { background: var(--surface-hover); }
-        .btn-danger { background: rgba(255, 69, 58, 0.1); color: var(--danger); border: 1px solid rgba(255, 69, 58, 0.2); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .btn-danger { background: rgba(255, 69, 58, 0.1); color: var(--danger); border: 1px solid rgba(255, 69, 58, 0.2); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; }
+        .btn-danger:hover { background: rgba(255, 69, 58, 0.2); }
         .btn-icon { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 16px; padding: 5px; transition: 0.2s; }
         .btn-icon:hover { color: var(--white-pure); }
         input, textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 16px; border-radius: 12px; font-size: 14px; margin-bottom: 15px; outline: none; transition: border 0.3s; }
         input:focus, textarea:focus { border-color: var(--accent-blue); }
 
-        /* GALERIE FOTO */
+        /* GALERIE FOTO VIP */
         .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .photo-item { height: 160px; background: #1A1A1C; border-radius: 16px; background-size: cover; background-position: center; cursor: pointer; border: 1px solid var(--border); position: relative; transition: 0.2s; }
+        .photo-item { height: 160px; background: #1A1A1C; border-radius: 16px; background-size: cover; background-position: center; cursor: pointer; border: 1px solid var(--border); position: relative; transition: 0.2s; overflow: hidden; }
         .photo-item:hover { border-color: var(--white-pure); opacity: 0.9; }
-        .photo-label { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); padding: 6px 10px; border-radius: 8px; font-size: 11px; color: var(--white-pure); }
+        .photo-label { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); padding: 4px 8px; border-radius: 8px; font-size: 10px; color: var(--white-pure); font-family: monospace; }
+        .photo-flag { position: absolute; top: 10px; right: 10px; color: var(--danger); font-size: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
+        .photo-msg-preview { position: absolute; bottom: 10px; left: 10px; right: 80px; font-size: 10px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(0,0,0,0.6); padding: 4px 6px; border-radius: 4px; backdrop-filter: blur(4px); }
 
         /* FEREASTRA POP-UP (MODAL) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: #121214; border: 1px solid var(--border); border-radius: 24px; padding: 30px; width: 500px; max-width: 90%; position: relative; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+        .modal-content { background: #121214; border: 1px solid var(--border); border-radius: 24px; padding: 30px; width: 600px; max-width: 100%; position: relative; max-height: 90vh; overflow-y: auto; }
         .modal-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 30px; height: 30px; border-radius: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-        .modal-image { width: 100%; border-radius: 16px; margin-bottom: 20px; max-height: 400px; object-fit: contain; background: #000; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-image { width: 100%; border-radius: 16px; margin-bottom: 20px; max-height: 40vh; object-fit: contain; background: #000; }
+        .modal-text-box { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; color: #eee; }
+        .modal-actions { display: flex; gap: 10px; }
         .modal-actions button { flex: 1; }
 
         /* HARTA */
@@ -142,6 +145,7 @@
             <div class="nav-item" onclick="switchView('keys', this)"><i class="fas fa-key"></i> Chei de Acces</div>
             <div class="nav-item" onclick="switchView('bank', this)"><i class="fas fa-wallet"></i> Banca Centrală</div>
             <div class="nav-item" onclick="switchView('photos', this)"><i class="fas fa-image"></i> Dovezi Foto</div>
+            <div class="nav-item" onclick="switchView('feedback', this)"><i class="fas fa-comment-dots"></i> Feedback Agenți</div>
             <div class="nav-item" onclick="switchView('release', this)"><i class="fas fa-bell"></i> Notificări Rețea</div>
         </div>
 
@@ -175,10 +179,10 @@
 
             <div id="view-keys" class="view-section">
                 <div class="table-container" style="display:flex; justify-content: space-between; align-items: center;">
-                    <h3 class="card-title" style="margin: 0; font-size: 15px; color: var(--text-primary);">Generare Coduri Noi</h3>
+                    <h3 class="card-title" style="margin: 0; font-size: 15px; color: var(--text-primary);">Generare Coduri de Acces (Securitate Avansată)</h3>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-secondary" onclick="generateKeys(1, 'BETA')">Generează Standard</button>
-                        <button class="btn-secondary" onclick="generateKeys(1, 'ELITE')" style="border-color: var(--accent-purple); color: var(--accent-purple);">Generează Premium</button>
+                        <button class="btn-secondary" onclick="generateKeys(1, 'PREMIUM')" style="border-color: var(--accent-purple); color: var(--accent-purple);">Generează Premium</button>
                     </div>
                 </div>
                 <div class="table-container">
@@ -192,12 +196,12 @@
             <div id="view-bank" class="view-section">
                 <div class="grid-2">
                     <div class="card">
-                        <h3 class="card-title" style="font-size: 15px; color: var(--text-primary);">Căutare Agent (ID)</h3>
-                        <input type="text" id="search-agent-id" placeholder="Ex: aB3x9...">
+                        <h3 class="card-title" style="font-size: 15px; color: var(--text-primary);">Căutare Agent (ID Scurt sau Cheie)</h3>
+                        <input type="text" id="search-agent-id" placeholder="Ex: IVYYVM5F sau VV-ABCD-1234">
                         <button class="btn-secondary" style="width:100%;" onclick="searchAgent()">Caută în Baza de Date</button>
                         
                         <div id="agent-result" style="margin-top:25px; display:none; border-top:1px solid var(--border); padding-top:20px;">
-                            <p style="color:var(--text-secondary); font-size:13px; margin-bottom: 8px;">Identificator: <span id="res-id" style="color:var(--white-pure);"></span></p>
+                            <p style="color:var(--text-secondary); font-size:13px; margin-bottom: 8px;">Identificator: <span id="res-id" style="color:var(--white-pure); font-family:monospace;"></span></p>
                             <p style="color:var(--text-secondary); font-size:13px; margin-bottom: 8px;">Fonduri Curente: <strong id="res-balance" style="color:var(--accent-blue); font-size:18px;"></strong> VV</p>
                             <p style="color:var(--text-secondary); font-size:13px;">Status Cont: <span id="res-status" style="color:var(--success);">Activ</span></p>
                         </div>
@@ -218,8 +222,24 @@
 
             <div id="view-photos" class="view-section">
                 <div class="table-container">
-                    <h3 class="card-title" style="margin-bottom: 20px; font-size: 15px; color: var(--text-primary);">Ultimele 50 de Fotografii Încărcate</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 class="card-title" style="margin: 0; font-size: 15px; color: var(--text-primary);">Interceptări și Rapoarte Teren</h3>
+                        <button class="btn-danger" style="padding: 8px 16px; width: auto;" onclick="deleteAllPhotos()"><i class="fas fa-trash"></i> Șterge Toate</button>
+                    </div>
                     <div class="photo-grid" id="photo-gallery"></div>
+                </div>
+            </div>
+
+            <div id="view-feedback" class="view-section">
+                <div class="table-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 class="card-title" style="margin: 0; font-size: 15px; color: var(--text-primary);">Mesaje Suport & Feedback</h3>
+                        <button class="btn-danger" style="padding: 8px 16px; width: auto;" onclick="deleteAllFeedback()"><i class="fas fa-trash"></i> Șterge Toate</button>
+                    </div>
+                    <table>
+                        <thead><tr><th>ID Agent</th><th>Data</th><th>Mesaj Trimis</th><th>Acțiuni</th></tr></thead>
+                        <tbody id="feedback-body"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -255,9 +275,13 @@
             <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             <h3 class="card-title" style="font-size: 15px; color: var(--text-primary);" id="modal-agent-text">Dovadă Foto</h3>
             <img src="" class="modal-image" id="modal-img-src">
+            
+            <h4 style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">Mesaj Atașat / Cerință Client</h4>
+            <div class="modal-text-box" id="modal-message-text">Niciun mesaj atașat.</div>
+            
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="viewAgentFromPhoto()">Vezi Profil Agent</button>
-                <button class="btn-danger" onclick="deleteCurrentPhoto()">Șterge Fotografia (Eliberare Spațiu)</button>
+                <button class="btn-danger" onclick="deleteCurrentPhoto()">Șterge Fotografia</button>
             </div>
         </div>
     </div>
@@ -277,13 +301,9 @@
             }
         }
 
-        // --- CONEXIUNE FIREBASE (MASCAT PENTRU GITHUB) ---
-        const _p1 = "AIzaSyDGv4k";
-        const _p2 = "EClO0RHCLvX";
-        const _p3 = "VLOT-vyPHw6bsxYVc";
-
+        // --- CONEXIUNE FIREBASE ---
         const firebaseConfig = {
-            apiKey: _p1 + _p2 + _p3,
+            apiKey: "AIzaSyDGv4kEClO0RHCLvXVLOT-vyPHw6bsxYVc",
             authDomain: "vv-ep-beta.firebaseapp.com",
             projectId: "vv-ep-beta",
             storageBucket: "vv-ep-beta.firebasestorage.app"
@@ -300,9 +320,13 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
-            element.classList.add('active');
             
-            const titles = { 'dashboard': 'Panou Principal', 'map': 'Harta Rețelei', 'keys': 'Chei de Acces', 'bank': 'Banca Centrală', 'photos': 'Dovezi Foto', 'release': 'Notificări Rețea' };
+            if(element) element.classList.add('active');
+            
+            const titles = { 
+                'dashboard': 'Panou Principal', 'map': 'Harta Rețelei', 'keys': 'Chei de Acces', 
+                'bank': 'Banca Centrală', 'photos': 'Interceptări Teren', 'feedback': 'Feedback Agenți', 'release': 'Notificări Rețea' 
+            };
             document.getElementById('top-title').innerText = titles[viewName];
 
             if(viewName === 'map' && !mapInitialized) {
@@ -350,10 +374,10 @@
                 snapshot.forEach(doc => {
                     const d = doc.data(); const date = new Date(d.createdAt).toLocaleDateString('ro-RO', {hour:'2-digit', minute:'2-digit'});
                     const status = d.used ? `<span style="color:var(--text-secondary)">Folosit</span>` : `<span style="color:var(--success)">Disponibil</span>`;
-                    const typeHtml = d.type === 'ELITE' ? `<span style="color:var(--accent-purple); font-weight:500;">Premium</span>` : `<span>Standard</span>`;
+                    const typeHtml = d.type === 'PREMIUM' ? `<span style="color:var(--accent-purple); font-weight:500;">Premium</span>` : `<span>Standard</span>`;
                     
                     tbody.innerHTML += `<tr>
-                        <td style="font-family:monospace; font-weight:500; font-size:15px;">${d.key}</td>
+                        <td style="font-family:monospace; font-weight:600; font-size:15px;">${d.key}</td>
                         <td><button class="btn-icon" onclick="copyToClipboard('${d.key}')"><i class="far fa-copy"></i></button></td>
                         <td>${typeHtml}</td>
                         <td>${status}</td>
@@ -362,13 +386,37 @@
                 });
             });
 
+            // GALERIE FOTO
             db.collection('photos').orderBy('timestamp', 'desc').limit(50).onSnapshot(snapshot => {
                 const grid = document.getElementById('photo-gallery'); grid.innerHTML = '';
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    grid.innerHTML += `<div class="photo-item" style="background-image: url('${data.url}')" onclick="openPhotoModal('${doc.id}', '${data.url}', '${data.agentId}')">
-                        <div class="photo-label"><i class="fas fa-user"></i> ${data.agentId.substring(0,6)}</div>
+                    let flagHtml = data.flagged ? `<i class="fas fa-flag photo-flag"></i>` : '';
+                    let msgPreview = data.message ? `<div class="photo-msg-preview">${data.message}</div>` : '';
+                    let safeMessage = data.message ? data.message.replace(/'/g, "\\'").replace(/"/g, '&quot;') : 'Niciun mesaj atașat.';
+
+                    grid.innerHTML += `<div class="photo-item" style="background-image: url('${data.url}')" onclick="openPhotoModal('${doc.id}', '${data.url}', '${data.agentId}', '${safeMessage}')">
+                        ${flagHtml}
+                        ${msgPreview}
+                        <div class="photo-label">ID: ${data.agentId.substring(0,8)}</div>
                     </div>`;
+                });
+            });
+
+            // FEEDBACK AGENȚI
+            db.collection('feedback').orderBy('timestamp', 'desc').limit(100).onSnapshot(snapshot => {
+                const tbody = document.getElementById('feedback-body'); tbody.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = new Date(data.timestamp).toLocaleString('ro-RO', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                    const safeMessage = data.message ? data.message.replace(/</g, "&lt;").replace(/>/g, "&gt;") : 'Fără text';
+                    
+                    tbody.innerHTML += `<tr>
+                        <td style="font-family:monospace; color:var(--accent-blue); font-weight:bold; cursor:pointer;" onclick="searchAndGoToAgent('${data.agentId}')" title="Apasă pentru a căuta profilul">${data.agentId.substring(0,8)}</td>
+                        <td style="font-size:12px; color:var(--text-secondary);">${date}</td>
+                        <td style="max-width: 300px; word-wrap: break-word; white-space: pre-wrap;">${safeMessage}</td>
+                        <td><button class="btn-icon" style="color:var(--danger);" onclick="deleteFeedback('${doc.id}')" title="Șterge mesaj"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
                 });
             });
         }
@@ -389,21 +437,42 @@
             mapInitialized = true;
         }
 
-        // --- BANCA CENTRALA ---
+        // --- BANCA CENTRALA & CAUTARE INTELIGENTA ---
         let currentAgent = null;
         async function searchAgent() {
-            const id = document.getElementById('search-agent-id').value.trim(); if(!id) return;
-            const docRef = await db.collection('users').doc(id).get();
-            if(docRef.exists) {
-                currentAgent = { id: docRef.id, ...docRef.data() };
+            const searchTerm = document.getElementById('search-agent-id').value.trim().toUpperCase(); 
+            if(!searchTerm) return;
+            
+            let foundAgent = null;
+            const usersSnapshot = await db.collection('users').get();
+            usersSnapshot.forEach(doc => {
+                const docId = doc.id.toUpperCase();
+                const keyUsed = (doc.data().keyUsed || "").toUpperCase();
+                
+                if(docId.startsWith(searchTerm) || keyUsed === searchTerm) {
+                    foundAgent = { id: doc.id, ...doc.data() };
+                }
+            });
+
+            if(foundAgent) {
+                currentAgent = foundAgent;
                 document.getElementById('agent-result').style.display = 'block'; 
-                document.getElementById('res-id').innerText = currentAgent.id; 
+                document.getElementById('res-id').innerText = currentAgent.id.substring(0,8).toUpperCase(); 
                 document.getElementById('res-balance').innerText = currentAgent.balance || 0;
                 document.getElementById('res-status').innerText = currentAgent.banned ? 'Blocat' : 'Activ'; 
                 document.getElementById('res-status').style.color = currentAgent.banned ? 'var(--danger)' : 'var(--success)';
                 document.getElementById('inject-panel').style.opacity = '1'; 
                 document.getElementById('inject-panel').style.pointerEvents = 'auto';
-            } else alert('Acest agent nu a fost găsit în sistem.');
+            } else {
+                alert('Acest agent nu a fost găsit în sistem.');
+            }
+        }
+
+        function searchAndGoToAgent(fullId) {
+            const navItems = document.querySelectorAll('.nav-item');
+            switchView('bank', navItems[3]); 
+            document.getElementById('search-agent-id').value = fullId.substring(0,8);
+            searchAgent();
         }
         
         async function processTransfer(act) {
@@ -411,6 +480,7 @@
             let nBal = currentAgent.balance || 0; if(act === 'add') nBal += amt; if(act === 'remove') nBal = Math.max(0, nBal - amt);
             await db.collection('users').doc(currentAgent.id).update({ balance: nBal }); 
             alert('Transfer finalizat cu succes.'); 
+            document.getElementById('search-agent-id').value = currentAgent.id.substring(0,8);
             searchAgent();
         }
         
@@ -419,16 +489,18 @@
             if(confirm("Sunteți sigur că doriți să blocați acest utilizator?")) { 
                 await db.collection('users').doc(currentAgent.id).update({ banned: true }); 
                 alert("Agent blocat cu succes."); 
+                document.getElementById('search-agent-id').value = currentAgent.id.substring(0,8);
                 searchAgent(); 
             }
         }
 
         // --- GESTIUNE FOTO ---
         let currPhoto = null;
-        function openPhotoModal(id, url, agId) { 
+        function openPhotoModal(id, url, agId, message) { 
             currPhoto = { id, url, agId }; 
             document.getElementById('modal-img-src').src = url; 
-            document.getElementById('modal-agent-text').innerText = "Încărcat de Agentul: " + agId.substring(0,8); 
+            document.getElementById('modal-agent-text').innerText = "Încărcat de Agentul ID: " + agId.substring(0,8); 
+            document.getElementById('modal-message-text').innerHTML = message;
             document.getElementById('photo-modal').style.display = 'flex'; 
         }
         function closeModal() { document.getElementById('photo-modal').style.display = 'none'; currPhoto = null; }
@@ -441,17 +513,67 @@
                 closeModal();
             }
         }
+
+        async function deleteAllPhotos() {
+            if(confirm("ATENȚIE! Sunteți sigur că doriți să ștergeți TOATE rapoartele din galerie?")) {
+                try {
+                    const snapshot = await db.collection('photos').get();
+                    if(snapshot.empty) return alert("Galeria este deja goală.");
+                    let count = 0;
+                    for (const doc of snapshot.docs) {
+                        const data = doc.data();
+                        try { await storage.refFromURL(data.url).delete(); } catch(e) {}
+                        await db.collection('photos').doc(doc.id).delete();
+                        count++;
+                    }
+                    alert(`Au fost șterse cu succes ${count} rapoarte foto.`);
+                } catch(error) { alert("A apărut o eroare la ștergerea rapoartelor."); }
+            }
+        }
         
         function viewAgentFromPhoto() { 
-            if(!currPhoto) return; const id = currPhoto.agId; closeModal(); 
-            document.querySelectorAll('.nav-item')[3].click(); 
-            document.getElementById('search-agent-id').value = id; 
-            searchAgent(); 
+            if(!currPhoto) return; const id = currPhoto.agId.substring(0,8); closeModal(); 
+            searchAndGoToAgent(id);
+        }
+
+        // --- GESTIUNE FEEDBACK ---
+        async function deleteFeedback(id) {
+            if(confirm("Sunteți sigur că doriți să ștergeți acest mesaj?")) {
+                await db.collection('feedback').doc(id).delete();
+            }
+        }
+
+        async function deleteAllFeedback() {
+            if(confirm("ATENȚIE! Această acțiune va șterge TOATE mesajele de feedback. Continuați?")) {
+                const snapshot = await db.collection('feedback').get();
+                if(snapshot.empty) return alert("Căsuța de feedback este deja goală.");
+                let count = 0;
+                for (const doc of snapshot.docs) {
+                    await db.collection('feedback').doc(doc.id).delete();
+                    count++;
+                }
+                alert(`Au fost șterse ${count} mesaje.`);
+            }
         }
 
         // --- UTILS ---
-        function generateRandomString(len) { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let r = ''; for(let i=0;i<len;i++) r+=c.charAt(Math.floor(Math.random()*c.length)); return r; }
-        async function generateKeys(count, type) { let prefix = type === 'ELITE' ? 'VIP-' : 'VV-'; for(let i=0; i<count; i++) await db.collection('access_keys').add({ key: prefix + generateRandomString(6), type: type, used: false, createdAt: Date.now() }); }
+        function generateRandomString(len) { 
+            const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; 
+            let r = ''; 
+            for(let i=0;i<len;i++) r+=c.charAt(Math.floor(Math.random()*c.length)); 
+            return r; 
+        }
+        
+        async function generateKeys(count, type) { 
+            let prefix = type === 'PREMIUM' ? 'VIP' : 'VV'; 
+            for(let i=0; i<count; i++) {
+                let formattedKey = `${prefix}-${generateRandomString(4)}-${generateRandomString(4)}`;
+                await db.collection('access_keys').add({ 
+                    key: formattedKey, type: type, used: false, createdAt: Date.now() 
+                }); 
+            }
+        }
+        
         function copyToClipboard(txt) { navigator.clipboard.writeText(txt).then(() => alert('Codul a fost copiat.')); }
 
         // --- NOTIFICARI ---
