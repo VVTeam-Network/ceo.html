@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.6.1 (GPS Fix & Escrow)</title>
+    <title>VV App | Premium Beta 1.7 (Clean VIP Design)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -15,138 +15,121 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --bg: #050505; --vv-red: #ff2d55; --vv-blue: #0A84FF; --vv-purple: #BF5AF2; --safe-green: #34c759; --gold: #d4af37; --glass-border: rgba(255,255,255,0.08); --glass: rgba(15,15,15,0.75); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); height: 100vh; overflow: hidden; color: #fff; position: fixed; inset: 0; }
+        :root { 
+            --bg: #000000; 
+            --premium-dark: #0a0a0c;
+            --gold: #D4AF37; 
+            --safe-green: #34c759;
+            --danger: #ff3b30;
+            --glass-bg: rgba(20, 20, 22, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #8e8e93;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); height: 100vh; overflow: hidden; color: var(--text-main); position: fixed; inset: 0; }
 
         /* ================= ONBOARDING ================= */
-        #splash-screen { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.5s; padding: 20px;}
-        .splash-logo { width: 90px; height: 90px; background: var(--vv-red); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 38px; font-weight: 900; color: #000; letter-spacing: 3px; padding-left: 3px; box-shadow: 0 0 30px rgba(255, 45, 85, 0.3); margin-bottom: 20px; animation: pulseLogo 2s infinite; }
-        @keyframes pulseLogo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        #splash-screen { position: fixed; inset: 0; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.8s ease-in-out; padding: 20px;}
+        .splash-logo { width: 80px; height: 80px; background: #fff; border-radius: 20px; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: 900; color: #000; letter-spacing: 2px; box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1); margin-bottom: 30px; animation: floatLogo 3s ease-in-out infinite; }
+        @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         
-        .vip-message { background: rgba(10,132,255,0.05); border: 1px solid rgba(10,132,255,0.2); padding: 15px; border-radius: 12px; margin-bottom: 30px; max-width: 300px; text-align: center;}
-        .vip-message h3 { color: var(--vv-blue); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;}
-        .vip-message p { font-size: 11px; color: #aaa; line-height: 1.5; font-weight: bold;}
-        .vip-message span { color: #fff; font-weight: 900; }
+        .vip-message { padding: 15px; margin-bottom: 30px; max-width: 300px; text-align: center;}
+        .vip-message h3 { color: var(--text-main); font-size: 14px; letter-spacing: 3px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px;}
+        .vip-message p { font-size: 12px; color: var(--text-muted); line-height: 1.6; font-weight: 400;}
 
-        .key-input { width: 100%; max-width: 300px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 16px; border-radius: 12px; color: #fff; text-align: center; font-size: 16px; font-weight: bold; letter-spacing: 3px; outline: none; text-transform: uppercase; margin-bottom: 15px;}
-        .key-input:focus { border-color: var(--vv-blue); background: rgba(10,132,255,0.05); }
-        .btn-main { width: 100%; max-width: 300px; padding: 16px; background: var(--vv-blue); color: #fff; font-weight: 900; border-radius: 12px; border: none; text-transform: uppercase; cursor: pointer; transition: 0.3s;}
-        .btn-main:active { transform: scale(0.95); }
+        .key-input { width: 100%; max-width: 300px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 18px; border-radius: 16px; color: #fff; text-align: center; font-size: 15px; font-weight: 600; letter-spacing: 4px; outline: none; text-transform: uppercase; margin-bottom: 20px; transition: 0.3s;}
+        .key-input:focus { border-color: #fff; background: rgba(255,255,255,0.08); }
+        
+        .btn-main { width: 100%; max-width: 300px; padding: 18px; background: #fff; color: #000; font-weight: 700; font-size: 13px; letter-spacing: 1px; border-radius: 16px; border: none; text-transform: uppercase; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(255,255,255,0.1);}
+        .btn-main:active { transform: scale(0.96); }
 
-        #alias-screen { position: fixed; inset: 0; background: #000; z-index: 99998; display: none; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: 0.5s; }
-        .tc-box { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; width: 85%; max-width: 320px; margin-bottom: 25px; }
+        #alias-screen { position: fixed; inset: 0; background: var(--bg); z-index: 99998; display: none; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: 0.5s; }
+        .tc-box { background: transparent; padding: 15px; width: 85%; max-width: 320px; margin-bottom: 20px; }
         .custom-checkbox { display: none; }
-        .custom-label { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #aaa; font-weight: bold; cursor: pointer; text-align: left;}
-        .checkmark { width: 22px; height: 22px; border: 2px solid #444; border-radius: 6px; display: flex; justify-content: center; align-items: center; transition: 0.2s; flex-shrink: 0; background: rgba(255,255,255,0.05);}
-        .custom-checkbox:checked + .custom-label .checkmark { background: var(--vv-blue); border-color: var(--vv-blue); box-shadow: 0 0 10px rgba(10,132,255,0.4); }
-        .custom-checkbox:checked + .custom-label .checkmark::after { content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900; color: #fff; font-size: 12px; }
-        .tc-link { color: #fff; text-decoration: underline; cursor: pointer; transition: 0.2s; }
+        .custom-label { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); font-weight: 500; cursor: pointer; text-align: left;}
+        .checkmark { width: 20px; height: 20px; border: 1px solid #555; border-radius: 6px; display: flex; justify-content: center; align-items: center; transition: 0.2s; flex-shrink: 0; background: rgba(255,255,255,0.02);}
+        .custom-checkbox:checked + .custom-label .checkmark { background: #fff; border-color: #fff; }
+        .custom-checkbox:checked + .custom-label .checkmark::after { content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900; color: #000; font-size: 10px; }
+        .tc-link { color: #fff; text-decoration: underline; cursor: pointer; }
 
-        /* MODALE GLOBALE */
-        .sheet-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 100000; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; pointer-events: none; transition: 0.4s; }
+        /* MODALE GLOBALE (Clean Sheet) */
+        .sheet-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 100000; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .sheet-modal.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: #0a0a0a; border-radius: 30px 30px 0 0; padding: 25px 20px 40px; border-top: 1px solid var(--glass-border); transform: translateY(100%); transition: 0.4s; max-height: 90vh; display: flex; flex-direction: column; }
+        .sheet-content { background: rgba(15, 15, 18, 0.95); backdrop-filter: blur(25px); border-radius: 35px 35px 0 0; padding: 30px 24px 40px; border-top: 1px solid var(--glass-border); transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; display: flex; flex-direction: column; }
         .sheet-modal.active .sheet-content { transform: translateY(0); }
-        .btn-launch { width: 100%; padding: 16px; background: var(--vv-blue); color: #fff; border: none; border-radius: 12px; font-weight: 900; font-size: 15px; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: auto; flex-shrink: 0; }
-        .btn-launch:active { transform: scale(0.95); }
-
-        /* INTRO CINEMATIC */
-        #intro-screen { position: fixed; inset: 0; background: #000; z-index: 99997; display: none; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
-        .big-vv-container { display: flex; gap: 15px; font-size: 120px; font-weight: 900; line-height: 1; margin-bottom: 25px; transform: scale(0.8); opacity: 0; transition: all 2.5s cubic-bezier(0.19, 1, 0.22, 1); }
-        .big-v { color: #fff; text-shadow: 0 0 50px rgba(255,255,255,0.4), 0 0 15px rgba(255,255,255,0.2); }
-        .intro-text { font-size: 16px; font-weight: 900; letter-spacing: 8px; color: #fff; text-transform: uppercase; opacity: 0; transition: opacity 2s ease-in-out 1.2s; text-shadow: 0 0 20px rgba(255,255,255,0.6); text-align: center;}
         
-        /* TUTORIAL */
-        #tutorial-screen { position: fixed; inset: 0; background: #050505; z-index: 99996; display: none; flex-direction: column; justify-content: space-between; padding: 60px 20px 40px; opacity: 0; transition: opacity 0.5s ease-in-out; }
-        .tut-slide { display: none; flex-direction: column; align-items: center; text-align: center; flex-grow: 1; justify-content: center; animation: fadeInSlide 0.5s forwards; }
-        .tut-slide.active { display: flex; }
-        @keyframes fadeInSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .tut-icon-box { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0)); border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; font-size: 50px; margin-bottom: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); color: var(--vv-blue);}
-        .tut-title { font-size: 28px; font-weight: 900; margin-bottom: 15px; letter-spacing: 1px; color: #fff;}
-        .tut-desc { font-size: 14px; color: #888; line-height: 1.6; max-width: 280px; font-weight: 500;}
-        .tut-controls { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; position: relative;}
-        .tut-dots { display: flex; gap: 8px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: 0.3s; }
-        .dot.active { background: var(--vv-blue); width: 24px; border-radius: 4px; box-shadow: 0 0 10px rgba(10,132,255,0.5);}
-        .tut-btn-next { width: 100%; max-width: 320px; padding: 18px; background: #222; color: #fff; font-weight: 900; border-radius: 15px; border: none; font-size: 15px; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
+        /* O liniuta eleganta sus pe modal */
+        .sheet-content::before { content: ''; width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: -10px auto 25px auto; }
+
+        .btn-launch { width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 16px; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: auto; flex-shrink: 0; }
+        .btn-launch:active { transform: scale(0.96); }
 
         /* ================= HARTA & HUD ================= */
         #map-view { position: absolute; inset: 0; z-index: 10; opacity: 1; transition: opacity 0.4s; pointer-events: auto; }
-        #map { position: absolute; inset: 0; background: #050505; z-index: 1; }
+        #map { position: absolute; inset: 0; background: var(--bg); z-index: 1; }
         .leaflet-control-attribution, .leaflet-control-zoom { display: none !important; }
 
-        .vv-map-pin { width: 34px; height: 34px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.8); opacity: 0.9; transition: 0.2s; }
-        .vv-pin-night { background: linear-gradient(135deg, #FF453A, #cc1f16); }
-        .vv-pin-retail { background: linear-gradient(135deg, #0A84FF, #0056b3); }
-        .vv-pin-cozy { background: linear-gradient(135deg, #BF5AF2, #8c2dbf); }
+        /* Pini Premium (Clean & Monocrom) */
+        .vv-map-pin { width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); opacity: 0.95; transition: 0.2s; background: rgba(15,15,15,0.9); backdrop-filter: blur(10px); }
+        .vv-pin-night { color: #fff; }
+        .vv-pin-retail { color: var(--gold); }
+        .vv-pin-cozy { color: var(--text-muted); }
 
         .stealth-hud { position: absolute; top: 50px; left: 20px; right: 20px; z-index: 10; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         .hud-left, .hud-right { display: flex; gap: 10px; pointer-events: auto; }
-        .glass-pill { background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 25px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff; }
-        .vv-dot { width: 18px; height: 18px; background: var(--vv-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 8px; font-weight: 900; color: #fff; box-shadow: 0 0 10px rgba(10, 132, 255, 0.5); }
-        .gold-text { color: var(--safe-green); }
+        .glass-pill { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 30px; font-size: 11px; font-weight: 600; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: #fff; text-transform: uppercase; }
+        .vv-dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
 
-        .search-container { position: absolute; top: 110px; left: 20px; z-index: 10; display: flex; align-items: center; gap: 10px; }
-        .search-btn { width: 45px; height: 45px; background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 16px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: 0.3s; }
-        .search-suggestions { display: flex; flex-direction: column; gap: 6px; max-height: 0; opacity: 0; transition: 0.4s; pointer-events: none; overflow: hidden; background: var(--glass); backdrop-filter: blur(20px); border-radius: 16px; padding: 0 15px; margin-top: 10px; position: absolute; top: 50px; left: 0; width: 230px;}
-        .search-suggestions.open { max-height: 400px; opacity: 1; pointer-events: auto; padding: 15px; border: 1px solid var(--glass-border); }
-        .sugg-cat { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 4px;}
-        .sugg-item { font-size: 12px; color: #fff; font-weight: bold; padding: 6px 0; cursor: pointer; display: flex; align-items: center;}
-        .sugg-item i { margin-right: 10px; width: 15px; text-align: center;}
-
-        /* ACTION HUB CU 4 BUTOANE TACTICE */
-        .action-hub { position: absolute; bottom: 120px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 15px; }
-        .fab-btn { width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.6); transition: 0.2s; background: rgba(15,15,15,0.9); backdrop-filter: blur(15px); position: relative; }
-        .fab-btn:active { transform: scale(0.9); }
+        /* ACTION HUB (Premium Glass Buttons) */
+        .action-hub { position: absolute; bottom: 120px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 16px; }
+        .fab-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
+        .fab-btn:active { transform: scale(0.92); }
         
-        .fab-inbox { border: 2px solid #fff; color: #fff; }
-        .inbox-badge { position: absolute; top: -5px; right: -5px; background: var(--vv-red); color: #fff; font-size: 10px; font-weight: 900; width: 20px; height: 20px; border-radius: 50%; display: none; justify-content: center; align-items: center; border: 2px solid #000; }
+        .fab-cam { background: #fff; color: #000; border: none; box-shadow: 0 8px 25px rgba(255,255,255,0.2); } 
         
-        .fab-mission-launch { border: 2px solid var(--vv-purple); color: var(--vv-purple); }
-        .fab-mission-receive { border: 2px solid var(--gold); color: var(--gold); }
-        .fab-cam { border: 2px solid var(--vv-blue); color: var(--vv-blue); } 
+        .inbox-badge { position: absolute; top: -2px; right: -2px; background: var(--gold); color: #000; font-size: 10px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: none; justify-content: center; align-items: center; border: 2px solid #000; }
 
-        .stealth-dock { position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 320px; height: 65px; background: var(--glass); backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 40px; justify-content: space-between; align-items: center; padding: 0 35px; z-index: 15000; box-shadow: 0 20px 40px rgba(0,0,0,0.8); display: none; }
-        .dock-icon { font-size: 22px; color: #555; cursor: pointer; transition: 0.3s; }
-        .dock-icon.active { color: var(--vv-blue); text-shadow: 0 0 15px rgba(10,132,255,0.4); }
-        .btn-soon { width: 64px; height: 64px; background: linear-gradient(135deg, #222, #050505); border: 1px solid #444; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; transform: translateY(-15px); box-shadow: 0 10px 25px rgba(0,0,0,0.8); cursor: pointer; color: #fff; z-index: 101;}
+        /* BOTTOM DOCK */
+        .stealth-dock { position: fixed; bottom: 35px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 320px; height: 65px; background: var(--glass-bg); backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 40px; justify-content: space-between; align-items: center; padding: 0 35px; z-index: 15000; box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: none; }
+        .dock-icon { font-size: 20px; color: #666; cursor: pointer; transition: 0.3s; }
+        .dock-icon.active { color: #fff; }
+        .btn-soon { width: 58px; height: 58px; background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; transform: translateY(-15px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; color: #fff; z-index: 101;}
 
         /* ================= PROFILUL ================= */
-        #profile-screen { position: absolute; inset: 0; background: #050505; z-index: 20; display: none; flex-direction: column; padding: 50px 20px 160px; opacity: 0; transition: 0.4s; overflow-y: auto; pointer-events: none; }
-        .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; position: relative; }
-        .profile-name-box { display: flex; flex-direction: column; align-items: flex-start; }
-        .profile-name { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+        #profile-screen { position: absolute; inset: 0; background: var(--premium-dark); z-index: 20; display: none; flex-direction: column; padding: 60px 24px 160px; opacity: 0; transition: 0.4s; overflow-y: auto; pointer-events: none; }
+        .profile-name { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; }
         
-        .real-black-card { width: 100%; aspect-ratio: 1.58; min-height: 210px; border-radius: 16px; background: linear-gradient(135deg, #18181a, #050505); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 50px rgba(0,0,0,0.9); padding: 25px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 20px; }
+        .real-black-card { width: 100%; aspect-ratio: 1.58; min-height: 210px; border-radius: 20px; background: linear-gradient(135deg, #1c1c1e, #0a0a0c); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); padding: 30px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 25px; position: relative; overflow: hidden;}
+        /* Reflexie subtila pe card */
+        .real-black-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.03), transparent); transform: skewX(-25deg); }
+        
         .card-top-row { display: flex; justify-content: space-between; align-items: flex-start; }
-        .card-logo-silver { font-size: 24px; font-weight: 900; color: rgba(255,255,255,0.7); letter-spacing: 2px;}
-        .card-middle { text-align: left; margin-top: auto; margin-bottom: 20px;}
-        .card-name-engraved { font-size: 18px; font-weight: bold; letter-spacing: 3px; color: #fff; text-transform: uppercase; }
-        .card-balance-text { font-size: 13px; color: var(--safe-green); font-weight: normal; margin-top: 5px; font-family: monospace;}
-        
-        .beta-glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .beta-action { background: rgba(10,132,255,0.1); color: var(--vv-blue); font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 12px; text-align: center; border-radius: 10px; letter-spacing: 1px; cursor: pointer; border: 1px solid rgba(10,132,255,0.2); transition: 0.3s; margin-top: 15px;}
+        .card-logo-silver { font-size: 20px; font-weight: 900; color: rgba(255,255,255,0.9); letter-spacing: 3px;}
+        .card-middle { text-align: left; margin-top: auto; }
+        .card-name-engraved { font-size: 16px; font-weight: 500; letter-spacing: 4px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;}
+        .card-balance-text { font-size: 22px; color: #fff; font-weight: 300; font-family: -apple-system, sans-serif;}
 
         /* INPUTS & MODALS */
-        .vv-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid #333; padding: 14px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: 0.3s; }
-        .vv-input:focus { border-color: var(--vv-blue); background: rgba(10, 132, 255, 0.05); }
-        .vv-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; font-weight: bold; text-align: left;}
+        .vv-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 14px; color: #fff; font-size: 14px; outline: none; transition: 0.3s; }
+        .vv-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
+        .vv-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; display: block; font-weight: 600; text-align: left;}
 
-        /* CAMERA AI MUTE */
+        /* CAMERA */
         #camera-screen { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; justify-content: space-between; padding: 50px 20px; opacity: 0; transition: 0.3s; }
-        .cam-header { display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 14px; font-weight: bold; z-index: 10;}
-        .cam-viewfinder { flex-grow: 1; border: 2px dashed rgba(255, 255, 255, 0.15); margin: 30px 0; border-radius: 20px; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #111; }
+        .cam-header { display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 12px; letter-spacing: 2px; font-weight: 600; z-index: 10;}
+        .cam-viewfinder { flex-grow: 1; border: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; border-radius: 30px; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #0a0a0c; }
         #real-camera-video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
         .cam-controls { display: flex; justify-content: center; align-items: center; padding: 0 40px 20px; z-index: 10;}
-        .shutter-btn { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #fff; background: transparent; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
-        .shutter-inner { width: 54px; height: 54px; background: #fff; border-radius: 50%; transition: 0.2s; }
+        .shutter-btn { width: 74px; height: 74px; border-radius: 50%; border: 3px solid #fff; background: transparent; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+        .shutter-inner { width: 60px; height: 60px; background: #fff; border-radius: 50%; transition: 0.2s; }
 
         /* MENIU DUPA POZA */
-        #post-photo-menu { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); padding: 30px 20px; border-radius: 30px 30px 0 0; display: none; flex-direction: column; z-index: 20; transform: translateY(100%); transition: 0.4s; }
+        #post-photo-menu { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(10,10,12,0.95); backdrop-filter: blur(25px); padding: 30px 24px; border-radius: 35px 35px 0 0; display: none; flex-direction: column; z-index: 20; transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); border-top: 1px solid var(--glass-border);}
         #post-photo-menu.active { transform: translateY(0); }
-        .urgent-toggle { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 45, 85, 0.1); border: 1px solid var(--vv-red); padding: 15px; border-radius: 12px; margin-bottom: 20px; cursor: pointer; }
-        .urgent-toggle.active { background: var(--vv-red); color: #fff; }
+        
+        .mission-item-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 20px; border-radius: 16px; text-align:left; margin-bottom: 12px; transition: 0.2s;}
     </style>
 </head>
 <body>
@@ -154,16 +137,16 @@
     <div id="splash-screen">
         <div class="splash-logo">VV</div>
         <div class="vip-message">
-            <h3>Program Beta Exclusiv</h3><p>Acțiunile tale de azi îți garantează accesul în rețeaua VV.</p>
+            <h3>Program Beta Exclusiv</h3>
         </div>
         <input type="text" class="key-input" id="access-key" placeholder="Access Key">
         <button class="btn-main" onclick="startBootSequence()">Decriptează</button>
     </div>
 
     <div id="alias-screen">
-        <div class="splash-logo" style="width: 70px; height: 70px; font-size: 24px; margin-bottom: 15px; background: #111; color: var(--vv-blue); box-shadow: none;"><i class="fas fa-fingerprint"></i></div>
-        <div class="splash-title" style="font-size: 18px; margin-bottom: 5px; color:#fff;">BUN VENIT</div>
-        <input type="text" class="key-input" id="user-alias-input" placeholder="Introdu Numele" style="margin-bottom: 20px; margin-top:20px;">
+        <div class="splash-logo" style="width: 60px; height: 60px; font-size: 20px; margin-bottom: 20px; background: #fff; color: #000; box-shadow: none;"><i class="fas fa-fingerprint"></i></div>
+        <div class="splash-title" style="font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; color:var(--text-muted); text-transform: uppercase;">Autentificare</div>
+        <input type="text" class="key-input" id="user-alias-input" placeholder="Introdu Numele" style="margin-bottom: 25px; margin-top:10px;">
         <div class="tc-box">
             <input type="checkbox" id="tc-checkbox" class="custom-checkbox">
             <label for="tc-checkbox" class="custom-label"><div class="checkmark"></div><div>Sunt de acord cu Regulile.</div></label>
@@ -176,17 +159,17 @@
         <div id="map-view">
             <div id="map"></div>
             <div class="stealth-hud">
-                <div class="hud-left"><div class="glass-pill"><div class="vv-dot">V</div> VV BETA</div></div>
-                <div class="hud-right"><div class="glass-pill gold-text" id="hud-balance">... VV</div></div>
+                <div class="hud-left"><div class="glass-pill"><div class="vv-dot"></div> VV BETA</div></div>
+                <div class="hud-right"><div class="glass-pill" id="hud-balance" style="color: #fff; border-color: rgba(255,255,255,0.2);">... VV</div></div>
             </div>
 
             <div class="action-hub">
-                <div class="fab-btn fab-inbox" onclick="openInbox()">
+                <div class="fab-btn" onclick="openInbox()">
                     <i class="fas fa-envelope"></i>
                     <div class="inbox-badge" id="inbox-badge">0</div>
                 </div>
-                <div class="fab-btn fab-mission-launch" onclick="openCreateMission()"><i class="fas fa-plane-departure"></i></div>
-                <div class="fab-btn fab-mission-receive" onclick="openMissionsList()"><i class="fas fa-plane-arrival"></i></div>
+                <div class="fab-btn" onclick="openCreateMission()"><i class="fas fa-plus"></i></div>
+                <div class="fab-btn" onclick="openMissionsList()"><i class="fas fa-list-ul"></i></div>
                 <div class="fab-btn fab-cam" onclick="openCamera()"><i class="fas fa-camera"></i></div>
             </div>
         </div>
@@ -199,53 +182,52 @@
     </div>
 
     <div class="sheet-modal" id="premium-teaser-modal">
-        <div class="sheet-content" style="align-items: center; text-align: center; padding-top: 40px; border-top: 1px solid var(--gold);">
-            <i class="fas fa-gem" style="font-size: 40px; color: var(--gold); margin-bottom: 20px; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);"></i>
-            <h2 style="color:#fff; margin-bottom:15px; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">The era of fake reality is over.</h2>
-            <p style="color: #aaa; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+        <div class="sheet-content" style="align-items: center; text-align: center; padding-top: 40px;">
+            <i class="fas fa-gem" style="font-size: 30px; color: #fff; margin-bottom: 25px;"></i>
+            <h2 style="color:#fff; margin-bottom:15px; font-size: 18px; text-transform: uppercase; letter-spacing: 2px;">The era of fake reality is over.</h2>
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 35px; font-weight: 300;">
                 În curând în versiunea <strong>VV EP 1.0</strong><br><br>
-                <span style="color: var(--vv-blue); font-weight: bold; letter-spacing: 1px;">LIVE FEED & THE CITY VAULT</span><br>
-                <span style="font-size: 11px;">(Vitrina Locațiilor Premium)</span>
+                <span style="color: #fff; font-weight: 500; letter-spacing: 1px;">LIVE FEED & THE CITY VAULT</span>
             </p>
-            <button class="btn-launch" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #333;" onclick="closeModal('premium-teaser-modal')">ÎNCHIDE</button>
+            <button class="btn-launch" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);" onclick="closeModal('premium-teaser-modal')">ÎNCHIDE</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="inbox-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 20px;"><i class="fas fa-envelope" style="color:#fff;"></i> Intel Primit</h2>
-            <p style="color:#aaa; font-size:12px; margin-bottom:20px;">Aprobă pozele primite pentru a elibera fondurile.</p>
+            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 600; letter-spacing: 1px;">Intel Primit</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Aprobă pozele primite pentru a elibera fondurile.</p>
             
             <div id="inbox-container" style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:15px; margin-bottom:20px;">
                 </div>
-            <button class="btn-launch" style="background:transparent; color:#888; border:1px solid #333;" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
+            <button class="btn-launch" style="background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="create-mission-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 20px;"><i class="fas fa-plane-departure" style="color:var(--vv-purple);"></i> Lansează Misiune</h2>
-            <p style="color:#aaa; font-size:12px; margin-bottom:20px;">Plătește alți agenți să verifice o locație pentru tine.</p>
+            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 600; letter-spacing: 1px;">Cere Inteligență</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Plătește agenții din zonă pentru o verificare reală.</p>
 
             <label class="vv-label">Ce trebuie verificat?</label>
-            <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 15px;" placeholder="Ex: Cum e coada la intrare la Nuba?">
+            <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 20px;" placeholder="Ex: Cum e coada la Nuba?">
 
             <label class="vv-label">Recompensă Oferită (VV)</label>
-            <input type="number" id="mission-reward" class="vv-input" style="margin-bottom: 25px;" placeholder="Ex: 50">
+            <input type="number" id="mission-reward" class="vv-input" style="margin-bottom: 30px;" placeholder="Ex: 50">
 
-            <button class="btn-launch" style="background: var(--vv-purple);" onclick="submitMission()">LANSEAZĂ CONTRACTUL</button>
-            <button class="btn-launch" style="background:transparent; color:#888; border:1px solid #333; margin-top:10px;" onclick="closeModal('create-mission-modal')">ANULEAZĂ</button>
+            <button class="btn-launch" onclick="submitMission()">LANSEAZĂ CONTRACTUL</button>
+            <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1); margin-top:12px;" onclick="closeModal('create-mission-modal')">ANULEAZĂ</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="missions-list-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 20px;"><i class="fas fa-plane-arrival" style="color:var(--gold);"></i> Bursa de Misiuni</h2>
-            <p style="color:#aaa; font-size:12px; margin-bottom:20px;">Acceptă contracte de la alți agenți și câștigă VV.</p>
+            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 600; letter-spacing: 1px;">Bursa de Misiuni</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă contracte de la alți agenți.</p>
             
-            <div id="missions-container" style="max-height: 300px; overflow-y: auto; display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-            </div>
-            <button class="btn-launch" style="background:transparent; color:#888; border:1px solid #333;" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
+            <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;">
+                </div>
+            <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
         </div>
     </div>
 
@@ -263,10 +245,10 @@
         </div>
 
         <div id="post-photo-menu">
-            <h3 style="font-size: 16px; margin-bottom: 15px; color: #fff;">Raport Pregătit</h3>
-            <textarea id="photo-msg" class="vv-input" style="height: 80px; margin-bottom: 15px;" placeholder="Adaugă un mesaj scurt..."></textarea>
-            <button id="send-btn" class="btn-launch" style="background: var(--safe-green); color:#000;" onclick="uploadPhotoToCEO()">TRIMITE RAPORT</button>
-            <button id="retake-btn" class="btn-launch" style="background: transparent; border:1px solid #444; color:#888; margin-top:10px;" onclick="retakePhoto()">REFĂ POZA</button>
+            <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; color: #fff; text-align: center;">Raport Pregătit</h3>
+            <textarea id="photo-msg" class="vv-input" style="height: 80px; margin-bottom: 25px;" placeholder="Adaugă detalii..."></textarea>
+            <button id="send-btn" class="btn-launch" onclick="uploadPhotoToCEO()">TRIMITE RAPORT</button>
+            <button id="retake-btn" class="btn-launch" style="background: transparent; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); margin-top:12px;" onclick="retakePhoto()">REFĂ POZA</button>
         </div>
     </div>
 
@@ -287,13 +269,13 @@
         let currentUserBalance = 0;
         let isInitialLoad = true;
         
-        // REZOLVARE BUG APPLE (Plasa de siguranta pe Bucuresti)
+        // REZOLVARE BUG APPLE
         let currentLat = 44.4325; 
         let currentLng = 26.1038;
         
         let activeMissionId = null;
 
-        // --- SISTEM PERSISTENT (MEMORIE TELEFON) ---
+        // --- SISTEM PERSISTENT ---
         auth.onAuthStateChanged(user => {
             if (user && localStorage.getItem('vv_agent_key') && isInitialLoad) {
                 document.getElementById('splash-screen').style.display = 'none';
@@ -330,14 +312,12 @@
 
         // ================= LOGICA BURSEI =================
 
-        function openCreateMission() {
-            openModal('create-mission-modal');
-        }
+        function openCreateMission() { openModal('create-mission-modal'); }
 
         async function submitMission() {
             let desc = document.getElementById('mission-desc').value.trim();
             let reward = parseInt(document.getElementById('mission-reward').value);
-            if(!desc || !reward || reward <= 0) return alert("Completează corect detaliile misiunii!");
+            if(!desc || !reward || reward <= 0) return alert("Completează corect detaliile!");
             if(reward > currentUserBalance) return alert("Fonduri insuficiente! Ai " + currentUserBalance + " VV.");
 
             try {
@@ -347,7 +327,9 @@
                     creatorId: uid, creatorAlias: globalAlias, description: desc,
                     reward: reward, lat: currentLat, lng: currentLng, status: 'active', timestamp: Date.now()
                 });
-                alert(`✅ Misiune lansată! ${reward} VV au fost blocați din cont.`);
+                alert(`Misiune lansată. ${reward} VV blocați.`);
+                document.getElementById('mission-desc').value = '';
+                document.getElementById('mission-reward').value = '';
                 closeModal('create-mission-modal');
             } catch(e) { alert("Eroare: " + e.message); }
         }
@@ -355,27 +337,27 @@
         function openMissionsList() {
             openModal('missions-list-modal');
             const container = document.getElementById('missions-container');
-            container.innerHTML = "<p style='color:#aaa; text-align:center;'>Caută contracte...</p>";
+            container.innerHTML = "<p style='color:var(--text-muted); text-align:center; font-size:12px;'>Caută contracte...</p>";
 
             db.collection('missions').where('status', '==', 'active').get().then(snap => {
-                if(snap.empty) { container.innerHTML = "<p style='color:#aaa; text-align:center;'>Nicio misiune activă.</p>"; return; }
+                if(snap.empty) { container.innerHTML = "<p style='color:var(--text-muted); text-align:center; font-size:12px;'>Nicio misiune activă.</p>"; return; }
                 let foundMissions = false; container.innerHTML = "";
                 snap.forEach(doc => {
                     let m = doc.data();
                     if(m.creatorId === auth.currentUser.uid) return; 
                     foundMissions = true;
                     container.innerHTML += `
-                        <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--gold); padding: 15px; border-radius: 12px; text-align:left;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="color:var(--gold); font-weight:bold;">${m.reward} VV Coins</span>
-                                <span style="color:#aaa; font-size:10px;">de la ${m.creatorAlias}</span>
+                        <div class="mission-item-card">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items: center;">
+                                <span style="color:#fff; font-weight:700; font-size:15px;">${m.reward} VV</span>
+                                <span style="color:var(--text-muted); font-size:10px; text-transform:uppercase; letter-spacing:1px;">${m.creatorAlias}</span>
                             </div>
-                            <div style="color:#fff; font-size:13px; margin-bottom:15px;">${m.description}</div>
-                            <button onclick="acceptMission('${doc.id}')" style="width:100%; padding:10px; background:var(--gold); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">ACCEPTĂ ȘI DESCHIDE CAMERA</button>
+                            <div style="color:rgba(255,255,255,0.8); font-size:13px; margin-bottom:20px; line-height:1.4;">${m.description}</div>
+                            <button onclick="acceptMission('${doc.id}')" style="width:100%; padding:14px; background:#fff; color:#000; font-weight:700; font-size:11px; letter-spacing:1px; border:none; border-radius:12px; cursor:pointer;">ACCEPTĂ</button>
                         </div>
                     `;
                 });
-                if(!foundMissions) container.innerHTML = "<p style='color:#aaa; text-align:center;'>Nicio misiune pentru tine momentan.</p>";
+                if(!foundMissions) container.innerHTML = "<p style='color:var(--text-muted); text-align:center; font-size:12px;'>Nicio misiune pentru tine momentan.</p>";
             });
         }
 
@@ -393,23 +375,23 @@
         function openInbox() {
             openModal('inbox-modal');
             const container = document.getElementById('inbox-container');
-            container.innerHTML = "<p style='color:#aaa; text-align:center;'>Se încarcă...</p>";
+            container.innerHTML = "<p style='color:var(--text-muted); text-align:center; font-size:12px;'>Se încarcă...</p>";
 
             db.collection('missions')
               .where('creatorId', '==', auth.currentUser.uid)
               .where('status', '==', 'pending_review')
               .get().then(snap => {
-                  if(snap.empty) { container.innerHTML = "<p style='color:#aaa; text-align:center;'>Nu ai intel nou de verificat.</p>"; return; }
+                  if(snap.empty) { container.innerHTML = "<p style='color:var(--text-muted); text-align:center; font-size:12px;'>Nu ai intel nou de verificat.</p>"; return; }
                   container.innerHTML = "";
                   snap.forEach(doc => {
                       let m = doc.data();
                       container.innerHTML += `
-                          <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--vv-blue); padding: 15px; border-radius: 12px;">
-                              <div style="font-size:12px; color:#aaa; margin-bottom:10px;">Cerere: ${m.description}</div>
-                              <img src="${m.photoUrl}" style="width:100%; border-radius:8px; margin-bottom:15px;">
+                          <div class="mission-item-card" style="padding:15px;">
+                              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Cerere: ${m.description}</div>
+                              <img src="${m.photoUrl}" style="width:100%; border-radius:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.05);">
                               <div style="display:flex; gap:10px;">
-                                  <button onclick="approveIntel('${doc.id}', '${m.solverId}', ${m.reward}, '${m.photoUrl}')" style="flex:1; padding:12px; background:var(--safe-green); color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">CONFIRMĂ (Plătește)</button>
-                                  <button onclick="reportFakeIntel('${doc.id}', '${m.photoUrl}')" style="flex:1; padding:12px; background:transparent; color:var(--vv-red); border:1px solid var(--vv-red); font-weight:bold; border-radius:8px; cursor:pointer;">REPORT FAKE</button>
+                                  <button onclick="approveIntel('${doc.id}', '${m.solverId}', ${m.reward}, '${m.photoUrl}')" style="flex:1; padding:14px; background:#fff; color:#000; font-weight:700; font-size:11px; border:none; border-radius:12px; cursor:pointer;">CONFIRMĂ</button>
+                                  <button onclick="reportFakeIntel('${doc.id}', '${m.photoUrl}')" style="flex:1; padding:14px; background:rgba(255,59,48,0.1); color:var(--danger); border:1px solid rgba(255,59,48,0.3); font-weight:700; font-size:11px; border-radius:12px; cursor:pointer;">REPORT</button>
                               </div>
                           </div>
                       `;
@@ -418,22 +400,22 @@
         }
 
         async function approveIntel(missionId, solverId, reward, photoUrl) {
-            if(!confirm("Ești sigur că aprobi această poză? Banii tăi blocați vor fi trimiși celuilalt agent.")) return;
+            if(!confirm("Aprobi această poză? Banii vor fi transferați.")) return;
             try {
                 await db.collection('missions').doc(missionId).update({ status: 'completed' });
                 await db.collection('users').doc(solverId).update({ balance: firebase.firestore.FieldValue.increment(reward) });
-                await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: "[APROBAT DE CLIENT] Contract P2P finalizat cu succes.", flagged: false, timestamp: Date.now(), lat: currentLat, lng: currentLng });
-                alert("Misiune finalizată cu succes!");
+                await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: "[APROBAT DE CLIENT] Contract finalizat.", flagged: false, timestamp: Date.now(), lat: currentLat, lng: currentLng });
+                alert("Misiune finalizată!");
                 closeModal('inbox-modal');
             } catch(e) { alert("Eroare: " + e.message); }
         }
 
         async function reportFakeIntel(missionId, photoUrl) {
-            if(!confirm("Atenție! Această poză va fi trimisă la CEO pentru investigație. Continuăm?")) return;
+            if(!confirm("Trimitem poza la CEO pentru investigație?")) return;
             try {
                 await db.collection('missions').doc(missionId).update({ status: 'disputed' });
-                await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: "[ALARMĂ FRAUDĂ - P2P] Un agent a raportat această poză ca fiind fake sau veche!", flagged: true, timestamp: Date.now(), lat: currentLat, lng: currentLng });
-                alert("Raport trimis către CEO! Fondurile rămân blocate până la rezolvare.");
+                await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: "[ALARMĂ FRAUDĂ] Raportat ca fake!", flagged: true, timestamp: Date.now(), lat: currentLat, lng: currentLng });
+                alert("Raport trimis către CEO.");
                 closeModal('inbox-modal');
             } catch(e) { alert("Eroare: " + e.message); }
         }
@@ -444,19 +426,14 @@
                 map = L.map('map', {zoomControl: false}).setView([currentLat, currentLng], 12);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
                 
-                // Fortam un refresh GPS si punem Timeout lung sa nu se blocheze Safari
                 map.locate({setView: true, watch: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000});
                 
                 let userMarker = null;
                 map.on('locationfound', function(e) {
                     currentLat = e.latlng.lat; currentLng = e.latlng.lng;
                     if(!userMarker) { 
-                        userMarker = L.circleMarker(e.latlng, { radius: 8, fillColor: "#0A84FF", color: "#fff", weight: 3, opacity: 1, fillOpacity: 0.9 }).addTo(map);
+                        userMarker = L.circleMarker(e.latlng, { radius: 7, fillColor: "#fff", color: "rgba(255,255,255,0.3)", weight: 6, opacity: 1, fillOpacity: 1 }).addTo(map);
                     } else { userMarker.setLatLng(e.latlng); }
-                });
-
-                map.on('locationerror', function(e) {
-                    console.log("Safari a refuzat locația automată. Folosim locația de siguranță.", e.message);
                 });
             }
             setTimeout(() => { map.invalidateSize(); }, 500); 
@@ -464,10 +441,10 @@
 
         async function startBootSequence() {
             let keyInput = document.getElementById('access-key').value.trim().toUpperCase();
-            if(keyInput.length < 5) return alert("⚠ Introdu o cheie validă!");
+            if(keyInput.length < 5) return alert("Introdu o cheie validă!");
             try {
                 const snapshot = await db.collection('access_keys').where('key', '==', keyInput).get();
-                if(snapshot.empty) { alert("❌ Cheie invalidă!"); } else {
+                if(snapshot.empty) { alert("Cheie invalidă!"); } else {
                     localStorage.setItem('vv_agent_key', keyInput);
                     document.getElementById('splash-screen').style.display = 'none';
                     document.getElementById('alias-screen').style.display = 'flex';
@@ -477,7 +454,7 @@
         }
 
         async function confirmAlias() {
-            if(!document.getElementById('tc-checkbox').checked) return alert("⚠ Bifează Regulamentul!");
+            if(!document.getElementById('tc-checkbox').checked) return alert("Bifează Regulamentul!");
             globalAlias = document.getElementById('user-alias-input').value.trim() || "AGENT VV";
             try {
                 const cred = await auth.signInAnonymously();
@@ -497,7 +474,7 @@
             try {
                 currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 document.getElementById('real-camera-video').srcObject = currentStream;
-            } catch (err) { alert("Eroare cameră. Te rugăm să oferi permisiunile."); }
+            } catch (err) { alert("Eroare cameră."); }
         }
 
         function closeCamera() {
@@ -514,11 +491,11 @@
             
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.font = "bold 30px monospace";
-            ctx.shadowColor = "black";
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetX = 2;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.font = "bold 24px -apple-system, sans-serif";
+            ctx.shadowColor = "rgba(0,0,0,0.8)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 2;
             let timeString = new Date().toLocaleTimeString();
             ctx.fillText("VV PROOF | " + timeString, 30, 50); 
@@ -567,17 +544,17 @@
                         photoUrl: downloadUrl,
                         solverId: uid
                     });
-                    alert("Fotografia a fost trimisă clientului! VV Coins vor intra imediat după aprobarea acestuia.");
+                    alert("Fotografia a fost trimisă clientului!");
                     activeMissionId = null;
                 } else {
                     await db.collection('photos').add({
                         url: downloadUrl, agentId: uid, message: msg, flagged: false, timestamp: timestamp, lat: currentLat, lng: currentLng 
                     });
                     await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(15) });
-                    alert("✅ Raport trimis cu succes la CEO! (+15 VV)");
+                    alert("Raport trimis cu succes la CEO!");
                 }
                 closeCamera();
-            } catch(e) { alert("Eroare la trimitere: " + e.message); closeCamera(); }
+            } catch(e) { alert("Eroare la trimitere."); closeCamera(); }
         }
     </script>
 </body>
