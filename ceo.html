@@ -26,8 +26,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background: var(--bg); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
 
-        /* ================= LOGIN ================= */
-        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.5s; }
+        /* ================= LOGIN (REPARAT PENTRU IPAD VECHI) ================= */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.5s; }
         .logo-box { font-size: 40px; font-weight: 900; letter-spacing: 5px; color: #fff; margin-bottom: 10px; }
         .logo-sub { font-size: 12px; color: var(--text-muted); letter-spacing: 4px; margin-bottom: 40px; text-transform: uppercase; }
         .login-input { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 18px 25px; border-radius: 12px; color: #fff; font-size: 16px; text-align: center; letter-spacing: 3px; outline: none; margin-bottom: 20px; width: 300px; transition: 0.3s; }
@@ -35,12 +35,21 @@
         .login-btn { background: #fff; color: #000; border: none; padding: 18px; width: 300px; border-radius: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
         .login-btn:active { transform: scale(0.98); }
 
-        /* ================= SIDEBAR ================= */
+        /* ================= LIGHTBOX (ZOOM POZE) ================= */
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 100000; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
+        #lightbox-img { max-width: 90%; max-height: 90%; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+
+        /* ================= SIDEBAR & TREZORERIE ================= */
         .sidebar { width: 260px; background: var(--panel); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 30px 0; z-index: 10; }
-        .sidebar-header { padding: 0 30px; margin-bottom: 40px; }
+        .sidebar-header { padding: 0 30px; margin-bottom: 30px; }
         .sidebar-title { font-size: 22px; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px; }
         .sidebar-subtitle { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
         
+        /* BANCA (TREZORERIA) */
+        .treasury-box { margin: 0 20px 30px 20px; padding: 15px; background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; text-align: center; }
+        .treasury-label { font-size: 9px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-weight: 700; }
+        .treasury-value { font-size: 20px; font-weight: 300; color: #fff; font-family: monospace; }
+
         .nav-item { padding: 18px 30px; display: flex; align-items: center; gap: 15px; color: var(--text-muted); cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.3s; border-left: 3px solid transparent; }
         .nav-item:hover { background: var(--glass-bg); color: #fff; }
         .nav-item.active { background: rgba(255,255,255,0.05); color: #fff; border-left-color: var(--vv-blue); }
@@ -48,19 +57,24 @@
         .nav-badge { background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; margin-left: auto; display: none; }
 
         /* ================= MAIN CONTENT ================= */
-        .main-content { flex: 1; padding: 40px 50px; overflow-y: auto; background: var(--bg); }
+        .main-content { flex: 1; padding: 40px 50px; overflow-y: auto; background: var(--bg); position: relative;}
         .section { display: none; animation: fadeIn 0.4s; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        .section-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
         .section-title { font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px; }
-        .section-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 40px; }
+        .section-desc { font-size: 14px; color: var(--text-muted); }
+        
+        /* WIPE BUTTON */
+        .btn-nuke { background: rgba(255,59,48,0.1); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+        .btn-nuke:hover { background: var(--danger); color: #fff; }
 
         /* GRID POZE (FEED) */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
         .photo-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; }
         .photo-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.2); }
-        .photo-img { width: 100%; height: 220px; object-fit: cover; background: #111; }
+        .photo-img { width: 100%; height: 220px; object-fit: cover; background: #111; cursor: zoom-in; }
         .photo-info { padding: 20px; }
         .photo-msg { font-size: 14px; color: #fff; margin-bottom: 10px; line-height: 1.5; }
         .photo-meta { font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 1px; }
@@ -92,6 +106,10 @@
 </head>
 <body>
 
+    <div id="lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="">
+    </div>
+
     <div id="login-screen">
         <div class="logo-box">VV</div>
         <div class="logo-sub">Executive Dashboard</div>
@@ -103,6 +121,11 @@
         <div class="sidebar-header">
             <div class="sidebar-title">VV.</div>
             <div class="sidebar-subtitle">Control Panel</div>
+        </div>
+        
+        <div class="treasury-box">
+            <div class="treasury-label">Total VV În Piață</div>
+            <div class="treasury-value" id="total-vv-bank">0 VV</div>
         </div>
         
         <div class="nav-item active" onclick="switchSection('feed', this)">
@@ -127,25 +150,38 @@
     <div class="main-content">
         
         <div id="feed-section" class="section active">
-            <div class="section-title">Global Intel Feed</div>
-            <div class="section-desc">Toate fotografiile și rapoartele valide trimise de agenți în timp real.</div>
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Global Intel Feed</div>
+                    <div class="section-desc">Toate fotografiile și rapoartele valide trimise de agenți în timp real.</div>
+                </div>
+                <button class="btn-nuke" onclick="nukeBetaData()"><i class="fas fa-radiation"></i> Wipe Beta Data</button>
+            </div>
+            
             <div class="grid-container" id="feed-container">
                 <div style="color:var(--text-muted);">Se încarcă datele...</div>
             </div>
         </div>
 
         <div id="disputes-section" class="section">
-            <div class="section-title">Dispute Escrow</div>
-            <div class="section-desc">Misiuni raportate de clienți ca fiind frauduloase. Verifică intel-ul și decide fluxul banilor.</div>
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Dispute Escrow</div>
+                    <div class="section-desc">Misiuni raportate de clienți ca fiind frauduloase. Verifică intel-ul și decide fluxul banilor.</div>
+                </div>
+            </div>
             <div class="grid-container" id="disputes-container">
                 <div style="color:var(--text-muted);">Nicio dispută activă. Sistem curat.</div>
             </div>
         </div>
 
         <div id="leaderboard-section" class="section">
-            <div class="section-title">Rețea Agenți & Status VV Onyx</div>
-            <div class="section-desc">Clasamentul agenților în funcție de balanța VV. Cei cu peste 1000 VV devin eligibili pentru abonament.</div>
-            
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Rețea Agenți & Status VV Onyx</div>
+                    <div class="section-desc">Clasamentul agenților în funcție de balanța VV. Cei cu peste 1000 VV devin eligibili pentru abonament.</div>
+                </div>
+            </div>
             <table class="leaderboard-table">
                 <thead>
                     <tr>
@@ -162,9 +198,12 @@
         </div>
 
         <div id="keys-section" class="section">
-            <div class="section-title">Management Chei Beta</div>
-            <div class="section-desc">Generează coduri unice pentru noii agenți sau clienți invitați în program.</div>
-            
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Management Chei Beta</div>
+                    <div class="section-desc">Generează coduri unice pentru noii agenți sau clienți invitați în program.</div>
+                </div>
+            </div>
             <div class="key-generator-card">
                 <button class="btn-primary" onclick="generateKey()"><i class="fas fa-plus"></i> Generează Cheie Nouă</button>
                 <div id="keys-list"></div>
@@ -184,80 +223,66 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Control sunet pentru notificari
         let isFirstDisputeLoad = true;
         let audioContext = null;
 
-        // ================= SISTEM AUDIO RADAR PING =================
-        function playAlertSound() {
-            try {
-                // Initializeaza AudioContext la primul sunet cerut
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                
-                // Creaza un "Ping" elegant electronic
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // Nota înaltă, curată
-                oscillator.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.1);
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.4);
-            } catch(e) {
-                console.log("Audio API nesuportat în acest browser.");
-            }
+        // ================= LIGHTBOX LOGIC =================
+        function openLightbox(imgUrl) {
+            document.getElementById('lightbox-img').src = imgUrl;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
         }
 
-        // ================= LOGIN SIMPLU =================
+        // ================= AUDIO PING =================
+        function playAlertSound() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.4);
+            } catch(e) { console.log("Audio nesuportat."); }
+        }
+
+        // ================= LOGIN =================
         function checkLogin() {
             let pass = document.getElementById('ceo-pass').value;
             if(pass === "CEO2026") {
-                // Deblocam contextul audio pentru momentul in care omul apasa click
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 document.getElementById('login-screen').style.opacity = '0';
                 setTimeout(() => { 
                     document.getElementById('login-screen').style.display = 'none'; 
                     initDashboard();
                 }, 500);
-            } else {
-                alert("Acces Respins.");
-            }
+            } else { alert("Acces Respins."); }
         }
-
-        document.getElementById("ceo-pass").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") checkLogin();
-        });
+        document.getElementById("ceo-pass").addEventListener("keypress", function(event) { if (event.key === "Enter") checkLogin(); });
 
         // ================= NAVIGATIE =================
         function switchSection(id, element) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id + '-section').classList.add('active');
-            
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             element.classList.add('active');
         }
 
-        // ================= INIT DASHBOARD =================
         function initDashboard() {
             loadGlobalFeed();
             loadDisputes();
-            loadLeaderboard();
+            loadLeaderboard(); // Aici e si calculul pentru Banca
             loadKeys();
         }
 
-        // ================= 1. GLOBAL FEED =================
+        // ================= FEED =================
         function loadGlobalFeed() {
             db.collection('photos').orderBy('timestamp', 'desc').onSnapshot(snap => {
                 const container = document.getElementById('feed-container');
@@ -271,13 +296,13 @@
                     
                     container.innerHTML += `
                         <div class="photo-card">
-                            <img src="${d.url}" class="photo-img">
+                            <img src="${d.url}" class="photo-img" onclick="openLightbox('${d.url}')" title="Click pentru Zoom">
                             <div class="photo-info">
                                 ${flagHtml}
                                 <div class="photo-msg">"${d.message}"</div>
                                 <div class="photo-meta">
                                     <span><i class="fas fa-clock"></i> ${date}</span>
-                                    <span>Agent UID: ${d.agentId.substring(0,5)}</span>
+                                    <span>UID: ${d.agentId.substring(0,5)}</span>
                                 </div>
                             </div>
                         </div>
@@ -286,50 +311,37 @@
             });
         }
 
-        // ================= 2. DISPUTE ESCROW =================
+        // ================= DISPUTE =================
         function loadDisputes() {
             db.collection('missions').where('status', '==', 'disputed').onSnapshot(snap => {
                 const container = document.getElementById('disputes-container');
                 const badge = document.getElementById('dispute-badge');
                 
                 container.innerHTML = '';
-                
-                if(snap.size > 0) {
-                    badge.style.display = 'inline-block';
-                    badge.innerText = snap.size;
-                } else {
-                    badge.style.display = 'none';
-                    container.innerHTML = '<div style="color:var(--text-muted);">Nicio dispută activă. Sistem curat.</div>';
-                }
+                if(snap.size > 0) { badge.style.display = 'inline-block'; badge.innerText = snap.size; } 
+                else { badge.style.display = 'none'; container.innerHTML = '<div style="color:var(--text-muted);">Nicio dispută activă. Sistem curat.</div>'; }
 
-                // Sistemul de Alarmă Sonoră
                 if (!isFirstDisputeLoad) {
-                    let hasNewDispute = false;
-                    snap.docChanges().forEach(change => {
-                        if (change.type === 'added') hasNewDispute = true;
-                    });
-                    if (hasNewDispute) {
-                        playAlertSound();
-                    }
+                    let hasNew = false;
+                    snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
+                    if (hasNew) playAlertSound();
                 }
                 isFirstDisputeLoad = false;
 
                 snap.forEach(doc => {
                     let m = doc.data();
-                    let date = new Date(m.timestamp).toLocaleString('ro-RO', {hour: '2-digit', minute:'2-digit'});
-                    
                     container.innerHTML += `
                         <div class="photo-card" style="border-color: var(--danger);">
-                            <img src="${m.photoUrl}" class="photo-img">
+                            <img src="${m.photoUrl}" class="photo-img" onclick="openLightbox('${m.photoUrl}')" title="Click pentru Inspecție">
                             <div class="photo-info">
                                 <div class="flag-badge">DISPUTĂ DESCHISĂ</div>
-                                <div class="photo-msg" style="color:var(--text-muted); font-size:12px;">Cerere inițială: <span style="color:#fff;">${m.description}</span></div>
+                                <div class="photo-msg" style="color:var(--text-muted); font-size:12px;">Cerere: <span style="color:#fff;">${m.description}</span></div>
                                 <div class="photo-meta" style="margin-top:10px;">
                                     <span>Recompensă: <strong style="color:var(--gold);">${m.reward} VV</strong></span>
                                 </div>
                                 <div class="action-row">
-                                    <button class="btn-approve" onclick="resolveDispute('${doc.id}', '${m.solverId}', ${m.reward}, true)">POZĂ OK (Plătește Agent)</button>
-                                    <button class="btn-reject" onclick="resolveDispute('${doc.id}', '${m.creatorId}', ${m.reward}, false)">FAKE (Returnează Bani)</button>
+                                    <button class="btn-approve" onclick="resolveDispute('${doc.id}', '${m.solverId}', ${m.reward}, true)">POZĂ OK</button>
+                                    <button class="btn-reject" onclick="resolveDispute('${doc.id}', '${m.creatorId}', ${m.reward}, false)">FAKE (Retur BANI)</button>
                                 </div>
                             </div>
                         </div>
@@ -339,65 +351,47 @@
         }
 
         async function resolveDispute(missionId, targetUserId, amount, isApprove) {
-            let msg = isApprove ? 
-                "Ești sigur că poza e validă? Banii din Escrow vor fi trimiși AGENTULUI." : 
-                "Ești sigur că poza e fake? Banii vor fi returnați CLIENTULUI care a făcut cererea.";
-            
+            let msg = isApprove ? "Plătești AGENTULUI?" : "Returnezi banii CLIENTULUI?";
             if(!confirm(msg)) return;
-
             try {
-                // Returnam/Trimitem banii
-                await db.collection('users').doc(targetUserId).update({
-                    balance: firebase.firestore.FieldValue.increment(amount)
-                });
-                
-                // Închidem misiunea
-                await db.collection('missions').doc(missionId).update({
-                    status: isApprove ? 'completed' : 'cancelled_fraud'
-                });
-
-                alert("Dispută rezolvată! Banii au fost eliberați din Escrow.");
-            } catch(e) {
-                alert("Eroare la transfer: " + e.message);
-            }
+                await db.collection('users').doc(targetUserId).update({ balance: firebase.firestore.FieldValue.increment(amount) });
+                await db.collection('missions').doc(missionId).update({ status: isApprove ? 'completed' : 'cancelled_fraud' });
+                alert("Dispută rezolvată.");
+            } catch(e) { alert("Eroare: " + e.message); }
         }
 
-        // ================= 3. LEADERBOARD (NETWORK) =================
+        // ================= LEADERBOARD & BANCA =================
         function loadLeaderboard() {
             db.collection('users').onSnapshot(snap => {
                 let users = [];
+                let totalBankValue = 0; // Pentru Trezorerie
+
                 snap.forEach(doc => {
                     let data = doc.data();
                     data.uid = doc.id;
                     users.push(data);
+                    totalBankValue += (data.balance || 0); // Adunam banii din piata
                 });
 
-                users.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+                // Update UI Trezorerie
+                document.getElementById('total-vv-bank').innerText = totalBankValue.toLocaleString() + " VV";
 
+                users.sort((a, b) => (b.balance || 0) - (a.balance || 0));
                 const tbody = document.getElementById('leaderboard-body');
                 tbody.innerHTML = '';
 
-                if(users.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Niciun agent înregistrat.</td></tr>';
-                    return;
-                }
+                if(users.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Niciun agent.</td></tr>'; return; }
 
                 users.forEach((u, index) => {
-                    let rankHtml = index === 0 ? `<span class="rank-gold">#1</span>` : 
-                                   index === 1 ? `<span style="color:#C0C0C0; font-weight:bold;">#2</span>` : 
-                                   index === 2 ? `<span style="color:#CD7F32; font-weight:bold;">#3</span>` : `#${index + 1}`;
-                    
+                    let rankHtml = index === 0 ? `<span class="rank-gold">#1</span>` : index === 1 ? `<span style="color:#C0C0C0; font-weight:bold;">#2</span>` : index === 2 ? `<span style="color:#CD7F32; font-weight:bold;">#3</span>` : `#${index + 1}`;
                     let shortId = u.uid.substring(0,5).toUpperCase();
                     let bal = u.balance || 0;
-                    
-                    let statusHtml = bal >= 1000 ? 
-                        `<span class="badge-onyx"><i class="fas fa-check-circle"></i> ELIGIBIL ONYX</span>` : 
-                        `<span style="color:var(--text-muted); font-size:11px;">ÎN PROGRES</span>`;
+                    let statusHtml = bal >= 1000 ? `<span class="badge-onyx"><i class="fas fa-check-circle"></i> ELIGIBIL ONYX</span>` : `<span style="color:var(--text-muted); font-size:11px;">ÎN PROGRES</span>`;
 
                     tbody.innerHTML += `
                         <tr>
                             <td>${rankHtml}</td>
-                            <td><strong style="color:#fff;">${u.alias || "Agent Necunoscut"}</strong> <span style="color:#555; font-size:10px; margin-left:5px;">(${shortId})</span></td>
+                            <td><strong style="color:#fff;">${u.alias || "Agent"}</strong> <span style="color:#555; font-size:10px; margin-left:5px;">(${shortId})</span></td>
                             <td style="color:var(--safe-green); font-family:monospace; font-size:16px;">${bal} VV</td>
                             <td>${statusHtml}</td>
                         </tr>
@@ -406,18 +400,33 @@
             });
         }
 
-        // ================= 4. CHEI ACCES =================
+        // ================= WIPE DATABASE (BUTONUL ROSU) =================
+        async function nukeBetaData() {
+            let promptWord = prompt("ATENȚIE: Această acțiune va șterge TOATE pozele și misiunile din sistem! Pentru a confirma, scrie cuvântul: RESET");
+            if(promptWord !== "RESET") { alert("Procedură anulată."); return; }
+            
+            try {
+                // Stergem photos
+                let photos = await db.collection('photos').get();
+                photos.forEach(doc => doc.ref.delete());
+                
+                // Stergem misiunile
+                let missions = await db.collection('missions').get();
+                missions.forEach(doc => doc.ref.delete());
+
+                alert("Sistemul a fost curățat cu succes! Gata pentru lansare.");
+            } catch(e) {
+                alert("Eroare la ștergere: " + e.message);
+            }
+        }
+
+        // ================= CHEI =================
         function loadKeys() {
             db.collection('access_keys').orderBy('createdAt', 'desc').onSnapshot(snap => {
                 const list = document.getElementById('keys-list');
                 list.innerHTML = '';
                 snap.forEach(doc => {
-                    list.innerHTML += `
-                        <div class="key-item">
-                            <span>${doc.data().key}</span>
-                            <span class="key-status">ACTIV <i class="fas fa-check"></i></span>
-                        </div>
-                    `;
+                    list.innerHTML += `<div class="key-item"><span>${doc.data().key}</span><span class="key-status">ACTIV <i class="fas fa-check"></i></span></div>`;
                 });
             });
         }
@@ -426,13 +435,8 @@
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let newKey = '';
             for(let i=0; i<6; i++) newKey += chars.charAt(Math.floor(Math.random() * chars.length));
-            
-            try {
-                await db.collection('access_keys').add({
-                    key: newKey,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch(e) { alert("Eroare la generare."); }
+            try { await db.collection('access_keys').add({ key: newKey, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); } 
+            catch(e) { alert("Eroare."); }
         }
     </script>
 </body>
