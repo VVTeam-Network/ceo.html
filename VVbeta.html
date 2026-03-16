@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.9.1 (Map & Profile Fix)</title>
+    <title>VV App | Premium Beta 1.9.2 (The VIP Profile)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -101,32 +101,39 @@
         .vv-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
         .vv-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; display: block; font-weight: 600; text-align: left;}
 
-        /* ================= PROFIL & SETARI (Z-INDEX REPARAT LA 20) ================= */
+        /* ================= PROFIL & SETARI VIP ================= */
         #profile-screen { position: absolute; inset: 0; background: var(--premium-dark); z-index: 20; display: none; flex-direction: column; padding: 60px 24px 140px; opacity: 0; transition: 0.4s; overflow-y: auto; }
         
         .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .profile-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+        .profile-title { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
         .settings-icon { font-size: 24px; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
         .settings-icon:active { transform: scale(0.9); color: #fff; }
 
-        .real-black-card { width: 100%; aspect-ratio: 1.58; min-height: 210px; border-radius: 20px; background: linear-gradient(135deg, #1c1c1e, #0a0a0c); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); padding: 25px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 25px; position: relative; overflow: hidden;}
+        /* THE BLACK CARD (Slogan Only) */
+        .real-black-card { width: 100%; aspect-ratio: 1.58; min-height: 210px; border-radius: 20px; background: linear-gradient(135deg, #1c1c1e, #0a0a0c); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; gap: 15px;}
         .real-black-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.03), transparent); transform: skewX(-25deg); }
-        .card-top-row { display: flex; justify-content: space-between; align-items: flex-start; z-index: 2;}
-        .card-logo-silver { font-size: 22px; font-weight: 900; color: rgba(255,255,255,0.9); letter-spacing: 3px; font-style: italic;}
-        .card-name-engraved { font-size: 12px; font-weight: 600; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);}
-        .card-middle { text-align: left; margin-top: auto; z-index: 2;}
-        .card-alias { font-size: 16px; font-weight: 500; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px;}
-        .card-balance-text { font-size: 28px; color: #fff; font-weight: 300; font-family: -apple-system, sans-serif;}
+        .card-logo-silver { font-size: 24px; font-weight: 900; color: rgba(255,255,255,0.9); letter-spacing: 3px; font-style: italic; z-index: 2; margin-bottom: 5px;}
+        .card-slogan-main { font-size: 17px; font-weight: 900; color: #fff; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(255,255,255,0.3); z-index: 2;}
+        .card-slogan-sub { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 4px; text-transform: uppercase; z-index: 2;}
 
-        .beta-warning-box { background: rgba(10, 132, 255, 0.05); border: 1px solid rgba(10, 132, 255, 0.2); padding: 16px; border-radius: 14px; margin-bottom: 35px; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.5; font-weight: 500; letter-spacing: 0.5px;}
-        .beta-warning-box i { color: var(--vv-blue); margin-right: 8px; font-size: 14px;}
-
+        /* LOCKED VALUE (Sticla cu VV si LEI) */
+        .locked-value-container { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 22px 25px; margin-bottom: 30px; position: relative; overflow: hidden; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.3);}
+        .locked-value-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.04); font-size: 45px; z-index: 1; }
+        .value-col { display: flex; flex-direction: column; z-index: 2; }
+        .value-label { font-size: 10px; color: var(--text-muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 6px; font-weight: 700;}
+        .value-number { font-size: 26px; font-weight: 300; font-family: -apple-system, sans-serif; }
+        
+        /* ABONAMENTE MATH */
+        .beta-warning-box { background: rgba(10, 132, 255, 0.05); border: 1px solid rgba(10, 132, 255, 0.2); padding: 18px; border-radius: 14px; margin-bottom: 35px; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.6; font-weight: 500; letter-spacing: 0.5px;}
+        
         .section-title { font-size: 11px; font-weight: 700; color: #666; letter-spacing: 3px; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
 
         .sub-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-bottom: 15px; position: relative;}
         .sub-title { font-size: 13px; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase;}
         .sub-price { font-size: 18px; color: #fff; font-weight: 300; margin-bottom: 10px;}
         .sub-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; font-weight: 400;}
+        
+        .footer-tech { text-align: center; margin-top: 40px; margin-bottom: 10px; font-size: 9px; color: #444; letter-spacing: 4px; font-weight: 800; text-transform: uppercase;}
 
         /* SETTINGS ITEMS */
         .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -193,23 +200,38 @@
 
         <div id="profile-screen">
             <div class="profile-header">
-                <div class="profile-title">Seif Agent</div>
+                <div class="profile-title" id="profile-main-name">...</div>
                 <div class="settings-icon" onclick="openSettings()"><i class="fas fa-fingerprint"></i></div>
             </div>
             
             <div class="real-black-card">
-                <div class="card-top-row">
-                    <div class="card-logo-silver">VV</div>
-                    <div class="card-name-engraved" id="profile-id-display">AGENT #---</div>
+                <div class="card-logo-silver">VV</div>
+                <div class="card-slogan-main">TRUTH IS OUR CURRENCY.</div>
+                <div class="card-slogan-sub">THE CITY REWARDS THE FAST.</div>
+            </div>
+
+            <div class="locked-value-container">
+                <div class="locked-value-icon"><i class="fas fa-lock"></i></div>
+                
+                <div class="value-col" style="align-items: flex-start;">
+                    <span class="value-label">Balanță</span>
+                    <span class="value-number" style="color: var(--gold);"><span id="profile-vv-val">...</span> VV</span>
                 </div>
-                <div class="card-middle">
-                    <div class="card-alias" id="profile-alias-display">...</div>
-                    <div class="card-balance-text" id="profile-balance-display">... VV</div>
+                
+                <div class="value-col" style="align-items: flex-end;">
+                    <span class="value-label">Valoare</span>
+                    <span class="value-number" style="color: var(--safe-green);"><span id="profile-lei-val">...</span> LEI</span>
                 </div>
             </div>
 
             <div class="beta-warning-box">
-                <i class="fas fa-shield-alt"></i> VV Coins obținuți în versiunea Beta vor fi convertiți exclusiv în luni de abonament premium VV Onyx la lansarea oficială EP 1.0.
+                <div style="font-size: 12px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: 1px;"><i class="fas fa-gem" style="color: var(--vv-blue); margin-right: 8px;"></i>RECOMPENSE BETA</div>
+                Conversie garantată la lansarea EP 1.0:<br>
+                <div style="margin-top: 8px; font-size: 12px;">
+                    <span style="color: #fff; font-weight: 700;">1000 VV</span> = 1 Lună VV Onyx<br>
+                    <span style="color: #fff; font-weight: 700;">1500 VV</span> = 2 Luni VV Onyx<br>
+                    <span style="color: #fff; font-weight: 700;">2000 VV</span> = 3 Luni VV Onyx
+                </div>
             </div>
 
             <div class="section-title">SOON IN VV EP 1.0</div>
@@ -230,6 +252,8 @@
                 <div class="sub-title" style="color: var(--vv-purple);">PROGRAM RECRUTARE</div>
                 <div class="sub-desc">Caut / Recrutez personal de elită pentru extinderea rețelei VV în România.</div>
             </div>
+            
+            <div class="footer-tech">VV TECHNOLOGIES BETA PROGRAM 2026</div>
         </div>
     </div>
 
@@ -263,10 +287,6 @@
 
             <button class="btn-launch" style="background: rgba(255,59,48,0.08); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); margin-top: 35px;" onclick="logoutAgent()">DECONECTARE</button>
             <button class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 12px;" onclick="closeModal('settings-modal')">ÎNCHIDE</button>
-
-            <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #444; letter-spacing: 3px; font-weight: 800;">
-                VV TECHNOLOGIES SRL
-            </div>
         </div>
     </div>
 
@@ -385,12 +405,13 @@
                         globalAlias = data.alias;
                         currentUserBalance = data.balance; 
                         
+                        // Update UI global
                         document.getElementById('hud-balance').innerText = data.balance + " VV";
-                        document.getElementById('profile-alias-display').innerText = data.alias;
-                        document.getElementById('profile-balance-display').innerText = data.balance + " VV";
                         
-                        let shortId = user.uid.substring(0, 5).toUpperCase();
-                        document.getElementById('profile-id-display').innerText = "AGENT #" + shortId;
+                        // Update Profil VIP cu Numele si Balanta
+                        document.getElementById('profile-main-name').innerText = data.alias;
+                        document.getElementById('profile-vv-val').innerText = data.balance;
+                        document.getElementById('profile-lei-val').innerText = data.balance; // Egal cu VV 1 la 1
                     }
                 });
 
@@ -410,7 +431,7 @@
             isInitialLoad = false;
         });
 
-        // ================= NAVIGARE TABS REPARATA =================
+        // ================= NAVIGARE TABS REPARATA COMPLET =================
         function switchTab(tab) {
             document.querySelectorAll('.dock-icon').forEach(i => i.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
@@ -426,19 +447,24 @@
                     document.getElementById('profile-screen').style.display = 'none'; 
                     
                     // Repunem butoanele de pe harta
-                    document.getElementById('action-hub').style.display = 'flex';
-                    setTimeout(() => { document.getElementById('action-hub').style.opacity = '1'; }, 50);
+                    let actionHub = document.getElementById('action-hub');
+                    actionHub.style.display = 'flex';
+                    actionHub.style.pointerEvents = 'auto';
+                    setTimeout(() => { actionHub.style.opacity = '1'; }, 50);
                     
-                    // Soc electric la harta sa isi revina mereu la dimensiunea normala
+                    // Soc electric la harta
                     if(map) map.invalidateSize();
                 }, 400);
             } else if (tab === 'profile') {
-                // ASCUNDEM HARTA SI BUTOANELE
-                document.getElementById('action-hub').style.opacity = '0';
+                // ASCUNDEM HARTA SI BUTOANELE DEFINTIV PENTRU A NU SE SUPRAPUNE
+                let actionHub = document.getElementById('action-hub');
+                actionHub.style.opacity = '0';
+                actionHub.style.pointerEvents = 'none';
+                
                 document.getElementById('map-view').style.opacity = '0';
                 
                 setTimeout(() => {
-                    document.getElementById('action-hub').style.display = 'none';
+                    actionHub.style.display = 'none'; // Le stergem fizic din ecran
                     
                     // ARATAM PROFILUL (z-index 20)
                     document.getElementById('profile-screen').style.display = 'flex';
