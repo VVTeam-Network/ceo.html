@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.8 (Uber Flow & Tips)</title>
+    <title>VV App | Premium Beta 1.8.1 (Older iPhone Fixes)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -84,7 +84,7 @@
         .glass-pill { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 30px; font-size: 11px; font-weight: 600; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: #fff; text-transform: uppercase; }
         .vv-dot { width: 7px; height: 7px; background: var(--vv-red); border-radius: 50%; box-shadow: 0 0 10px rgba(255, 45, 85, 0.8); }
 
-        /* ACTION HUB (Mutat mai sus la 145px ca sa nu atinga Dock-ul) */
+        /* ACTION HUB */
         .action-hub { position: absolute; bottom: 145px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 16px; }
         .fab-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
         .fab-btn:active { transform: scale(0.92); }
@@ -172,7 +172,7 @@
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Aprobă pozele primite pentru a elibera fondurile.</p>
             
             <div id="inbox-container" style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:15px; margin-bottom:20px;">
-                </div>
+            </div>
             <button class="btn-launch" style="background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
         </div>
     </div>
@@ -249,7 +249,6 @@
     </div>
 
     <script>
-        // ================= FIREBASE CONFIG =================
         const firebaseConfig = {
             apiKey: "AIzaSyDGv4kEClO0RHCLvXVLOT-vyPHw6bsxYVc",
             authDomain: "vv-ep-beta.firebaseapp.com",
@@ -268,7 +267,6 @@
         let currentLng = 26.1038;
         let activeMissionId = null;
 
-        // Variabile pentru noile mecanici
         let selectedReward = 15;
         let selectedTip = 0;
         let pendingApprovalData = null;
@@ -277,9 +275,17 @@
             if (user && localStorage.getItem('vv_agent_key') && isInitialLoad) {
                 document.getElementById('splash-screen').style.display = 'none';
                 document.getElementById('alias-screen').style.display = 'none';
-                let app = document.getElementById('app-container'); app.style.display = 'block';
+                let app = document.getElementById('app-container'); 
+                app.style.display = 'block';
                 document.getElementById('main-dock').style.display = 'flex';
-                setTimeout(() => { app.style.opacity = '1'; initMap(); }, 50);
+                
+                // Fortam re-desenarea hartii in mai multe etape pentru a preveni bug-ul pe iPhone vechi
+                setTimeout(() => { 
+                    app.style.opacity = '1'; 
+                    initMap(); 
+                    setTimeout(() => { if(map) map.invalidateSize(); }, 300);
+                    setTimeout(() => { if(map) map.invalidateSize(); }, 800);
+                }, 50);
                 
                 db.collection('users').doc(user.uid).onSnapshot(snap => {
                     if(snap.exists) {
@@ -306,7 +312,6 @@
             isInitialLoad = false;
         });
 
-        // ================= LOGICA BURSEI (REWARDS & UBER LOAD) =================
         function openCreateMission() { openModal('create-mission-modal'); }
 
         function selectReward(val) {
@@ -323,17 +328,13 @@
             let btnLaunch = document.getElementById('btn-launch-radar');
             let btnCancel = document.getElementById('btn-cancel-radar');
             
-            // Animatie Uber
             btnLaunch.innerHTML = "SCANARE PERIMETRU... <div class='uber-loader' style='display:block;'><div class='uber-loader-bar'></div></div>";
             btnLaunch.style.background = "rgba(255,255,255,0.05)";
             btnLaunch.style.color = "#fff";
             btnLaunch.style.pointerEvents = "none";
             btnCancel.style.display = "none";
 
-            // Simulam suspansul radarului timp de 3 secunde
-            setTimeout(() => {
-                submitMissionDB(desc, selectedReward);
-            }, 3000);
+            setTimeout(() => { submitMissionDB(desc, selectedReward); }, 3000);
         }
 
         async function submitMissionDB(desc, reward) {
@@ -345,7 +346,6 @@
                     reward: reward, lat: currentLat, lng: currentLng, status: 'active', timestamp: Date.now()
                 });
                 
-                // Reset UI
                 resetRadarUI();
                 closeModal('create-mission-modal');
                 alert(`✅ Cerere plasată pe radarul global! Agentul care acceptă va lua cei ${reward} VV.`);
@@ -401,7 +401,6 @@
             } catch(e) { alert("Eroare la acceptare."); }
         }
 
-        // ================= LOGICA INBOX & TIPS =================
         function openInbox() {
             openModal('inbox-modal');
             const container = document.getElementById('inbox-container');
@@ -433,9 +432,9 @@
             pendingApprovalData = { missionId, solverId, reward, photoUrl };
             closeModal('inbox-modal');
             setTimeout(() => {
-                selectTip(0); // Reseteaza la 0
+                selectTip(0); 
                 openModal('tips-modal');
-            }, 400); // Tranzitie fluida
+            }, 400); 
         }
 
         function selectTip(val) {
@@ -460,19 +459,12 @@
             let { missionId, solverId, reward, photoUrl } = pendingApprovalData;
             
             try {
-                // 1. Inchidem misiunea
                 await db.collection('missions').doc(missionId).update({ status: 'completed' });
-                
-                // 2. Extragem suma de TIPS de la client (daca a pus peste 0)
                 if (selectedTip > 0) {
                     await db.collection('users').doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-selectedTip) });
                 }
-
-                // 3. Trimitem agentului Recompensa din Escrow + Tips-ul bonus
                 let totalAgentPayout = reward + selectedTip;
                 await db.collection('users').doc(solverId).update({ balance: firebase.firestore.FieldValue.increment(totalAgentPayout) });
-                
-                // 4. Arhivare la Panou CEO
                 let msgToCEO = `[CONTRACT APROBAT] Recompensă Bază: ${reward} VV | Tips Lăsat: ${selectedTip} VV.`;
                 await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: msgToCEO, flagged: false, timestamp: Date.now(), lat: currentLat, lng: currentLng });
                 
@@ -492,7 +484,6 @@
             } catch(e) { alert("Eroare la raportare."); }
         }
 
-        // ================= MAP & CAMERA =================
         function initMap() {
             if(!map) {
                 map = L.map('map', {zoomControl: false}).setView([currentLat, currentLng], 12);
@@ -508,7 +499,7 @@
                     } else { userMarker.setLatLng(e.latlng); }
                 });
             }
-            setTimeout(() => { map.invalidateSize(); }, 500); 
+            setTimeout(() => { if(map) map.invalidateSize(); }, 500); 
         }
 
         async function startBootSequence() {
@@ -544,9 +535,20 @@
             document.getElementById('camera-screen').style.display = 'flex';
             setTimeout(() => { document.getElementById('camera-screen').style.opacity = '1'; }, 50);
             try {
-                currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                // OPTIMIZARE IPHONE 6s (Limitator rezolutie si audio dezactivat strict)
+                const constraints = {
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 }, // HD - nu sugruma un iPhone vechi
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('real-camera-video').srcObject = currentStream;
-            } catch (err) { alert("Eroare cameră."); }
+            } catch (err) { 
+                alert("Eroare la accesarea camerei: " + err.message + " (Asigură-te că ai dat Allow/Permite din Safari)"); 
+            }
         }
 
         function closeCamera() {
@@ -558,9 +560,11 @@
         function takePicture() {
             const video = document.getElementById('real-camera-video');
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight;
             
+            // Corectat eroarea de cod pentru Safari vechi
+            const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
