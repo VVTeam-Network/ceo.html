@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.9 (VIP Profile & Settings)</title>
+    <title>VV App | Premium Beta 1.9.1 (Map & Profile Fix)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -64,12 +64,10 @@
         .btn-launch { width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 16px; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: auto; flex-shrink: 0; position: relative; overflow: hidden;}
         .btn-launch:active { transform: scale(0.96); }
 
-        /* UBER LOADER ANIMATION */
         .uber-loader { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 15px; position: relative; display: none; }
         .uber-loader-bar { width: 30%; height: 100%; background: #fff; position: absolute; left: -30%; animation: uberScan 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
         @keyframes uberScan { 0% { left: -30%; } 100% { left: 100%; } }
 
-        /* REWARD BUTTONS (5, 15, 25 VV) */
         .reward-group { display: flex; gap: 10px; margin-bottom: 30px; }
         .reward-btn { flex: 1; padding: 16px 0; text-align: center; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.03); }
         .reward-btn.active { background: #fff; color: #000; border-color: #fff; box-shadow: 0 5px 15px rgba(255,255,255,0.2); }
@@ -99,13 +97,12 @@
         .dock-icon.active { color: #fff; }
         .btn-soon { width: 58px; height: 58px; background: #000; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; transform: translateY(-15px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; color: #fff; z-index: 101;}
 
-        /* INPUTS */
         .vv-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 14px; color: #fff; font-size: 14px; outline: none; transition: 0.3s; }
         .vv-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
         .vv-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; display: block; font-weight: 600; text-align: left;}
 
-        /* ================= PROFIL & SETARI ================= */
-        #profile-screen { position: absolute; inset: 0; background: var(--premium-dark); z-index: 5; display: none; flex-direction: column; padding: 60px 24px 140px; opacity: 0; transition: 0.4s; overflow-y: auto; }
+        /* ================= PROFIL & SETARI (Z-INDEX REPARAT LA 20) ================= */
+        #profile-screen { position: absolute; inset: 0; background: var(--premium-dark); z-index: 20; display: none; flex-direction: column; padding: 60px 24px 140px; opacity: 0; transition: 0.4s; overflow-y: auto; }
         
         .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .profile-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
@@ -277,7 +274,6 @@
         <div class="sheet-content">
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Intel Primit</h2>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Aprobă pozele primite pentru a elibera fondurile.</p>
-            
             <div id="inbox-container" style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:15px; margin-bottom:20px;"></div>
             <button class="btn-launch" style="background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
         </div>
@@ -287,17 +283,14 @@
         <div class="sheet-content">
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Confirmare Plată</h2>
             <p style="color:var(--safe-green); font-size:12px; margin-bottom:25px;">Poza a fost aprobată. Vrei să lași un TIPS pentru rapiditate?</p>
-
             <label class="vv-label">Bonus Rapiditate (VV Coins)</label>
             <div class="reward-group">
                 <div class="reward-btn active" id="tip-btn-0" onclick="selectTip(0)">FĂRĂ</div>
                 <div class="reward-btn" id="tip-btn-5" onclick="selectTip(5)">5 VV</div>
                 <div class="reward-btn" id="tip-btn-10" onclick="selectTip(10)">10 VV</div>
             </div>
-
             <label class="vv-label">Sumă Personalizată (Opțional)</label>
             <input type="number" id="custom-tip" class="vv-input" style="margin-bottom: 30px;" placeholder="Ex: 3" oninput="customTipInput()">
-
             <button class="btn-launch" onclick="finalizeApprovalWithTips()">TRIMITE PLATA CĂTRE AGENT</button>
         </div>
     </div>
@@ -306,17 +299,14 @@
         <div class="sheet-content">
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Cere Inteligență</h2>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Banii vor fi blocați în Escrow până primești poza.</p>
-
             <label class="vv-label">Ce trebuie verificat?</label>
             <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 20px;" placeholder="Ex: Cum e coada la Nuba?">
-
             <label class="vv-label">Alege Recompensa (VV Coins)</label>
             <div class="reward-group">
                 <div class="reward-btn" id="rew-btn-5" onclick="selectReward(5)">5 VV</div>
                 <div class="reward-btn active" id="rew-btn-15" onclick="selectReward(15)">15 VV</div>
                 <div class="reward-btn" id="rew-btn-25" onclick="selectReward(25)">25 VV</div>
             </div>
-
             <button class="btn-launch" id="btn-launch-radar" onclick="startUberRadar()">LANSEAZĂ CONTRACTUL</button>
             <button class="btn-launch" id="btn-cancel-radar" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1); margin-top:12px;" onclick="closeModal('create-mission-modal')">ANULEAZĂ</button>
         </div>
@@ -326,7 +316,6 @@
         <div class="sheet-content">
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Bursa de Misiuni</h2>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă contracte de la alți agenți.</p>
-            
             <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;"></div>
             <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
         </div>
@@ -344,7 +333,6 @@
         <div class="cam-controls" id="shutter-container">
             <div class="shutter-btn" onclick="takePicture()"><div class="shutter-inner"></div></div>
         </div>
-
         <div id="post-photo-menu">
             <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 25px; color: #fff; text-align: center; font-weight: 700;">Raport Pregătit</h3>
             <textarea id="photo-msg" class="vv-input" style="height: 80px; margin-bottom: 25px; border-radius: 12px;" placeholder="Adaugă detalii..."></textarea>
@@ -397,14 +385,10 @@
                         globalAlias = data.alias;
                         currentUserBalance = data.balance; 
                         
-                        // Update UI global
                         document.getElementById('hud-balance').innerText = data.balance + " VV";
-                        
-                        // Update Profil VIP
                         document.getElementById('profile-alias-display').innerText = data.alias;
                         document.getElementById('profile-balance-display').innerText = data.balance + " VV";
                         
-                        // Generare Agent ID fals din UID (primele 5 caractere)
                         let shortId = user.uid.substring(0, 5).toUpperCase();
                         document.getElementById('profile-id-display').innerText = "AGENT #" + shortId;
                     }
@@ -426,27 +410,43 @@
             isInitialLoad = false;
         });
 
-        // ================= NAVIGARE TABS (Map vs Profile) =================
+        // ================= NAVIGARE TABS REPARATA =================
         function switchTab(tab) {
             document.querySelectorAll('.dock-icon').forEach(i => i.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
 
             if(tab === 'map') {
+                // ASCUNDEM PROFILUL
                 document.getElementById('profile-screen').style.opacity = '0';
+                
+                // ARATAM HARTA
+                document.getElementById('map-view').style.opacity = '1';
+                
                 setTimeout(() => { 
                     document.getElementById('profile-screen').style.display = 'none'; 
-                    document.getElementById('action-hub').style.opacity = '1';
-                    document.getElementById('action-hub').style.pointerEvents = 'auto';
+                    
+                    // Repunem butoanele de pe harta
+                    document.getElementById('action-hub').style.display = 'flex';
+                    setTimeout(() => { document.getElementById('action-hub').style.opacity = '1'; }, 50);
+                    
+                    // Soc electric la harta sa isi revina mereu la dimensiunea normala
+                    if(map) map.invalidateSize();
                 }, 400);
             } else if (tab === 'profile') {
+                // ASCUNDEM HARTA SI BUTOANELE
                 document.getElementById('action-hub').style.opacity = '0';
-                document.getElementById('action-hub').style.pointerEvents = 'none';
-                document.getElementById('profile-screen').style.display = 'flex';
-                setTimeout(() => { document.getElementById('profile-screen').style.opacity = '1'; }, 50);
+                document.getElementById('map-view').style.opacity = '0';
+                
+                setTimeout(() => {
+                    document.getElementById('action-hub').style.display = 'none';
+                    
+                    // ARATAM PROFILUL (z-index 20)
+                    document.getElementById('profile-screen').style.display = 'flex';
+                    setTimeout(() => { document.getElementById('profile-screen').style.opacity = '1'; }, 50);
+                }, 400);
             }
         }
 
-        // ================= SETARI / LOGOUT =================
         function openSettings() { openModal('settings-modal'); }
 
         function logoutAgent() {
@@ -457,7 +457,6 @@
             }).catch(err => alert("Eroare la deconectare."));
         }
 
-        // ================= LOGICA BURSEI (REWARDS & UBER LOAD) =================
         function openCreateMission() { openModal('create-mission-modal'); }
 
         function selectReward(val) {
@@ -547,7 +546,6 @@
             } catch(e) { alert("Eroare la acceptare."); }
         }
 
-        // ================= LOGICA INBOX & TIPS =================
         function openInbox() {
             openModal('inbox-modal');
             const container = document.getElementById('inbox-container');
@@ -631,7 +629,6 @@
             } catch(e) { alert("Eroare la raportare."); }
         }
 
-        // ================= MAP & CAMERA =================
         function initMap() {
             if(!map) {
                 map = L.map('map', {zoomControl: false}).setView([currentLat, currentLng], 12);
