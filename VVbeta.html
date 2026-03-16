@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.8.1 (Older iPhone Fixes)</title>
+    <title>VV App | Premium Beta 1.9 (VIP Profile & Settings)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -58,9 +58,9 @@
         /* MODALE GLOBALE */
         .sheet-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 100000; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .sheet-modal.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: rgba(10, 10, 12, 0.96); backdrop-filter: blur(25px); border-radius: 35px 35px 0 0; padding: 30px 24px 40px; border-top: 1px solid var(--glass-border); transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; display: flex; flex-direction: column; }
+        .sheet-content { background: rgba(10, 10, 12, 0.96); backdrop-filter: blur(25px); border-radius: 35px 35px 0 0; padding: 30px 24px 40px; border-top: 1px solid var(--glass-border); transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto;}
         .sheet-modal.active .sheet-content { transform: translateY(0); }
-        .sheet-content::before { content: ''; width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: -10px auto 25px auto; }
+        .sheet-content::before { content: ''; width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: -10px auto 25px auto; flex-shrink: 0;}
         .btn-launch { width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 16px; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: auto; flex-shrink: 0; position: relative; overflow: hidden;}
         .btn-launch:active { transform: scale(0.96); }
 
@@ -85,7 +85,7 @@
         .vv-dot { width: 7px; height: 7px; background: var(--vv-red); border-radius: 50%; box-shadow: 0 0 10px rgba(255, 45, 85, 0.8); }
 
         /* ACTION HUB */
-        .action-hub { position: absolute; bottom: 145px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 16px; }
+        .action-hub { position: absolute; bottom: 145px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 16px; transition: 0.3s; }
         .fab-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
         .fab-btn:active { transform: scale(0.92); }
         .fab-cam { background: #fff; color: #000; border: none; box-shadow: 0 8px 25px rgba(255,255,255,0.2); font-size: 20px; } 
@@ -103,6 +103,41 @@
         .vv-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 14px; color: #fff; font-size: 14px; outline: none; transition: 0.3s; }
         .vv-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
         .vv-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; display: block; font-weight: 600; text-align: left;}
+
+        /* ================= PROFIL & SETARI ================= */
+        #profile-screen { position: absolute; inset: 0; background: var(--premium-dark); z-index: 5; display: none; flex-direction: column; padding: 60px 24px 140px; opacity: 0; transition: 0.4s; overflow-y: auto; }
+        
+        .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .profile-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+        .settings-icon { font-size: 24px; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
+        .settings-icon:active { transform: scale(0.9); color: #fff; }
+
+        .real-black-card { width: 100%; aspect-ratio: 1.58; min-height: 210px; border-radius: 20px; background: linear-gradient(135deg, #1c1c1e, #0a0a0c); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); padding: 25px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 25px; position: relative; overflow: hidden;}
+        .real-black-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.03), transparent); transform: skewX(-25deg); }
+        .card-top-row { display: flex; justify-content: space-between; align-items: flex-start; z-index: 2;}
+        .card-logo-silver { font-size: 22px; font-weight: 900; color: rgba(255,255,255,0.9); letter-spacing: 3px; font-style: italic;}
+        .card-name-engraved { font-size: 12px; font-weight: 600; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);}
+        .card-middle { text-align: left; margin-top: auto; z-index: 2;}
+        .card-alias { font-size: 16px; font-weight: 500; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px;}
+        .card-balance-text { font-size: 28px; color: #fff; font-weight: 300; font-family: -apple-system, sans-serif;}
+
+        .beta-warning-box { background: rgba(10, 132, 255, 0.05); border: 1px solid rgba(10, 132, 255, 0.2); padding: 16px; border-radius: 14px; margin-bottom: 35px; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.5; font-weight: 500; letter-spacing: 0.5px;}
+        .beta-warning-box i { color: var(--vv-blue); margin-right: 8px; font-size: 14px;}
+
+        .section-title { font-size: 11px; font-weight: 700; color: #666; letter-spacing: 3px; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
+
+        .sub-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-bottom: 15px; position: relative;}
+        .sub-title { font-size: 13px; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase;}
+        .sub-price { font-size: 18px; color: #fff; font-weight: 300; margin-bottom: 10px;}
+        .sub-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; font-weight: 400;}
+
+        /* SETTINGS ITEMS */
+        .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item span { font-size: 13px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 10px;}
+        .settings-item i { color: var(--text-muted); font-size: 16px; width: 20px; text-align: center;}
+        .locked-badge { background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 10px !important; padding: 6px 12px; border-radius: 20px; font-weight: 700 !important; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.1);}
+        .locked-select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); padding: 8px 12px; border-radius: 8px; outline: none; font-size: 12px; font-weight: 600; appearance: none; -webkit-appearance: none;}
 
         /* CAMERA */
         #camera-screen { position: fixed; inset: 0; background: #000; z-index: 100000; display: none; flex-direction: column; justify-content: space-between; padding: 50px 20px; opacity: 0; transition: 0.3s; }
@@ -148,7 +183,7 @@
                 <div class="hud-right"><div class="glass-pill" id="hud-balance" style="color: #fff; border-color: rgba(255,255,255,0.15);">... VV</div></div>
             </div>
 
-            <div class="action-hub">
+            <div class="action-hub" id="action-hub">
                 <div class="fab-btn" onclick="openInbox()">
                     <i class="fas fa-envelope"></i>
                     <div class="inbox-badge" id="inbox-badge">0</div>
@@ -158,12 +193,84 @@
                 <div class="fab-btn fab-cam" onclick="openCamera()"><i class="fas fa-camera"></i></div>
             </div>
         </div>
+
+        <div id="profile-screen">
+            <div class="profile-header">
+                <div class="profile-title">Seif Agent</div>
+                <div class="settings-icon" onclick="openSettings()"><i class="fas fa-fingerprint"></i></div>
+            </div>
+            
+            <div class="real-black-card">
+                <div class="card-top-row">
+                    <div class="card-logo-silver">VV</div>
+                    <div class="card-name-engraved" id="profile-id-display">AGENT #---</div>
+                </div>
+                <div class="card-middle">
+                    <div class="card-alias" id="profile-alias-display">...</div>
+                    <div class="card-balance-text" id="profile-balance-display">... VV</div>
+                </div>
+            </div>
+
+            <div class="beta-warning-box">
+                <i class="fas fa-shield-alt"></i> VV Coins obținuți în versiunea Beta vor fi convertiți exclusiv în luni de abonament premium VV Onyx la lansarea oficială EP 1.0.
+            </div>
+
+            <div class="section-title">SOON IN VV EP 1.0</div>
+            
+            <div class="sub-card">
+                <div class="sub-title" style="color: var(--vv-blue);">VV ONYX</div>
+                <div class="sub-price">29 LEI / LUNĂ</div>
+                <div class="sub-desc">Acces nelimitat la The City Vault, radar VIP, filtre premium și lansare prioritară de misiuni în oraș.</div>
+            </div>
+
+            <div class="sub-card" style="border-color: rgba(212, 175, 55, 0.2);">
+                <div class="sub-title" style="color: var(--gold);">VV VENUE PREMIUM</div>
+                <div class="sub-price">299 € / LUNĂ</div>
+                <div class="sub-desc">Vitrină digitală de business pentru locația ta. Apari prioritar pe radarul VIP, atragi trafic live și clienți relevanți.</div>
+            </div>
+
+            <div class="sub-card" style="border-color: rgba(191, 90, 242, 0.2);">
+                <div class="sub-title" style="color: var(--vv-purple);">PROGRAM RECRUTARE</div>
+                <div class="sub-desc">Caut / Recrutez personal de elită pentru extinderea rețelei VV în România.</div>
+            </div>
+        </div>
     </div>
 
     <div class="stealth-dock" id="main-dock">
-        <div class="dock-icon active" id="tab-map"><i class="fas fa-map"></i></div>
+        <div class="dock-icon active" id="tab-map" onclick="switchTab('map')"><i class="fas fa-map"></i></div>
         <div class="btn-soon" onclick="alert('Feed în curând')">FEED</div>
-        <div class="dock-icon" id="tab-profile" onclick="alert('Profil în curând')"><i class="fas fa-user"></i></div>
+        <div class="dock-icon" id="tab-profile" onclick="switchTab('profile')"><i class="fas fa-user"></i></div>
+    </div>
+
+    <div class="sheet-modal" id="settings-modal">
+        <div class="sheet-content">
+            <h2 style="color:#fff; margin-bottom:20px; font-size: 16px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Setări Sistem</h2>
+            
+            <div class="settings-item">
+                <span><i class="fas fa-moon"></i> Dark Mode</span>
+                <span class="locked-badge">LOCKED ON</span>
+            </div>
+            
+            <div class="settings-item">
+                <span><i class="fas fa-globe"></i> Limbă</span>
+                <select class="locked-select" disabled>
+                    <option>Română</option>
+                    <option>English (Global Expansion) 🔒</option>
+                </select>
+            </div>
+
+            <div class="settings-item" style="flex-direction: column; align-items: flex-start; gap: 8px; border-bottom: none; padding-bottom: 0;">
+                <span style="color: var(--danger); font-size: 12px; letter-spacing: 1px;"><i class="fas fa-exclamation-triangle"></i> Reguli de Discreție</span>
+                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5; font-weight: 500;">Aplicația VV nu tolerează invadarea intimității. ZERO fețe filmate intenționat. Orice raport validat duce la blocarea fondurilor și ban permanent pe dispozitiv.</p>
+            </div>
+
+            <button class="btn-launch" style="background: rgba(255,59,48,0.08); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); margin-top: 35px;" onclick="logoutAgent()">DECONECTARE</button>
+            <button class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 12px;" onclick="closeModal('settings-modal')">ÎNCHIDE</button>
+
+            <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #444; letter-spacing: 3px; font-weight: 800;">
+                VV TECHNOLOGIES SRL
+            </div>
+        </div>
     </div>
 
     <div class="sheet-modal" id="inbox-modal">
@@ -171,8 +278,7 @@
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Intel Primit</h2>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Aprobă pozele primite pentru a elibera fondurile.</p>
             
-            <div id="inbox-container" style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:15px; margin-bottom:20px;">
-            </div>
+            <div id="inbox-container" style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:15px; margin-bottom:20px;"></div>
             <button class="btn-launch" style="background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
         </div>
     </div>
@@ -221,8 +327,7 @@
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Bursa de Misiuni</h2>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă contracte de la alți agenți.</p>
             
-            <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;">
-            </div>
+            <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;"></div>
             <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
         </div>
     </div>
@@ -279,7 +384,6 @@
                 app.style.display = 'block';
                 document.getElementById('main-dock').style.display = 'flex';
                 
-                // Fortam re-desenarea hartii in mai multe etape pentru a preveni bug-ul pe iPhone vechi
                 setTimeout(() => { 
                     app.style.opacity = '1'; 
                     initMap(); 
@@ -292,7 +396,17 @@
                         const data = snap.data();
                         globalAlias = data.alias;
                         currentUserBalance = data.balance; 
+                        
+                        // Update UI global
                         document.getElementById('hud-balance').innerText = data.balance + " VV";
+                        
+                        // Update Profil VIP
+                        document.getElementById('profile-alias-display').innerText = data.alias;
+                        document.getElementById('profile-balance-display').innerText = data.balance + " VV";
+                        
+                        // Generare Agent ID fals din UID (primele 5 caractere)
+                        let shortId = user.uid.substring(0, 5).toUpperCase();
+                        document.getElementById('profile-id-display').innerText = "AGENT #" + shortId;
                     }
                 });
 
@@ -312,6 +426,38 @@
             isInitialLoad = false;
         });
 
+        // ================= NAVIGARE TABS (Map vs Profile) =================
+        function switchTab(tab) {
+            document.querySelectorAll('.dock-icon').forEach(i => i.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+
+            if(tab === 'map') {
+                document.getElementById('profile-screen').style.opacity = '0';
+                setTimeout(() => { 
+                    document.getElementById('profile-screen').style.display = 'none'; 
+                    document.getElementById('action-hub').style.opacity = '1';
+                    document.getElementById('action-hub').style.pointerEvents = 'auto';
+                }, 400);
+            } else if (tab === 'profile') {
+                document.getElementById('action-hub').style.opacity = '0';
+                document.getElementById('action-hub').style.pointerEvents = 'none';
+                document.getElementById('profile-screen').style.display = 'flex';
+                setTimeout(() => { document.getElementById('profile-screen').style.opacity = '1'; }, 50);
+            }
+        }
+
+        // ================= SETARI / LOGOUT =================
+        function openSettings() { openModal('settings-modal'); }
+
+        function logoutAgent() {
+            if(!confirm("Ești sigur că vrei să te deconectezi?")) return;
+            auth.signOut().then(() => {
+                localStorage.removeItem('vv_agent_key');
+                location.reload();
+            }).catch(err => alert("Eroare la deconectare."));
+        }
+
+        // ================= LOGICA BURSEI (REWARDS & UBER LOAD) =================
         function openCreateMission() { openModal('create-mission-modal'); }
 
         function selectReward(val) {
@@ -401,6 +547,7 @@
             } catch(e) { alert("Eroare la acceptare."); }
         }
 
+        // ================= LOGICA INBOX & TIPS =================
         function openInbox() {
             openModal('inbox-modal');
             const container = document.getElementById('inbox-container');
@@ -484,6 +631,7 @@
             } catch(e) { alert("Eroare la raportare."); }
         }
 
+        // ================= MAP & CAMERA =================
         function initMap() {
             if(!map) {
                 map = L.map('map', {zoomControl: false}).setView([currentLat, currentLng], 12);
@@ -535,20 +683,10 @@
             document.getElementById('camera-screen').style.display = 'flex';
             setTimeout(() => { document.getElementById('camera-screen').style.opacity = '1'; }, 50);
             try {
-                // OPTIMIZARE IPHONE 6s (Limitator rezolutie si audio dezactivat strict)
-                const constraints = {
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1280 }, // HD - nu sugruma un iPhone vechi
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                };
+                const constraints = { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
                 currentStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('real-camera-video').srcObject = currentStream;
-            } catch (err) { 
-                alert("Eroare la accesarea camerei: " + err.message + " (Asigură-te că ai dat Allow/Permite din Safari)"); 
-            }
+            } catch (err) { alert("Eroare la accesarea camerei: " + err.message); }
         }
 
         function closeCamera() {
@@ -563,7 +701,6 @@
             canvas.width = video.videoWidth; 
             canvas.height = video.videoHeight;
             
-            // Corectat eroarea de cod pentru Safari vechi
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
