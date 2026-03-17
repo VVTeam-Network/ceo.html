@@ -777,19 +777,31 @@
             } catch(e) { alert("Eroare la raportare."); }
         }
 
+        let isFirstLocation = true; // Variabila care opreste elasticul
+
         function initMap() {
             if(!map) {
                 map = L.map('map', {zoomControl: false}).setView([currentLat, currentLng], 12);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
                 
-                map.locate({setView: true, watch: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000});
+                // Am setat setView pe FALSE aici:
+                map.locate({setView: false, watch: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000});
                 
                 let userMarker = null;
                 map.on('locationfound', function(e) {
                     currentLat = e.latlng.lat; currentLng = e.latlng.lng;
+                    
+                    // Centram harta pe tine DOAR prima data, apoi o eliberam:
+                    if(isFirstLocation) {
+                        map.setView(e.latlng, 15);
+                        isFirstLocation = false;
+                    }
+
                     if(!userMarker) { 
                         userMarker = L.circleMarker(e.latlng, { radius: 7, fillColor: "#fff", color: "rgba(255,255,255,0.25)", weight: 7, opacity: 1, fillOpacity: 1 }).addTo(map);
-                    } else { userMarker.setLatLng(e.latlng); }
+                    } else { 
+                        userMarker.setLatLng(e.latlng); 
+                    }
                 });
             }
             setTimeout(() => { if(map) map.invalidateSize(); }, 500); 
