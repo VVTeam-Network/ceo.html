@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.9.5 (Pinpoint Engine)</title>
+    <title>VV App | Premium Beta 1.9.5 (Pinpoint & Address Engine)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -805,7 +805,7 @@
                     }
                 });
 
-                // ================= NOU: SISTEM VV PINPOINT (TAP TO DROP) =================
+                // ================= NOU: SISTEM VV PINPOINT + NOMINATIM (REVERSE GEOCODING) =================
                 map.on('click', function(e) {
                     targetMissionLat = e.latlng.lat;
                     targetMissionLng = e.latlng.lng;
@@ -823,12 +823,52 @@
 
                     targetMarker = L.marker(e.latlng, {icon: crosshairIcon}).addTo(map);
 
-                    targetMarker.bindPopup(`
-                        <div style="text-align:center; padding: 5px;">
-                            <div style="font-size: 10px; color: #888; margin-bottom: 8px; letter-spacing: 1px;">COORDONATE SECURIZATE</div>
+                    // Afișăm inițial starea de încărcare (HUD Tech)
+                    let popupContent = `
+                        <div style="text-align:center; padding: 5px; min-width: 150px;">
+                            <div id="dynamic-address" style="font-size: 10px; color: var(--vv-blue); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">[ EXTRAGERE DATE... ]</div>
                             <button onclick="openTargetMissionModal()" style="background: var(--vv-purple); color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(191, 90, 242, 0.4);">🎯 LANSEAZĂ CONTRACT</button>
                         </div>
-                    `, {closeButton: false, className: 'dark-popup'}).openPopup();
+                    `;
+
+                    targetMarker.bindPopup(popupContent, {closeButton: false, className: 'dark-popup'}).openPopup();
+
+                    // Facem apelul gratuit (de gherilă) către serverul OpenStreetMap
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${targetMissionLat}&lon=${targetMissionLng}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            let addressText = "ZONĂ NECUNOSCUTĂ";
+                            if(data && data.address) {
+                                // Căutăm cele mai relevante părți din adresă
+                                let road = data.address.road || data.address.pedestrian || "";
+                                let house = data.address.house_number || "";
+                                let suburb = data.address.suburb || data.address.neighbourhood || data.address.city || "";
+                                
+                                if(road) {
+                                    addressText = `${road} ${house}`.trim().toUpperCase();
+                                } else if (suburb) {
+                                    addressText = `${suburb}`.toUpperCase();
+                                } else {
+                                    // Fallback la GPS dacă nu există stradă
+                                    addressText = `LAT: ${targetMissionLat.toFixed(4)} | LNG: ${targetMissionLng.toFixed(4)}`;
+                                }
+                            }
+                            
+                            // Actualizăm textul în popup instant fără a închide fereastra
+                            const addressElement = document.getElementById('dynamic-address');
+                            if(addressElement) {
+                                addressElement.innerText = addressText;
+                                addressElement.style.color = "#888"; // Culoare subtilă de confirmare
+                            }
+                        })
+                        .catch(err => {
+                            // Dacă serverul lor pică, arătăm coordonatele și gata (Tanc-mode)
+                            const addressElement = document.getElementById('dynamic-address');
+                            if(addressElement) {
+                                addressElement.innerText = `LAT: ${targetMissionLat.toFixed(4)} | LNG: ${targetMissionLng.toFixed(4)}`;
+                                addressElement.style.color = "#888";
+                            }
+                        });
                 });
             }
             setTimeout(() => { if(map) map.invalidateSize(); }, 500); 
