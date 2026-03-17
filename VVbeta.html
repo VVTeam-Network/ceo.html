@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.9.3 (Feedback Active)</title>
+    <title>VV App | Premium Beta 1.9.5 (Onyx Radar)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -82,13 +82,23 @@
         .glass-pill { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 30px; font-size: 11px; font-weight: 600; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: #fff; text-transform: uppercase; }
         .vv-dot { width: 7px; height: 7px; background: var(--vv-red); border-radius: 50%; box-shadow: 0 0 10px rgba(255, 45, 85, 0.8); }
 
+        /* BANNER RADAR VIP */
+        #radar-banner { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); background: rgba(10, 132, 255, 0.15); backdrop-filter: blur(25px); border: 1px solid rgba(10, 132, 255, 0.4); padding: 12px 20px; border-radius: 20px; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; display: none; z-index: 1000; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); text-transform: uppercase; }
+        .radar-banner-icon { color: var(--vv-blue); margin-right: 8px; font-size: 12px; }
+
+        /* ANIMATII RADAR HARTĂ */
+        .hotzone-pulse { animation: pulseRadarZone 2s infinite alternate; }
+        @keyframes pulseRadarZone { 0% { fill-opacity: 0.1; stroke-opacity: 0.2; } 100% { fill-opacity: 0.35; stroke-opacity: 0.8; } }
+
         /* ACTION HUB */
-        .action-hub { position: absolute; bottom: 145px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 16px; transition: 0.3s; }
-        .fab-btn { width: 54px; height: 54px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
+        .action-hub { position: absolute; bottom: 145px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 14px; transition: 0.3s; }
+        .fab-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
         .fab-btn:active { transform: scale(0.92); }
         .fab-cam { background: #fff; color: #000; border: none; box-shadow: 0 8px 25px rgba(255,255,255,0.2); font-size: 20px; } 
         .fab-mission-launch { color: var(--vv-purple); border-color: rgba(191, 90, 242, 0.2); }
         .fab-mission-receive { color: var(--gold); border-color: rgba(212, 175, 55, 0.2); }
+        .fab-radar { color: var(--vv-blue); border-color: rgba(10, 132, 255, 0.2); }
+        .fab-radar.active { background: var(--vv-blue); color: #fff; box-shadow: 0 0 20px rgba(10, 132, 255, 0.6); border-color: transparent; }
         .inbox-badge { position: absolute; top: -3px; right: -3px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 900; width: 19px; height: 19px; border-radius: 50%; display: none; justify-content: center; align-items: center; border: 2px solid #000; box-shadow: 0 0 10px rgba(255, 59, 48, 0.5); }
 
         /* BOTTOM DOCK */
@@ -109,14 +119,14 @@
         .settings-icon { font-size: 24px; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
         .settings-icon:active { transform: scale(0.9); color: #fff; }
 
-        /* THE BLACK CARD (Slogan Only) */
+        /* THE BLACK CARD */
         .real-black-card { width: 100%; aspect-ratio: 1.58; min-height: 210px; border-radius: 20px; background: linear-gradient(135deg, #1c1c1e, #0a0a0c); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.8); padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; gap: 15px;}
         .real-black-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.03), transparent); transform: skewX(-25deg); }
         .card-logo-silver { font-size: 24px; font-weight: 900; color: rgba(255,255,255,0.9); letter-spacing: 3px; font-style: italic; z-index: 2; margin-bottom: 5px;}
         .card-slogan-main { font-size: 17px; font-weight: 900; color: #fff; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(255,255,255,0.3); z-index: 2;}
         .card-slogan-sub { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 4px; text-transform: uppercase; z-index: 2;}
 
-        /* LOCKED VALUE (Sticla cu VV si LEI) */
+        /* LOCKED VALUE */
         .locked-value-container { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 22px 25px; margin-bottom: 15px; position: relative; overflow: hidden; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.3);}
         .locked-value-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.04); font-size: 45px; z-index: 1; }
         .value-col { display: flex; flex-direction: column; z-index: 2; }
@@ -195,7 +205,15 @@
                 <div class="hud-right"><div class="glass-pill" id="hud-balance" style="color: #fff; border-color: rgba(255,255,255,0.15);">... VV</div></div>
             </div>
 
+            <div id="radar-banner">
+                <i class="fas fa-gem radar-banner-icon"></i> RADAR VV ONYX ACTIV - TEST BETA
+            </div>
+
             <div class="action-hub" id="action-hub">
+                <div class="fab-btn fab-radar" id="btn-radar" onclick="toggleRadar()">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                
                 <div class="fab-btn" onclick="openInbox()">
                     <i class="fas fa-envelope"></i>
                     <div class="inbox-badge" id="inbox-badge">0</div>
@@ -411,6 +429,10 @@
         let selectedTip = 0;
         let pendingApprovalData = null;
 
+        // Variabile Radar
+        let radarActive = false;
+        let radarLayers = [];
+
         auth.onAuthStateChanged(user => {
             if (user && localStorage.getItem('vv_agent_key') && isInitialLoad) {
                 document.getElementById('splash-screen').style.display = 'none';
@@ -484,6 +506,54 @@
                     setTimeout(() => { document.getElementById('profile-screen').style.opacity = '1'; }, 50);
                 }, 400);
             }
+        }
+
+        // ================= LOGICA RADAR ONYX =================
+        function toggleRadar() {
+            radarActive = !radarActive;
+            const btn = document.getElementById('btn-radar');
+            const banner = document.getElementById('radar-banner');
+
+            if(radarActive) {
+                btn.classList.add('active');
+                banner.style.display = 'block';
+                activateRadarVisuals();
+            } else {
+                btn.classList.remove('active');
+                banner.style.display = 'none';
+                clearRadarVisuals();
+            }
+        }
+
+        function activateRadarVisuals() {
+            if(!map) return;
+            
+            // Simulam o zona rosie (Hotzone) de cerere mare langa utilizator
+            let hotzone = L.circle([currentLat + 0.004, currentLng + 0.003], {
+                color: '#ff2d55',
+                fillColor: '#ff2d55',
+                fillOpacity: 0.2,
+                radius: 500,
+                className: 'hotzone-pulse',
+                weight: 2
+            }).addTo(map);
+            radarLayers.push(hotzone);
+
+            // Simulam o zona albastra unde sunt alti agenti disponibili
+            let agentZone = L.circle([currentLat - 0.002, currentLng - 0.005], {
+                color: '#0A84FF',
+                fillColor: '#0A84FF',
+                fillOpacity: 0.15,
+                radius: 300,
+                weight: 1,
+                dashArray: '5, 5'
+            }).addTo(map);
+            radarLayers.push(agentZone);
+        }
+
+        function clearRadarVisuals() {
+            radarLayers.forEach(layer => map.removeLayer(layer));
+            radarLayers = [];
         }
 
         // ================= FEEDBACK LOGIC =================
