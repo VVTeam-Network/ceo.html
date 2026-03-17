@@ -418,6 +418,12 @@
         const auth = firebase.auth();
         const storage = firebase.storage();
 
+        // --- FIX PENTRU HARTĂ ȘI CAMERĂ PE MOBIL ---
+        let map = null; 
+        let currentStream = null;
+        let tempPhotoBlob = null;
+        // -------------------------------------------
+
         let globalAlias = "AGENT VV";
         let currentUserBalance = 0;
         let isInitialLoad = true;
