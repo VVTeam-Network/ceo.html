@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV App | Premium Beta 1.9.5 (Onyx Radar)</title>
+    <title>VV App | Premium Beta 1.9.5 (Pinpoint Engine)</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -77,6 +77,18 @@
         #map { position: absolute; inset: 0; background: var(--bg); z-index: 1; }
         .leaflet-control-attribution, .leaflet-control-zoom { display: none !important; }
 
+        /* STILURI PENTRU POPUP HARTĂ (DARK MODE) */
+        .leaflet-popup-content-wrapper { background: rgba(15,15,18,0.95); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; color: #fff; }
+        .leaflet-popup-tip { background: rgba(15,15,18,0.95); border: 1px solid var(--glass-border); }
+        
+        /* ȚINTA VV PINPOINT */
+        .target-crosshair { position: relative; display: flex; justify-content: center; align-items: center; }
+        .target-crosshair::before, .target-crosshair::after { content: ''; position: absolute; background: var(--vv-purple); opacity: 0.8;}
+        .target-crosshair::before { width: 2px; height: 30px; }
+        .target-crosshair::after { width: 30px; height: 2px; }
+        .crosshair-center { width: 8px; height: 8px; background: transparent; border: 2px solid var(--vv-purple); border-radius: 50%; z-index: 2; box-shadow: 0 0 15px var(--vv-purple); animation: pulseCrosshair 1.5s infinite; }
+        @keyframes pulseCrosshair { 0% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(0.8); opacity: 0.5; } }
+
         .stealth-hud { position: absolute; top: 50px; left: 20px; right: 20px; z-index: 10; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         .hud-left, .hud-right { display: flex; gap: 10px; pointer-events: auto; }
         .glass-pill { background: var(--glass-bg); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 30px; font-size: 11px; font-weight: 600; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: #fff; text-transform: uppercase; }
@@ -95,7 +107,6 @@
         .fab-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
         .fab-btn:active { transform: scale(0.92); }
         .fab-cam { background: #fff; color: #000; border: none; box-shadow: 0 8px 25px rgba(255,255,255,0.2); font-size: 20px; } 
-        .fab-mission-launch { color: var(--vv-purple); border-color: rgba(191, 90, 242, 0.2); }
         .fab-mission-receive { color: var(--gold); border-color: rgba(212, 175, 55, 0.2); }
         .fab-radar { color: var(--vv-blue); border-color: rgba(10, 132, 255, 0.2); }
         .fab-radar.active { background: var(--vv-blue); color: #fff; box-shadow: 0 0 20px rgba(10, 132, 255, 0.6); border-color: transparent; }
@@ -218,7 +229,6 @@
                     <i class="fas fa-envelope"></i>
                     <div class="inbox-badge" id="inbox-badge">0</div>
                 </div>
-                <div class="fab-btn fab-mission-launch" onclick="openCreateMission()"><i class="fas fa-plus"></i></div>
                 <div class="fab-btn fab-mission-receive" onclick="openMissionsList()"><i class="fas fa-list-ul"></i></div>
                 <div class="fab-btn fab-cam" onclick="openCamera()"><i class="fas fa-camera"></i></div>
             </div>
@@ -365,14 +375,14 @@
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Cere Inteligență</h2>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Banii vor fi blocați în Escrow până primești poza.</p>
             <label class="vv-label">Ce trebuie verificat?</label>
-            <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 20px;" placeholder="Ex: Cum e coada la Nuba?">
+            <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 20px;" placeholder="Ex: Cum e coada la intrare?">
             <label class="vv-label">Alege Recompensa (VV Coins)</label>
             <div class="reward-group">
                 <div class="reward-btn" id="rew-btn-5" onclick="selectReward(5)">5 VV</div>
                 <div class="reward-btn active" id="rew-btn-15" onclick="selectReward(15)">15 VV</div>
                 <div class="reward-btn" id="rew-btn-25" onclick="selectReward(25)">25 VV</div>
             </div>
-            <button class="btn-launch" id="btn-launch-radar" onclick="startUberRadar()">LANSEAZĂ CONTRACTUL</button>
+            <button class="btn-launch" id="btn-launch-radar" onclick="submitPinpointMission()">LANSEAZĂ CONTRACTUL</button>
             <button class="btn-launch" id="btn-cancel-radar" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1); margin-top:12px;" onclick="closeModal('create-mission-modal')">ANULEAZĂ</button>
         </div>
     </div>
@@ -389,7 +399,7 @@
     <div id="camera-screen">
         <div class="cam-header">
             <div onclick="closeCamera()" style="cursor:pointer; padding:10px;"><i class="fas fa-times" style="font-size:20px;"></i></div>
-            <div id="camera-status-text">Scanner Live perimetru</div>
+            <div id="camera-status-text">Sistem Validare VV</div>
             <div style="width: 40px;"></div>
         </div>
         <div class="cam-viewfinder">
@@ -418,11 +428,9 @@
         const auth = firebase.auth();
         const storage = firebase.storage();
 
-        // --- FIX PENTRU HARTĂ ȘI CAMERĂ PE MOBIL ---
         let map = null; 
         let currentStream = null;
         let tempPhotoBlob = null;
-        // -------------------------------------------
 
         let globalAlias = "AGENT VV";
         let currentUserBalance = 0;
@@ -435,9 +443,14 @@
         let selectedTip = 0;
         let pendingApprovalData = null;
 
-        // Variabile Radar
         let radarActive = false;
         let radarLayers = [];
+        let proofMarker = null; 
+
+        // VARIABILE NOI PENTRU PINPOINT (TAP TO DROP)
+        let targetMarker = null;
+        let targetMissionLat = null;
+        let targetMissionLng = null;
 
         auth.onAuthStateChanged(user => {
             if (user && localStorage.getItem('vv_agent_key') && isInitialLoad) {
@@ -483,7 +496,6 @@
             isInitialLoad = false;
         });
 
-        // ================= NAVIGARE TABS =================
         function switchTab(tab) {
             document.querySelectorAll('.dock-icon').forEach(i => i.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
@@ -514,7 +526,6 @@
             }
         }
 
-        // ================= LOGICA RADAR ONYX =================
         function toggleRadar() {
             radarActive = !radarActive;
             const btn = document.getElementById('btn-radar');
@@ -533,26 +544,13 @@
 
         function activateRadarVisuals() {
             if(!map) return;
-            
-            // Simulam o zona rosie (Hotzone) de cerere mare langa utilizator
             let hotzone = L.circle([currentLat + 0.004, currentLng + 0.003], {
-                color: '#ff2d55',
-                fillColor: '#ff2d55',
-                fillOpacity: 0.2,
-                radius: 500,
-                className: 'hotzone-pulse',
-                weight: 2
+                color: '#ff2d55', fillColor: '#ff2d55', fillOpacity: 0.2, radius: 500, className: 'hotzone-pulse', weight: 2
             }).addTo(map);
             radarLayers.push(hotzone);
 
-            // Simulam o zona albastra unde sunt alti agenti disponibili
             let agentZone = L.circle([currentLat - 0.002, currentLng - 0.005], {
-                color: '#0A84FF',
-                fillColor: '#0A84FF',
-                fillOpacity: 0.15,
-                radius: 300,
-                weight: 1,
-                dashArray: '5, 5'
+                color: '#0A84FF', fillColor: '#0A84FF', fillOpacity: 0.15, radius: 300, weight: 1, dashArray: '5, 5'
             }).addTo(map);
             radarLayers.push(agentZone);
         }
@@ -560,9 +558,9 @@
         function clearRadarVisuals() {
             radarLayers.forEach(layer => map.removeLayer(layer));
             radarLayers = [];
+            if(proofMarker) { map.removeLayer(proofMarker); proofMarker = null; }
         }
 
-        // ================= FEEDBACK LOGIC =================
         function openFeedbackModal() {
             document.getElementById('feedback-msg-input').value = '';
             openModal('feedback-modal');
@@ -577,35 +575,20 @@
             btn.style.pointerEvents = "none";
 
             try {
-                await db.collection('feedback').add({
-                    agentId: auth.currentUser.uid,
-                    alias: globalAlias,
-                    message: msg,
-                    status: 'unread',
-                    timestamp: Date.now()
-                });
+                await db.collection('feedback').add({ agentId: auth.currentUser.uid, alias: globalAlias, message: msg, status: 'unread', timestamp: Date.now() });
                 alert("✅ Mesaj trimis cu succes către Centrul de Comandă!");
                 closeModal('feedback-modal');
-            } catch(e) {
-                alert("Eroare la trimitere: " + e.message);
-            } finally {
-                btn.innerText = "TRIMITE MESAJUL";
-                btn.style.pointerEvents = "auto";
+            } catch(e) { alert("Eroare la trimitere: " + e.message); } finally {
+                btn.innerText = "TRIMITE MESAJUL"; btn.style.pointerEvents = "auto";
             }
         }
 
-        // ================= SETARI & BAZA =================
         function openSettings() { openModal('settings-modal'); }
 
         function logoutAgent() {
             if(!confirm("Ești sigur că vrei să te deconectezi?")) return;
-            auth.signOut().then(() => {
-                localStorage.removeItem('vv_agent_key');
-                location.reload();
-            }).catch(err => alert("Eroare la deconectare."));
+            auth.signOut().then(() => { localStorage.removeItem('vv_agent_key'); location.reload(); }).catch(err => alert("Eroare la deconectare."));
         }
-
-        function openCreateMission() { openModal('create-mission-modal'); }
 
         function selectReward(val) {
             selectedReward = val;
@@ -613,46 +596,48 @@
             document.getElementById('rew-btn-' + val).classList.add('active');
         }
 
-        async function startUberRadar() {
+        // DESCHIDE MODALUL DE MISIUNE DIN PINPOINT
+        window.openTargetMissionModal = function() {
+            if(targetMarker) { map.removeLayer(targetMarker); targetMarker = null; }
+            openModal('create-mission-modal');
+        }
+
+        // SALVEAZA MISIUNEA CU COORDONATELE TINTEI (PINPOINT)
+        async function submitPinpointMission() {
             let desc = document.getElementById('mission-desc').value.trim();
             if(!desc) return alert("Scrie ce trebuie verificat!");
             if(selectedReward > currentUserBalance) return alert("Fonduri insuficiente! Ai " + currentUserBalance + " VV.");
+            if(!targetMissionLat || !targetMissionLng) return alert("Eroare locație țintă.");
 
             let btnLaunch = document.getElementById('btn-launch-radar');
             let btnCancel = document.getElementById('btn-cancel-radar');
             
             btnLaunch.innerHTML = "SCANARE PERIMETRU... <div class='uber-loader' style='display:block;'><div class='uber-loader-bar'></div></div>";
             btnLaunch.style.background = "rgba(255,255,255,0.05)";
-            btnLaunch.style.color = "#fff";
-            btnLaunch.style.pointerEvents = "none";
+            btnLaunch.style.color = "#fff"; btnLaunch.style.pointerEvents = "none";
             btnCancel.style.display = "none";
 
-            setTimeout(() => { submitMissionDB(desc, selectedReward); }, 3000);
-        }
-
-        async function submitMissionDB(desc, reward) {
-            try {
-                const uid = auth.currentUser.uid;
-                await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(-reward) });
-                await db.collection('missions').add({
-                    creatorId: uid, creatorAlias: globalAlias, description: desc,
-                    reward: reward, lat: currentLat, lng: currentLng, status: 'active', timestamp: Date.now()
-                });
-                
-                resetRadarUI();
-                closeModal('create-mission-modal');
-                alert(`✅ Cerere plasată pe radarul global! Agentul care acceptă va lua cei ${reward} VV.`);
-            } catch(e) { alert("Eroare: " + e.message); resetRadarUI(); }
+            setTimeout(async () => {
+                try {
+                    const uid = auth.currentUser.uid;
+                    await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(-selectedReward) });
+                    await db.collection('missions').add({
+                        creatorId: uid, creatorAlias: globalAlias, description: desc,
+                        reward: selectedReward, lat: targetMissionLat, lng: targetMissionLng, status: 'active', timestamp: Date.now()
+                    });
+                    
+                    resetRadarUI(); closeModal('create-mission-modal');
+                    alert(`✅ Contract plasat exact la țintă! Agentul care acceptă va lua cei ${selectedReward} VV.`);
+                } catch(e) { alert("Eroare: " + e.message); resetRadarUI(); }
+            }, 2000);
         }
 
         function resetRadarUI() {
             let btnLaunch = document.getElementById('btn-launch-radar');
             let btnCancel = document.getElementById('btn-cancel-radar');
             btnLaunch.innerHTML = "LANSEAZĂ CONTRACTUL";
-            btnLaunch.style.background = "#fff";
-            btnLaunch.style.color = "#000";
-            btnLaunch.style.pointerEvents = "auto";
-            btnCancel.style.display = "block";
+            btnLaunch.style.background = "#fff"; btnLaunch.style.color = "#000";
+            btnLaunch.style.pointerEvents = "auto"; btnCancel.style.display = "block";
             document.getElementById('mission-desc').value = '';
         }
 
@@ -688,12 +673,13 @@
                 await db.collection('missions').doc(missionId).update({ status: 'accepted', solverId: auth.currentUser.uid });
                 activeMissionId = missionId;
                 closeModal('missions-list-modal');
-                document.getElementById('camera-status-text').innerText = `MISIUNE ACTIVĂ TACTICĂ`;
+                document.getElementById('camera-status-text').innerText = `AUTENTIFICARE LOCAȚIE`;
                 document.getElementById('camera-status-text').style.color = "var(--gold)";
                 openCamera(); 
             } catch(e) { alert("Eroare la acceptare."); }
         }
 
+        // ======================= NOUL INBOX & VIZUALIZARE GPS =======================
         function openInbox() {
             openModal('inbox-modal');
             const container = document.getElementById('inbox-container');
@@ -707,10 +693,16 @@
                   container.innerHTML = "";
                   snap.forEach(doc => {
                       let m = doc.data();
+                      let targetLat = m.solverLat || m.lat;
+                      let targetLng = m.solverLng || m.lng;
+
                       container.innerHTML += `
                           <div class="mission-item-card" style="padding:18px;">
                               <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; font-weight:600;">Cerere: ${m.description}</div>
                               <img src="${m.photoUrl}" style="width:100%; border-radius:14px; margin-bottom:18px; border:1px solid rgba(255,255,255,0.05); box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                              
+                              <button onclick="viewPhotoLocation(${targetLat}, ${targetLng})" style="width:100%; padding:12px; background:rgba(10, 132, 255, 0.1); color:var(--vv-blue); border:1px solid rgba(10, 132, 255, 0.3); font-weight:800; font-size:11px; letter-spacing:1px; border-radius:12px; cursor:pointer; text-transform:uppercase; margin-bottom: 12px; transition: 0.3s;"><i class="fas fa-map-marker-alt"></i> VERIFICĂ LOCAȚIA GPS</button>
+                              
                               <div style="display:flex; gap:12px;">
                                   <button onclick="triggerTipsModal('${doc.id}', '${m.solverId}', ${m.reward}, '${m.photoUrl}')" style="flex:1; padding:15px; background:#fff; color:#000; font-weight:700; font-size:11px; letter-spacing:1px; border:none; border-radius:12px; cursor:pointer; text-transform:uppercase;">CONFIRMĂ</button>
                                   <button onclick="reportFakeIntel('${doc.id}', '${m.photoUrl}')" style="flex:1; padding:15px; background:rgba(255,59,48,0.08); color:var(--danger); border:1px solid rgba(255,59,48,0.2); font-weight:700; font-size:11px; letter-spacing:1px; border-radius:12px; cursor:pointer; text-transform:uppercase;">REPORT</button>
@@ -721,21 +713,31 @@
               });
         }
 
+        function viewPhotoLocation(lat, lng) {
+            if(!lat || !lng) return alert("Eroare: Locația GPS nu a putut fi extrasă.");
+            closeModal('inbox-modal');
+            
+            map.flyTo([lat, lng], 17, { animate: true, duration: 1.5 });
+            
+            if(proofMarker) map.removeLayer(proofMarker);
+            
+            proofMarker = L.circleMarker([lat, lng], {
+                radius: 10, fillColor: "#0A84FF", color: "#fff", weight: 3, opacity: 1, fillOpacity: 0.8, className: 'hotzone-pulse'
+            }).addTo(map);
+
+            proofMarker.bindPopup("<div style='text-align:center;'><b style='color:#000; font-size:12px;'>LOCAȚIE VALIDATĂ</b><br><span style='color:#555; font-size:10px;'>Amprentă GPS confirmată.</span></div>").openPopup();
+        }
+
         function triggerTipsModal(missionId, solverId, reward, photoUrl) {
             pendingApprovalData = { missionId, solverId, reward, photoUrl };
             closeModal('inbox-modal');
-            setTimeout(() => {
-                selectTip(0); 
-                openModal('tips-modal');
-            }, 400); 
+            setTimeout(() => { selectTip(0); openModal('tips-modal'); }, 400); 
         }
 
         function selectTip(val) {
             selectedTip = val;
             document.querySelectorAll('[id^="tip-btn-"]').forEach(b => b.classList.remove('active'));
-            if(document.getElementById('tip-btn-' + val)) {
-                document.getElementById('tip-btn-' + val).classList.add('active');
-            }
+            if(document.getElementById('tip-btn-' + val)) document.getElementById('tip-btn-' + val).classList.add('active');
             document.getElementById('custom-tip').value = '';
         }
 
@@ -753,14 +755,14 @@
             
             try {
                 await db.collection('missions').doc(missionId).update({ status: 'completed' });
-                if (selectedTip > 0) {
-                    await db.collection('users').doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-selectedTip) });
-                }
+                if (selectedTip > 0) { await db.collection('users').doc(auth.currentUser.uid).update({ balance: firebase.firestore.FieldValue.increment(-selectedTip) }); }
+                
                 let totalAgentPayout = reward + selectedTip;
                 await db.collection('users').doc(solverId).update({ balance: firebase.firestore.FieldValue.increment(totalAgentPayout) });
                 let msgToCEO = `[CONTRACT APROBAT] Recompensă Bază: ${reward} VV | Tips Lăsat: ${selectedTip} VV.`;
                 await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: msgToCEO, flagged: false, timestamp: Date.now(), lat: currentLat, lng: currentLng });
                 
+                if(proofMarker) { map.removeLayer(proofMarker); proofMarker = null; }
                 alert(`✅ Tranzacție finalizată! Agentul a încasat ${totalAgentPayout} VV în total.`);
                 closeModal('tips-modal');
                 pendingApprovalData = null;
@@ -772,26 +774,25 @@
             try {
                 await db.collection('missions').doc(missionId).update({ status: 'disputed' });
                 await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: "[ALARMĂ FRAUDĂ - P2P] Vezi poza raportată!", flagged: true, timestamp: Date.now(), lat: currentLat, lng: currentLng });
+                if(proofMarker) { map.removeLayer(proofMarker); proofMarker = null; }
                 alert("Raportul a fost trimis. Durata de returnare a fondurilor poate varia ca timp.");
                 closeModal('inbox-modal');
             } catch(e) { alert("Eroare la raportare."); }
         }
 
-        let isFirstLocation = true; // Variabila care opreste elasticul
+        let isFirstLocation = true; 
 
         function initMap() {
             if(!map) {
                 map = L.map('map', {zoomControl: false}).setView([currentLat, currentLng], 12);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
                 
-                // Am setat setView pe FALSE aici:
                 map.locate({setView: false, watch: true, maxZoom: 16, enableHighAccuracy: true, timeout: 10000});
                 
                 let userMarker = null;
                 map.on('locationfound', function(e) {
                     currentLat = e.latlng.lat; currentLng = e.latlng.lng;
                     
-                    // Centram harta pe tine DOAR prima data, apoi o eliberam:
                     if(isFirstLocation) {
                         map.setView(e.latlng, 15);
                         isFirstLocation = false;
@@ -802,6 +803,32 @@
                     } else { 
                         userMarker.setLatLng(e.latlng); 
                     }
+                });
+
+                // ================= NOU: SISTEM VV PINPOINT (TAP TO DROP) =================
+                map.on('click', function(e) {
+                    targetMissionLat = e.latlng.lat;
+                    targetMissionLng = e.latlng.lng;
+
+                    if(targetMarker) {
+                        map.removeLayer(targetMarker);
+                    }
+
+                    const crosshairIcon = L.divIcon({
+                        className: 'target-crosshair',
+                        html: '<div class="crosshair-center"></div>',
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
+                    });
+
+                    targetMarker = L.marker(e.latlng, {icon: crosshairIcon}).addTo(map);
+
+                    targetMarker.bindPopup(`
+                        <div style="text-align:center; padding: 5px;">
+                            <div style="font-size: 10px; color: #888; margin-bottom: 8px; letter-spacing: 1px;">COORDONATE SECURIZATE</div>
+                            <button onclick="openTargetMissionModal()" style="background: var(--vv-purple); color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(191, 90, 242, 0.4);">🎯 LANSEAZĂ CONTRACT</button>
+                        </div>
+                    `, {closeButton: false, className: 'dark-popup'}).openPopup();
                 });
             }
             setTimeout(() => { if(map) map.invalidateSize(); }, 500); 
@@ -890,7 +917,7 @@
                 document.getElementById('send-btn').style.pointerEvents = 'auto';
                 document.getElementById('retake-btn').style.display = 'block';
                 if(!activeMissionId) { 
-                    document.getElementById('camera-status-text').innerText = "Scanner Live perimetru"; 
+                    document.getElementById('camera-status-text').innerText = "Sistem Validare VV"; 
                     document.getElementById('camera-status-text').style.color = "#fff"; 
                 }
             }, 300);
@@ -915,9 +942,11 @@
                     await db.collection('missions').doc(activeMissionId).update({
                         status: 'pending_review',
                         photoUrl: downloadUrl,
-                        solverId: uid
+                        solverId: uid,
+                        solverLat: currentLat,
+                        solverLng: currentLng
                     });
-                    alert("Intel trimis către client!");
+                    alert("Raport validat și trimis către client!");
                     activeMissionId = null;
                 } else {
                     await db.collection('photos').add({
