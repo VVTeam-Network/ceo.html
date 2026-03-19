@@ -304,7 +304,7 @@
 
     <div class="stealth-dock" id="main-dock">
         <div class="dock-icon active" id="tab-map" onclick="switchTab('map')"><i class="fas fa-map"></i></div>
-        <div class="btn-soon" onclick="alert('Feed în curând')">FEED</div>
+        <div class="btn-soon" onclick="document.getElementById('feedModal').style.display = 'flex';">FEED</div>
         <div class="dock-icon" id="tab-profile" onclick="switchTab('profile')"><i class="fas fa-user"></i></div>
     </div>
 
@@ -393,6 +393,29 @@
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă contracte de la alți agenți.</p>
             <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;"></div>
             <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
+        </div>
+    </div>
+
+    <div id="feedModal" style="display: none; position: fixed; inset: 0; z-index: 100000; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);">
+        <div style="background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 20px; width: 85%; max-width: 360px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
+            
+            <div style="color: var(--danger); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; font-weight: 800;">
+                The era of fake reality is over.
+            </div>
+            
+            <div style="color: var(--gold); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px;">
+                VV 1.0 INCOMING
+            </div>
+            
+            <div style="color: var(--text-muted); font-size: 12px; line-height: 1.6; text-align: left; border-top: 1px solid rgba(255,215,0,0.1); padding-top: 20px; margin-bottom: 25px;">
+                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">👁️ THE RAW FEED</span><br>
+                Vezi ce fac alți agenți în oraș. Fără filtre, fără fake-uri. Pură realitate.<br><br>
+                
+                <span style="color: var(--gold); font-weight: 800; letter-spacing: 1px; font-size: 13px;">🏛️ THE CITY VAULT</span><br>
+                Catalogul exclusivist al afacerilor premium. Doar locațiile care merită.
+            </div>
+
+            <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 0;">ÎNCHIDE</button>
         </div>
     </div>
 
