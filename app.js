@@ -247,16 +247,43 @@ function openMissionsList() {
     });
 }
 
+// ===== FUNCȚIA NOUĂ CU LACĂT ANTI-CLONARE =====
 async function acceptMission(missionId) {
     try {
-        await db.collection('missions').doc(missionId).update({ status: 'accepted', solverId: auth.currentUser.uid });
+        const missionRef = db.collection('missions').doc(missionId);
+        
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(missionRef);
+            
+            if (!doc.exists) {
+                throw "Eroare: Contractul a dispărut din sistem!";
+            }
+            
+            if (doc.data().status !== 'active') {
+                throw "PREA TÂRZIU! Alt agent a luat deja acest contract.";
+            }
+            
+            // Dacă a trecut de verificări, punem lacătul și înregistrăm userul
+            transaction.update(missionRef, { 
+                status: 'accepted', 
+                solverId: auth.currentUser.uid 
+            });
+        });
+
+        // Dacă tranzacția a reușit, deschidem camera pentru misiune
         activeMissionId = missionId;
         closeModal('missions-list-modal');
         document.getElementById('camera-status-text').innerText = `AUTENTIFICARE LOCAȚIE`;
         document.getElementById('camera-status-text').style.color = "var(--gold)";
         openCamera(); 
-    } catch(e) { alert("Eroare la acceptare."); }
+
+    } catch(e) { 
+        // Afișează eroarea (ex: altul a luat-o primul) și dă refresh la listă
+        alert(e); 
+        openMissionsList(); 
+    }
 }
+// ==============================================
 
 function openInbox() {
     openModal('inbox-modal');
