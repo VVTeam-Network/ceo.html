@@ -102,10 +102,10 @@
         .hotzone-pulse { animation: pulseRadarZone 2s infinite alternate; }
         @keyframes pulseRadarZone { 0% { fill-opacity: 0.1; stroke-opacity: 0.2; } 100% { fill-opacity: 0.35; stroke-opacity: 0.8; } }
 
-        /* ACTION HUB - CORECTAT PENTRU IPHONE X ȘI IPAD */
+        /* ACTION HUB */
         .action-hub { 
             position: fixed; 
-            bottom: 200px; 
+            bottom: 230px; 
             right: 20px; 
             z-index: 10000; 
             display: flex; 
@@ -113,7 +113,6 @@
             gap: 14px; 
             transition: 0.3s; 
         }
-        
         .fab-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: 0.2s; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); position: relative; color: var(--text-main); }
         .fab-btn:active { transform: scale(0.92); }
         .fab-cam { background: #fff; color: #000; border: none; box-shadow: 0 8px 25px rgba(255,255,255,0.2); font-size: 20px; } 
@@ -409,19 +408,19 @@
     <div id="feedModal" style="display: none; position: fixed; inset: 0; z-index: 100000; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);">
         <div style="background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 20px; width: 85%; max-width: 360px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
             
-            <div style="color: var(--danger); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; font-weight: 800;">
+            <div style="color: #fff; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(255,255,255,0.5);">
                 The era of fake reality is over.
             </div>
             
-            <div style="color: var(--gold); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px;">
+            <div style="color: var(--danger); font-size: 18px; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px;">
                 VV 1.0 INCOMING
             </div>
             
-            <div style="color: var(--text-muted); font-size: 12px; line-height: 1.6; text-align: left; border-top: 1px solid rgba(255,215,0,0.1); padding-top: 20px; margin-bottom: 25px;">
-                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">👁️ THE RAW FEED</span><br>
+            <div style="color: var(--text-muted); font-size: 12px; line-height: 1.6; text-align: left; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 25px;">
+                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">👁️ FEED</span><br>
                 Vezi ce fac alți agenți în oraș. Fără filtre, fără fake-uri. Pură realitate.<br><br>
                 
-                <span style="color: var(--gold); font-weight: 800; letter-spacing: 1px; font-size: 13px;">🏛️ THE CITY VAULT</span><br>
+                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">🏛️ THE CITY VAULT</span><br>
                 Catalogul exclusivist al afacerilor premium. Doar locațiile care merită.
             </div>
 
@@ -1025,7 +1024,7 @@
                     await db.collection('photos').add({
                         url: downloadUrl, agentId: uid, message: msg, flagged: false, timestamp: timestamp, lat: currentLat, lng: currentLng 
                     });
-                    /* TĂIAT: await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(15) }); */
+                    
                     alert("✅ Raport trimis către centrală!");
                 }
                 closeCamera();
