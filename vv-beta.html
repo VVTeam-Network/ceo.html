@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="vv-beta-style.css">
 </head>
 <body>
 
@@ -81,12 +81,12 @@
                 
                 <div class="value-col" style="align-items: flex-start;">
                     <span class="value-label">Balanță</span>
-                    <span class="value-number" style="color: var(--gold);"><span id="profile-vv-val">...</span> VV</span>
+                    <span class="value-number" style="color: #D4AF37;"><span id="profile-vv-val">...</span> VV</span>
                 </div>
                 
                 <div class="value-col" style="align-items: flex-end;">
                     <span class="value-label">Valoare</span>
-                    <span class="value-number" style="color: var(--safe-green);"><span id="profile-lei-val">...</span> LEI</span>
+                    <span class="value-number" style="color: #34c759;"><span id="profile-lei-val">...</span> LEI</span>
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
             </div>
 
             <div class="beta-warning-box">
-                <div style="font-size: 12px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: 1px;"><i class="fas fa-gem" style="color: var(--vv-blue); margin-right: 8px;"></i>RECOMPENSE BETA</div>
+                <div style="font-size: 12px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: 1px;"><i class="fas fa-gem" style="color: #0A84FF; margin-right: 8px;"></i>RECOMPENSE BETA</div>
                 Conversie garantată la lansarea EP 1.0:<br>
                 <div style="margin-top: 8px; font-size: 12px;">
                     <span style="color: #fff; font-weight: 700;">1000 VV</span> = 1 Lună VV Onyx<br>
@@ -112,19 +112,19 @@
             <div class="section-title">SOON IN VV EP 1.0</div>
             
             <div class="sub-card">
-                <div class="sub-title" style="color: var(--vv-blue);">VV ONYX</div>
+                <div class="sub-title" style="color: #0A84FF;">VV ONYX</div>
                 <div class="sub-price">29 LEI / LUNĂ</div>
                 <div class="sub-desc">Acces nelimitat la The City Vault, radar VIP, filtre premium și lansare prioritară de misiuni în oraș.</div>
             </div>
 
             <div class="sub-card" style="border-color: rgba(212, 175, 55, 0.2);">
-                <div class="sub-title" style="color: var(--gold);">VV VENUE PREMIUM</div>
+                <div class="sub-title" style="color: #D4AF37;">VV VENUE PREMIUM</div>
                 <div class="sub-price">299 € / LUNĂ</div>
                 <div class="sub-desc">Vitrină digitală de business pentru locația ta. Apari prioritar pe radarul VIP, atragi trafic live și clienți relevanți.</div>
             </div>
 
             <div class="sub-card" style="border-color: rgba(191, 90, 242, 0.2);">
-                <div class="sub-title" style="color: var(--vv-purple);">PROGRAM RECRUTARE</div>
+                <div class="sub-title" style="color: #BF5AF2;">PROGRAM RECRUTARE</div>
                 <div class="sub-desc">Caut / Recrutez personal de elită pentru extinderea rețelei VV în România.</div>
             </div>
             
@@ -141,111 +141,66 @@
     <div class="sheet-modal" id="settings-modal">
         <div class="sheet-content">
             <h2 style="color:#fff; margin-bottom:20px; font-size: 16px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Setări Sistem</h2>
-            
-            <div class="settings-item">
-                <span><i class="fas fa-moon"></i> Dark Mode</span>
-                <span class="locked-badge">LOCKED ON</span>
-            </div>
-            
-            <div class="settings-item">
-                <span><i class="fas fa-globe"></i> Limbă</span>
-                <select class="locked-select" disabled>
-                    <option>Română</option>
-                    <option>English (Global Expansion) 🔒</option>
-                </select>
-            </div>
-
-            <div class="settings-item" style="flex-direction: column; align-items: flex-start; gap: 8px; border-bottom: none; padding-bottom: 0;">
-                <span style="color: var(--danger); font-size: 12px; letter-spacing: 1px;"><i class="fas fa-exclamation-triangle"></i> Reguli de Discreție</span>
-                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5; font-weight: 500;">Aplicația VV nu tolerează invadarea intimității. ZERO fețe filmate intenționat. Orice raport validat duce la blocarea fondurilor și ban permanent pe dispozitiv.</p>
-            </div>
-
-            <button class="btn-launch" style="background: rgba(255,59,48,0.08); color: var(--danger); border: 1px solid rgba(255,59,48,0.3); margin-top: 35px;" onclick="logoutAgent()">DECONECTARE</button>
-            <button class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 12px;" onclick="closeModal('settings-modal')">ÎNCHIDE</button>
+            <div class="settings-item"><span><i class="fas fa-moon"></i> Dark Mode</span><span class="locked-badge">LOCKED ON</span></div>
+            <button class="btn-launch" style="background: rgba(255,59,48,0.08); color: #ff3b30; border: 1px solid rgba(255,59,48,0.3); margin-top: 35px;" onclick="logoutAgent()">DECONECTARE</button>
+            <button class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #8e8e93; margin-top: 12px;" onclick="closeModal('settings-modal')">ÎNCHIDE</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="feedback-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Suport VVTeam</h2>
-            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Trimite un raport, o problemă sau o sugestie direct către centrul de comandă VV.</p>
-            <textarea id="feedback-msg-input" class="vv-input" style="height: 100px; margin-bottom: 25px; border-radius: 12px; resize: none;" placeholder="Scrie mesajul tău aici..."></textarea>
+            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700;">Suport VVTeam</h2>
+            <textarea id="feedback-msg-input" class="vv-input" style="height: 100px; margin-bottom: 25px;" placeholder="Scrie mesajul tău..."></textarea>
             <button class="btn-launch" id="btn-send-feedback" onclick="sendFeedback()">TRIMITE MESAJUL</button>
-            <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1); margin-top:12px;" onclick="closeModal('feedback-modal')">ANULEAZĂ</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="inbox-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Intel Primit</h2>
-            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Aprobă pozele primite pentru a elibera fondurile.</p>
-            <div id="inbox-container" style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:15px; margin-bottom:20px;"></div>
-            <button class="btn-launch" style="background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
+            <h2 style="color:#fff; margin-bottom:25px; font-size: 18px; font-weight: 700;">Intel Primit</h2>
+            <div id="inbox-container" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="btn-launch" onclick="closeModal('inbox-modal')">ÎNCHIDE</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="tips-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Confirmare Plată</h2>
-            <p style="color:var(--safe-green); font-size:12px; margin-bottom:25px;">Poza a fost aprobată. Vrei să lași un TIPS pentru rapiditate?</p>
-            <label class="vv-label">Bonus Rapiditate (VV Coins)</label>
+            <h2 style="color:#fff; margin-bottom:25px; font-size: 18px; font-weight: 700;">Confirmare Plată</h2>
             <div class="reward-group">
                 <div class="reward-btn active" id="tip-btn-0" onclick="selectTip(0)">FĂRĂ</div>
                 <div class="reward-btn" id="tip-btn-5" onclick="selectTip(5)">5 VV</div>
                 <div class="reward-btn" id="tip-btn-10" onclick="selectTip(10)">10 VV</div>
             </div>
-            <label class="vv-label">Sumă Personalizată (Opțional)</label>
-            <input type="number" id="custom-tip" class="vv-input" style="margin-bottom: 30px;" placeholder="Ex: 3" oninput="customTipInput()">
-            <button class="btn-launch" onclick="finalizeApprovalWithTips()">TRIMITE PLATA CĂTRE AGENT</button>
+            <button class="btn-launch" onclick="finalizeApprovalWithTips()">TRIMITE PLATA</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="create-mission-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Cere Inteligență</h2>
-            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Banii vor fi blocați în Escrow până primești poza.</p>
-            <label class="vv-label">Ce trebuie verificat?</label>
-            <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 20px;" placeholder="Ex: Cum e coada la intrare?">
-            <label class="vv-label">Alege Recompensa (VV Coins)</label>
+            <h2 style="color:#fff; margin-bottom:25px; font-size: 18px; font-weight: 700;">Cere Inteligență</h2>
+            <input type="text" id="mission-desc" class="vv-input" style="margin-bottom: 20px;" placeholder="Ex: Cum e coada la club?">
             <div class="reward-group">
                 <div class="reward-btn" id="rew-btn-5" onclick="selectReward(5)">5 VV</div>
                 <div class="reward-btn active" id="rew-btn-15" onclick="selectReward(15)">15 VV</div>
                 <div class="reward-btn" id="rew-btn-25" onclick="selectReward(25)">25 VV</div>
             </div>
             <button class="btn-launch" id="btn-launch-radar" onclick="submitPinpointMission()">LANSEAZĂ CONTRACTUL</button>
-            <button class="btn-launch" id="btn-cancel-radar" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1); margin-top:12px;" onclick="closeModal('create-mission-modal')">ANULEAZĂ</button>
         </div>
     </div>
 
     <div class="sheet-modal" id="missions-list-modal">
         <div class="sheet-content">
-            <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Bursa de Misiuni</h2>
-            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă misiuni de la alte persoane.</p>
-            <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;"></div>
-            <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
+            <h2 style="color:#fff; margin-bottom:25px; font-size: 18px; font-weight: 700;">Bursa de Misiuni</h2>
+            <div id="missions-container" style="max-height: 350px; overflow-y: auto;"></div>
+            <button class="btn-launch" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
         </div>
     </div>
 
     <div id="feedModal" style="display: none; position: fixed; inset: 0; z-index: 100000; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);">
-        <div style="background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 20px; width: 85%; max-width: 360px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
-            
-            <div style="color: #fff; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(255,255,255,0.5);">
-                The era of fake reality is over.
-            </div>
-            
-            <div style="color: var(--danger); font-size: 18px; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px;">
-                VV 1.0 SOON
-            </div>
-            
-            <div style="color: var(--text-muted); font-size: 12px; line-height: 1.6; text-align: left; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 25px;">
-                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;"> FEED</span><br>
-                Vezi atmosfera orasului. Fără filtre, fără fake-uri. Pură realitate.<br><br>
-                
-                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">🏛️ THE CITY VAULT</span><br>
-                Vezi ce e nou in orasul tau! Locatiile pot plasa evenimente sau ce e nou.
-            </div>
-
-            <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 0;">ÎNCHIDE</button>
+        <div style="background: rgba(10, 10, 12, 0.95); padding: 30px; border-radius: 20px; width: 85%; max-width: 360px; text-align: center;">
+            <div style="color: #fff; font-size: 16px; text-transform: uppercase; margin-bottom: 15px; font-weight: 900;">REALITY IS BACK.</div>
+            <div style="color: #ff3b30; font-size: 18px; font-weight: 900; margin-bottom: 25px;">VV 1.0 SOON</div>
+            <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch">ÎNCHIDE</button>
         </div>
     </div>
 
@@ -255,20 +210,17 @@
             <div id="camera-status-text">Sistem Validare VV</div>
             <div style="width: 40px;"></div>
         </div>
-        <div class="cam-viewfinder">
-            <video id="real-camera-video" autoplay playsinline muted></video>
-        </div>
+        <div class="cam-viewfinder"><video id="real-camera-video" autoplay playsinline muted></video></div>
         <div class="cam-controls" id="shutter-container">
             <div class="shutter-btn" onclick="takePicture()"><div class="shutter-inner"></div></div>
         </div>
         <div id="post-photo-menu">
-            <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 25px; color: #fff; text-align: center; font-weight: 700;">Raport Pregătit</h3>
-            <textarea id="photo-msg" class="vv-input" style="height: 80px; margin-bottom: 25px; border-radius: 12px;" placeholder="Adaugă detalii..."></textarea>
+            <textarea id="photo-msg" class="vv-input" style="height: 80px; margin-bottom: 25px;" placeholder="Adaugă detalii..."></textarea>
             <button id="send-btn" class="btn-launch" onclick="uploadPhotoToCEO()">TRIMITE RAPORT</button>
-            <button id="retake-btn" class="btn-launch" style="background: transparent; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); margin-top:12px;" onclick="retakePhoto()">REFĂ POZA</button>
+            <button id="retake-btn" class="btn-launch" style="background: transparent; color:#8e8e93;" onclick="retakePhoto()">REFĂ POZA</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="vv-beta-app.js"></script>
 </body>
 </html>
