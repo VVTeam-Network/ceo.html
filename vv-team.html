@@ -2,86 +2,138 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VV TEAM | Headquarters</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VV TEAM | Central Command</title>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <link rel="stylesheet" href="vv-team-style.css">
 </head>
 <body>
 
-    <div id="lightbox" onclick="this.style.display='none'">
-        <img id="lb-img" src="">
+    <div id="lightbox">
+        <div class="lb-close" onclick="closeLightbox()"><i class="fas fa-times"></i></div>
+        <div class="lb-nav lb-prev" onclick="lbPrev(event)"><i class="fas fa-chevron-left"></i></div>
+        <img id="lb-img" src="" onclick="event.stopPropagation()">
+        <div class="lb-nav lb-next" onclick="lbNext(event)"><i class="fas fa-chevron-right"></i></div>
     </div>
 
     <div id="login-screen">
-        <div class="logo-box">VV</div>
-        <div class="logo-sub">TEAM COMMAND</div>
-        <input type="email" id="auth-email" class="login-input" placeholder="TEAM EMAIL">
-        <input type="password" id="auth-pass" class="login-input" placeholder="ACCESS KEY">
-        <button class="login-btn" onclick="loginTeam()">AUTHENTICATE</button>
-        <div id="login-error">ACCESS DENIED. UNAUTHORIZED.</div>
+        <div class="logo-box">VV TEAM</div>
+        <div class="logo-sub">Central Command</div>
+        <input type="password" id="ceo-pass" class="login-input" placeholder="ACCESS CODE">
+        <button class="login-btn" onclick="checkLogin()">Enter System</button>
     </div>
 
-    <div id="vv-app-ui" style="display: none;">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">VV TEAM.</div>
-                <div class="sidebar-subtitle">CENTRAL COMMAND</div>
-            </div>
-            
-            <div class="stats-box">
-                <div class="stat-label">MASĂ MONETARĂ</div>
-                <div class="stat-value" id="total-vv-bank">0 VV</div>
-            </div>
-            
-            <nav>
-                <div class="nav-item active" onclick="switchSection('feed', this)"><i class="fas fa-satellite"></i> INTEL FEED</div>
-                <div class="nav-item" onclick="switchSection('disputes', this)"><i class="fas fa-shield-alt"></i> DISPUTE ESCROW <span class="nav-badge" id="dispute-badge">0</span></div>
-                <div class="nav-item" onclick="switchSection('agents', this)"><i class="fas fa-users"></i> REȚEA AGENȚI</div>
-                <div class="nav-item" onclick="switchSection('keys', this)"><i class="fas fa-key"></i> ACCES BETA</div>
-            </nav>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">VV TEAM.</div>
+            <div class="sidebar-subtitle">Control Panel</div>
+        </div>
+        
+        <div class="system-money-box">
+            <div class="money-label">Masă Monetară Sistem</div>
+            <div class="money-value" id="total-vv-bank">0 VV</div>
+        </div>
+        
+        <div class="nav-item active" onclick="switchSection('feed', this)">
+            <i class="fas fa-stream"></i> Global Intel Feed
+        </div>
+        <div class="nav-item" onclick="switchSection('disputes', this)">
+            <i class="fas fa-gavel"></i> Dispute Escrow
+            <span class="nav-badge" id="dispute-badge">0</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('feedback', this)">
+            <i class="fas fa-inbox"></i> Feedback & Suport
+        </div>
+        <div class="nav-item" onclick="switchSection('leaderboard', this)">
+            <i class="fas fa-trophy"></i> Rețea & VV Onyx
+        </div>
+        <div class="nav-item" onclick="switchSection('keys', this)">
+            <i class="fas fa-key"></i> Chei Acces Beta
+        </div>
+        <div style="margin-top: auto;"></div>
+        <div class="nav-item" onclick="location.reload()">
+            <i class="fas fa-sign-out-alt"></i> Deconectare
+        </div>
+    </div>
 
-            <div class="sidebar-footer">
-                <div class="nav-item" onclick="logoutTeam()"><i class="fas fa-power-off"></i> SHUTDOWN</div>
+    <div class="main-content">
+        
+        <div id="feed-section" class="section active">
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Global Intel Feed</div>
+                    <div class="section-desc">Toate fotografiile și rapoartele valide trimise de agenți în timp real.</div>
+                </div>
+                <button class="btn-delete-all" onclick="deleteAllBetaData()"><i class="fas fa-trash-alt"></i> DELETE ALL (WIPE SYSTEM)</button>
+            </div>
+            <div class="grid-container" id="feed-container">
+                <div style="color:var(--text-muted);">Se încarcă datele...</div>
             </div>
         </div>
 
-        <main class="main-content">
-            <section id="feed-section" class="section active">
-                <div class="header-row">
-                    <h1>Global Intel Feed</h1>
-                    <button class="btn-reset" onclick="resetBetaData()">WIPE SYSTEM</button>
+        <div id="disputes-section" class="section">
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Dispute Escrow</div>
+                    <div class="section-desc">Misiuni raportate de clienți. Verifică intel-ul și decide.</div>
                 </div>
-                <div class="grid-container" id="feed-container"></div>
-            </section>
+            </div>
+            <div class="grid-container" id="disputes-container">
+                <div style="color:var(--text-muted);">Nicio dispută activă. Sistem curat.</div>
+            </div>
+        </div>
 
-            <section id="disputes-section" class="section">
-                <h1>Dispute Escrow</h1>
-                <div class="grid-container" id="disputes-container"></div>
-            </section>
-
-            <section id="agents-section" class="section">
-                <h1>Clasament Elite</h1>
-                <table class="vv-table">
-                    <thead><tr><th>Rank</th><th>Agent</th><th>Balanță</th><th>Status</th></tr></thead>
-                    <tbody id="agents-body"></tbody>
-                </table>
-            </section>
-
-            <section id="keys-section" class="section">
-                <h1>Management Acces</h1>
-                <div class="key-card">
-                    <button class="btn-premium" onclick="generateNewKey()">GENERARE CHEIE</button>
-                    <div id="keys-list" class="keys-grid"></div>
+        <div id="feedback-section" class="section">
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Feedback & Suport</div>
+                    <div class="section-desc">Mesaje primite de la clienți și agenți din aplicație.</div>
                 </div>
-            </section>
-        </main>
+            </div>
+            <table class="vv-table">
+                <thead>
+                    <tr><th>Agent / Client</th><th>Mesaj</th><th>Status</th><th>Acțiune</th></tr>
+                </thead>
+                <tbody id="feedback-body">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Niciun mesaj nou.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="leaderboard-section" class="section">
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Rețea Agenți & Status VV Onyx</div>
+                    <div class="section-desc">Clasamentul agenților în funcție de balanța VV.</div>
+                </div>
+            </div>
+            <table class="vv-table">
+                <thead>
+                    <tr><th>Rank</th><th>Alias Agent</th><th>Balanță (VV Coins)</th><th>Status Abonament</th></tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Se sincronizează rețeaua...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="keys-section" class="section">
+            <div class="section-header-row">
+                <div>
+                    <div class="section-title">Management Chei Beta</div>
+                    <div class="section-desc">Generează coduri unice pentru noii agenți.</div>
+                </div>
+            </div>
+            <div class="key-generator-card">
+                <button class="btn-primary" onclick="generateKey()"><i class="fas fa-plus"></i> Generează Cheie Nouă</button>
+                <div id="keys-list"></div>
+            </div>
+        </div>
+
     </div>
 
     <script src="vv-team-logic.js"></script>
