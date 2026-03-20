@@ -1021,7 +1021,6 @@
                     await db.collection('photos').add({
                         url: downloadUrl, agentId: uid, message: msg, flagged: false, timestamp: timestamp, lat: currentLat, lng: currentLng 
                     });
-                    await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(15) });
                     alert("✅ Raport trimis către VVTeam!");
                 }
                 closeCamera();
