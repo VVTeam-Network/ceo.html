@@ -399,7 +399,7 @@
     <div class="sheet-modal" id="missions-list-modal">
         <div class="sheet-content">
             <h2 style="color:#fff; margin-bottom:5px; font-size: 18px; font-weight: 700; letter-spacing: 1px;">Bursa de Misiuni</h2>
-            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă contracte de la alți agenți.</p>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:25px;">Acceptă misiuni de la alte persoane.</p>
             <div id="missions-container" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; margin-bottom:20px;"></div>
             <button class="btn-launch" style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="closeModal('missions-list-modal')">ÎNCHIDE</button>
         </div>
@@ -413,15 +413,15 @@
             </div>
             
             <div style="color: var(--danger); font-size: 18px; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px;">
-                VV 1.0 INCOMING
+                VV 1.0 SOON
             </div>
             
             <div style="color: var(--text-muted); font-size: 12px; line-height: 1.6; text-align: left; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 25px;">
-                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">👁️ FEED</span><br>
-                Vezi ce fac alți agenți în oraș. Fără filtre, fără fake-uri. Pură realitate.<br><br>
+                <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;"> FEED</span><br>
+                Vezi atmosfera orasului. Fără filtre, fără fake-uri. Pură realitate.<br><br>
                 
                 <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">🏛️ THE CITY VAULT</span><br>
-                Catalogul exclusivist al afacerilor premium. Doar locațiile care merită.
+            ' Vezi ce e nou in orasul tau! Locatiile pot plasa evenimente sau ce e nou.
             </div>
 
             <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 0;">ÎNCHIDE</button>
@@ -608,7 +608,7 @@
 
             try {
                 await db.collection('feedback').add({ agentId: auth.currentUser.uid, alias: globalAlias, message: msg, status: 'unread', timestamp: Date.now() });
-                alert("✅ Mesaj trimis cu succes către Centrul de Comandă!");
+                alert("Mesaj trimis cu succes către VVTeam!");
                 closeModal('feedback-modal');
             } catch(e) { alert("Eroare la trimitere: " + e.message); } finally {
                 btn.innerText = "TRIMITE MESAJUL"; btn.style.pointerEvents = "auto";
@@ -659,7 +659,7 @@
                     });
                     
                     resetRadarUI(); closeModal('create-mission-modal');
-                    alert(`✅ Contract plasat exact la țintă! Agentul care acceptă va lua cei ${selectedReward} VV.`);
+                    alert(`Misiune plasată exact la țintă! Cine acceptă va lua cei ${selectedReward} VV.`);
                 } catch(e) { alert("Eroare: " + e.message); resetRadarUI(); }
             }, 2000);
         }
@@ -781,7 +781,7 @@
 
         async function finalizeApprovalWithTips() {
             if(!pendingApprovalData) return;
-            if(selectedTip > currentUserBalance) return alert("Nu ai suficienți VV pentru a lăsa acest Tips!");
+            if(selectedTip > currentUserBalance) return alert("Nu ai suficienți VVcoins pentru a lăsa acest Tips!:)");
 
             let { missionId, solverId, reward, photoUrl } = pendingApprovalData;
             
@@ -795,14 +795,14 @@
                 await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: msgToCEO, flagged: false, timestamp: Date.now(), lat: currentLat, lng: currentLng });
                 
                 if(proofMarker) { map.removeLayer(proofMarker); proofMarker = null; }
-                alert(`✅ Tranzacție finalizată! Agentul a încasat ${totalAgentPayout} VV în total.`);
+                alert(`Misiune finalizată!'  ${totalAgentPayout} VV în total.`);
                 closeModal('tips-modal');
                 pendingApprovalData = null;
             } catch(e) { alert("Eroare la tranzacție: " + e.message); }
         }
 
         async function reportFakeIntel(missionId, photoUrl) {
-            if(!confirm("Trimitem poza la CEO pentru investigație de fraudă?")) return;
+            if(!confirm("Trimitem poza catre VVTeam pentru investigație de fraudă?")) return;
             try {
                 await db.collection('missions').doc(missionId).update({ status: 'disputed' });
                 await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: "[ALARMĂ FRAUDĂ - P2P] Vezi poza raportată!", flagged: true, timestamp: Date.now(), lat: currentLat, lng: currentLng });
@@ -1024,8 +1024,8 @@
                     await db.collection('photos').add({
                         url: downloadUrl, agentId: uid, message: msg, flagged: false, timestamp: timestamp, lat: currentLat, lng: currentLng 
                     });
-                    
-                    alert("✅ Raport trimis către centrală!");
+                
+                    alert(' Raport trimis către VVTEAM!");
                 }
                 closeCamera();
             } catch(e) { alert("Eroare la trimitere."); closeCamera(); }
