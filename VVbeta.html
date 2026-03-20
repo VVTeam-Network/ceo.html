@@ -102,7 +102,7 @@
         .hotzone-pulse { animation: pulseRadarZone 2s infinite alternate; }
         @keyframes pulseRadarZone { 0% { fill-opacity: 0.1; stroke-opacity: 0.2; } 100% { fill-opacity: 0.35; stroke-opacity: 0.8; } }
 
-        /* ACTION HUB */
+        /* ACTION HUB - FIX PENTRU IPHONE X ȘI IPAD */
         .action-hub { 
             position: fixed; 
             bottom: 230px; 
@@ -421,7 +421,7 @@
                 Vezi atmosfera orasului. Fără filtre, fără fake-uri. Pură realitate.<br><br>
                 
                 <span style="color: #fff; font-weight: 800; letter-spacing: 1px; font-size: 13px;">🏛️ THE CITY VAULT</span><br>
-            ' Vezi ce e nou in orasul tau! Locatiile pot plasa evenimente sau ce e nou.
+                Vezi ce e nou in orasul tau! Locatiile pot plasa evenimente sau ce e nou.
             </div>
 
             <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); margin-top: 0;">ÎNCHIDE</button>
@@ -781,7 +781,7 @@
 
         async function finalizeApprovalWithTips() {
             if(!pendingApprovalData) return;
-            if(selectedTip > currentUserBalance) return alert("Nu ai suficienți VVcoins pentru a lăsa acest Tips!:)");
+            if(selectedTip > currentUserBalance) return alert("Nu ai suficienți VV Coins pentru a lăsa acest Tips! :)");
 
             let { missionId, solverId, reward, photoUrl } = pendingApprovalData;
             
@@ -795,7 +795,7 @@
                 await db.collection('photos').add({ url: photoUrl, agentId: auth.currentUser.uid, message: msgToCEO, flagged: false, timestamp: Date.now(), lat: currentLat, lng: currentLng });
                 
                 if(proofMarker) { map.removeLayer(proofMarker); proofMarker = null; }
-                alert(`Misiune finalizată!'  ${totalAgentPayout} VV în total.`);
+                alert("Misiune finalizată! " + totalAgentPayout + " VV în total.");
                 closeModal('tips-modal');
                 pendingApprovalData = null;
             } catch(e) { alert("Eroare la tranzacție: " + e.message); }
@@ -865,13 +865,12 @@
 
                     targetMarker.bindPopup(popupContent, {closeButton: false, className: 'dark-popup'}).openPopup();
 
-                    // Facem apelul gratuit (de gherilă) către serverul OpenStreetMap
+                    // Facem apelul gratuit către serverul OpenStreetMap
                     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${targetMissionLat}&lon=${targetMissionLng}&format=json`)
                         .then(response => response.json())
                         .then(data => {
                             let addressText = "ZONĂ NECUNOSCUTĂ";
                             if(data && data.address) {
-                                // Căutăm cele mai relevante părți din adresă
                                 let road = data.address.road || data.address.pedestrian || "";
                                 let house = data.address.house_number || "";
                                 let suburb = data.address.suburb || data.address.neighbourhood || data.address.city || "";
@@ -881,20 +880,16 @@
                                 } else if (suburb) {
                                     addressText = `${suburb}`.toUpperCase();
                                 } else {
-                                    // Fallback la GPS dacă nu există stradă
                                     addressText = `LAT: ${targetMissionLat.toFixed(4)} | LNG: ${targetMissionLng.toFixed(4)}`;
                                 }
                             }
-                            
-                            // Actualizăm textul în popup instant fără a închide fereastra
                             const addressElement = document.getElementById('dynamic-address');
                             if(addressElement) {
                                 addressElement.innerText = addressText;
-                                addressElement.style.color = "#888"; // Culoare subtilă de confirmare
+                                addressElement.style.color = "#888";
                             }
                         })
                         .catch(err => {
-                            // Dacă serverul lor pică, arătăm coordonatele și gata (Tanc-mode)
                             const addressElement = document.getElementById('dynamic-address');
                             if(addressElement) {
                                 addressElement.innerText = `LAT: ${targetMissionLat.toFixed(4)} | LNG: ${targetMissionLng.toFixed(4)}`;
@@ -1024,8 +1019,8 @@
                     await db.collection('photos').add({
                         url: downloadUrl, agentId: uid, message: msg, flagged: false, timestamp: timestamp, lat: currentLat, lng: currentLng 
                     });
-                
-                    alert(' Raport trimis către VVTEAM!");
+                    await db.collection('users').doc(uid).update({ balance: firebase.firestore.FieldValue.increment(15) });
+                    alert("✅ Raport trimis către VVTeam!");
                 }
                 closeCamera();
             } catch(e) { alert("Eroare la trimitere."); closeCamera(); }
