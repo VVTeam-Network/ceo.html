@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VV TEAM | Headquarters</title>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="vv-team-style.css">
+</head>
+<body>
+
+    <div id="lightbox" onclick="this.style.display='none'">
+        <img id="lb-img" src="">
+    </div>
+
+    <div id="login-screen">
+        <div class="logo-box">VV</div>
+        <div class="logo-sub">TEAM COMMAND</div>
+        <input type="email" id="auth-email" class="login-input" placeholder="TEAM EMAIL">
+        <input type="password" id="auth-pass" class="login-input" placeholder="ACCESS KEY">
+        <button class="login-btn" onclick="loginTeam()">AUTHENTICATE</button>
+        <div id="login-error">ACCESS DENIED. UNAUTHORIZED.</div>
+    </div>
+
+    <div id="vv-app-ui">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">VV TEAM.</div>
+                <div class="sidebar-subtitle">CENTRAL COMMAND</div>
+            </div>
+            
+            <div class="stats-box">
+                <div class="stat-label">MASĂ MONETARĂ</div>
+                <div class="stat-value" id="total-vv-bank">0 VV</div>
+            </div>
+            
+            <nav>
+                <div class="nav-item active" onclick="switchSection('feed', this)"><i class="fas fa-satellite"></i> INTEL FEED</div>
+                <div class="nav-item" onclick="switchSection('disputes', this)"><i class="fas fa-shield-alt"></i> DISPUTE ESCROW <span class="nav-badge" id="dispute-badge">0</span></div>
+                <div class="nav-item" onclick="switchSection('agents', this)"><i class="fas fa-users"></i> REȚEA AGENȚI</div>
+                <div class="nav-item" onclick="switchSection('keys', this)"><i class="fas fa-key"></i> ACCES BETA</div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="nav-item" onclick="logoutTeam()"><i class="fas fa-power-off"></i> SHUTDOWN</div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <section id="feed-section" class="section active">
+                <div class="header-row">
+                    <h1>Global Intel Feed</h1>
+                    <button class="btn-reset" onclick="resetBetaData()">WIPE SYSTEM</button>
+                </div>
+                <div class="grid-container" id="feed-container"></div>
+            </section>
+
+            <section id="disputes-section" class="section">
+                <h1>Dispute Escrow</h1>
+                <div class="grid-container" id="disputes-container"></div>
+            </section>
+
+            <section id="agents-section" class="section">
+                <h1>Clasament Elite</h1>
+                <table class="vv-table">
+                    <thead><tr><th>Rank</th><th>Agent</th><th>Balanță</th><th>Status</th></tr></thead>
+                    <tbody id="agents-body"></tbody>
+                </table>
+            </section>
+
+            <section id="keys-section" class="section">
+                <h1>Management Acces</h1>
+                <div class="key-card">
+                    <button class="btn-premium" onclick="generateNewKey()">GENERARE CHEIE</button>
+                    <div id="keys-list" class="keys-grid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="vv-team-logic.js"></script>
+</body>
+</html>
