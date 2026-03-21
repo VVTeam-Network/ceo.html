@@ -268,53 +268,44 @@ function initMap() {
 
 // ================= LOCAȚII BUCUREȘTI — FILTRARE + CLUSTERING =================
 
-// Variabile globale pentru venues
 let venueClusterGroup = null;
-let allVenueMarkers = []; // [{marker, category}]
+let currentCategory = 'all';
 
 const VENUE_CATEGORIES = {
     nightlife: {
         label: 'Club / Nightlife', emoji: '🎵',
         color: 'rgba(138,43,226,0.92)', border: 'rgba(180,100,255,0.8)',
-        size: 30, zIndex: 500, limit: 25,
-        query: `node["amenity"="nightclub"](around:5000,44.4325,26.1038);`
+        size: 30, zIndex: 500,
+        query: `[out:json][timeout:15];(node["amenity"="nightclub"](around:5000,44.4325,26.1038););out body;`
     },
     bar: {
         label: 'Bar / Lounge', emoji: '🍸',
         color: 'rgba(10,100,200,0.92)', border: 'rgba(10,132,255,0.8)',
-        size: 28, zIndex: 400, limit: 25,
-        query: `node["amenity"="bar"](around:5000,44.4325,26.1038);`
+        size: 28, zIndex: 400,
+        query: `[out:json][timeout:15];(node["amenity"="bar"](around:5000,44.4325,26.1038););out body;`
     },
     restaurant: {
         label: 'Restaurant', emoji: '🍽️',
-        color: 'rgba(180,60,20,0.65)', border: 'rgba(255,100,40,0.4)',
-        size: 20, zIndex: 200, limit: 20,
-        query: `node["amenity"="restaurant"](around:5000,44.4325,26.1038);`
+        color: 'rgba(180,60,20,0.75)', border: 'rgba(255,100,40,0.5)',
+        size: 22, zIndex: 200,
+        query: `[out:json][timeout:15];(node["amenity"="restaurant"](around:5000,44.4325,26.1038););out body;`
     },
     hotel: {
         label: 'Hotel', emoji: '🏨',
-        color: 'rgba(20,120,60,0.65)', border: 'rgba(52,199,89,0.35)',
-        size: 20, zIndex: 200, limit: 15,
-        query: `node["tourism"="hotel"](around:5000,44.4325,26.1038);`
+        color: 'rgba(20,120,60,0.75)', border: 'rgba(52,199,89,0.45)',
+        size: 22, zIndex: 200,
+        query: `[out:json][timeout:15];(node["tourism"="hotel"](around:5000,44.4325,26.1038););out body;`
     },
-    supermarket: {
-        label: 'Supermarket', emoji: '🛒',
-        color: 'rgba(30,120,180,0.85)', border: 'rgba(80,170,230,0.6)',
-        size: 26, zIndex: 300, limit: 40,
-        query: `node["shop"="supermarket"](around:5000,44.4325,26.1038);`
-    },
-    hypermarket: {
-        label: 'Hypermarket / Jumbo', emoji: '📦',
-        color: 'rgba(60,60,80,0.88)', border: 'rgba(150,150,180,0.5)',
-        size: 26, zIndex: 300, limit: 20,
-        query: `node["shop"="department_store"](around:5000,44.4325,26.1038);`
+    shopping: {
+        label: 'Shopping', emoji: '🛒',
+        color: 'rgba(20,100,180,0.88)', border: 'rgba(60,160,240,0.6)',
+        size: 26, zIndex: 300,
+        query: `[out:json][timeout:20];(node["shop"~"supermarket|department_store"](around:6000,44.4325,26.1038);node["brand"~"Lidl|Kaufland|Mega Image|Profi|Jumbo|Carrefour|Auchan"](around:6000,44.4325,26.1038););out body;`
     }
 };
 
-async function loadBucharestVenues() {
-    if (!map) return;
-
-    // Inițializăm cluster group cu design VV
+// Inițializare cluster la pornirea hărții
+function initClusterGroup() {
     venueClusterGroup = L.markerClusterGroup({
         maxClusterRadius: 45,
         spiderfyOnMaxZoom: true,
@@ -326,16 +317,15 @@ async function loadBucharestVenues() {
             return L.divIcon({
                 html: `<div style="
                     width:${size}px; height:${size}px;
-                    background: rgba(5,5,7,0.85);
+                    background: rgba(5,5,7,0.9);
                     backdrop-filter: blur(15px);
                     -webkit-backdrop-filter: blur(15px);
-                    border: 1px solid rgba(212,175,55,0.5);
+                    border: 1px solid rgba(212,175,55,0.6);
                     border-radius: 50%;
                     display: flex; align-items: center; justify-content: center;
                     color: #D4AF37; font-size: 13px; font-weight: 900;
                     font-family: -apple-system, sans-serif;
-                    box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.15);
-                    letter-spacing: -0.5px;
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(212,175,55,0.1);
                 ">${count}</div>`,
                 className: '',
                 iconSize: [size, size],
@@ -343,97 +333,116 @@ async function loadBucharestVenues() {
             });
         }
     });
-
-    allVenueMarkers = [];
-
-    // Încărcăm toate categoriile
-    for (const [catKey, cat] of Object.entries(VENUE_CATEGORIES)) {
-        try {
-            const overpassQuery = `[out:json][timeout:15];(${cat.query});out body;`;
-            const res = await fetch('https://overpass-api.de/api/interpreter', {
-                method: 'POST',
-                body: overpassQuery
-            });
-            const data = await res.json();
-            if (!data.elements) continue;
-
-            const elements = data.elements.slice(0, cat.limit);
-
-            elements.forEach(el => {
-                if (!el.lat || !el.lon) return;
-
-                const name = el.tags?.name || el.tags?.['name:ro'] || cat.label;
-                const address = el.tags?.['addr:street']
-                    ? `${el.tags['addr:street']}${el.tags['addr:housenumber'] ? ' ' + el.tags['addr:housenumber'] : ''}`
-                    : '';
-                const phone = el.tags?.phone || el.tags?.['contact:phone'] || '';
-                const opening = el.tags?.opening_hours || '';
-
-                const s = cat.size;
-                const icon = L.divIcon({
-                    className: '',
-                    html: `<div style="
-                        background: ${cat.color};
-                        backdrop-filter: blur(8px);
-                        border: 1px solid ${cat.border};
-                        border-radius: 50%;
-                        width: ${s}px; height: ${s}px;
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: ${Math.round(s*0.45)}px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-                        cursor: pointer;
-                    ">${cat.emoji}</div>`,
-                    iconSize: [s, s],
-                    iconAnchor: [s/2, s/2]
-                });
-
-                const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex });
-
-                marker.bindPopup(`
-                    <div style="padding:4px; min-width:190px;">
-                        <div style="font-size:10px; color:rgba(255,255,255,0.35); margin-bottom:5px; letter-spacing:2px; font-weight:700;">${cat.label.toUpperCase()}</div>
-                        <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:8px; line-height:1.3;">${name}</div>
-                        ${address ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📍 ${address}</div>` : ''}
-                        ${opening ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">🕐 ${opening}</div>` : ''}
-                        ${phone ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:8px;">📞 ${phone}</div>` : ''}
-                        <button onclick="map.closePopup(); openCreateMissionModal(${el.lat}, ${el.lon});"
-                            style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%; margin-top:6px;">
-                            LANSEAZĂ CONTRACT AICI
-                        </button>
-                    </div>`, { closeButton: false, className: 'dark-popup' });
-
-                allVenueMarkers.push({ marker, category: catKey });
-                venueClusterGroup.addLayer(marker);
-            });
-
-        } catch (err) {
-            console.log(`Eroare ${cat.label}:`, err);
-        }
-    }
-
     map.addLayer(venueClusterGroup);
 }
 
-// ================= FILTER VENUES =================
-function filterVenues(category) {
-    if (!venueClusterGroup) return;
+// MOTOR PRINCIPAL — încarcă o categorie din Overpass și o afișează
+async function applyFilter(category) {
+    if (!map || !venueClusterGroup) return;
 
-    // Update pills UI
+    // Update UI pastile
+    currentCategory = category;
     document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
     const activePill = document.getElementById('filter-' + category);
     if (activePill) activePill.classList.add('active');
 
-    // Clear cluster
+    // Golim harta
     venueClusterGroup.clearLayers();
 
-    // Re-adaugă markere filtrate
-    allVenueMarkers.forEach(({ marker, category: cat }) => {
-        if (category === 'all' || category === cat) {
-            venueClusterGroup.addLayer(marker);
+    if (category === 'all') {
+        // Încărcăm toate categoriile
+        showToast('Se încarcă toate locațiile...');
+        for (const [catKey, cat] of Object.entries(VENUE_CATEGORIES)) {
+            await loadCategoryMarkers(catKey, cat, 25);
         }
-    });
+        showToast('Toate locațiile încărcate ✅');
+        return;
+    }
 
-    showToast(category === 'all' ? 'Toate locațiile' : VENUE_CATEGORIES[category]?.label || category);
+    const cat = VENUE_CATEGORIES[category];
+    if (!cat) return;
+
+    showToast(`Se caută ${cat.label}...`);
+    const limit = category === 'shopping' ? 50 : 40;
+    await loadCategoryMarkers(category, cat, limit);
+    showToast(`${cat.emoji} ${cat.label} încărcate!`);
+}
+
+// Fetch + adaugă markeri pentru o categorie
+async function loadCategoryMarkers(catKey, cat, limit) {
+    try {
+        const res = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: cat.query
+        });
+        const data = await res.json();
+        if (!data.elements) return;
+
+        const elements = data.elements.slice(0, limit);
+
+        elements.forEach(el => {
+            if (!el.lat || !el.lon) return;
+
+            const name = el.tags?.name || el.tags?.['name:ro'] || el.tags?.brand || cat.label;
+            const address = el.tags?.['addr:street']
+                ? `${el.tags['addr:street']}${el.tags['addr:housenumber'] ? ' ' + el.tags['addr:housenumber'] : ''}`
+                : '';
+            const phone = el.tags?.phone || el.tags?.['contact:phone'] || '';
+            const opening = el.tags?.opening_hours || '';
+            const brand = el.tags?.brand || '';
+
+            const s = cat.size;
+            const icon = L.divIcon({
+                className: '',
+                html: `<div style="
+                    background: ${cat.color};
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    border: 1px solid ${cat.border};
+                    border-radius: 50%;
+                    width: ${s}px; height: ${s}px;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: ${Math.round(s*0.45)}px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                    cursor: pointer;
+                ">${cat.emoji}</div>`,
+                iconSize: [s, s],
+                iconAnchor: [s/2, s/2]
+            });
+
+            const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex });
+
+            marker.bindPopup(`
+                <div style="padding:4px; min-width:190px;">
+                    <div style="font-size:10px; color:rgba(255,255,255,0.35); margin-bottom:5px; letter-spacing:2px; font-weight:700;">${cat.label.toUpperCase()}</div>
+                    <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:8px; line-height:1.3;">${name}</div>
+                    ${brand && brand !== name ? `<div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:4px;">🏷️ ${brand}</div>` : ''}
+                    ${address ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📍 ${address}</div>` : ''}
+                    ${opening ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">🕐 ${opening}</div>` : ''}
+                    ${phone ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:8px;">📞 ${phone}</div>` : ''}
+                    <button onclick="map.closePopup(); openCreateMissionModal(${el.lat}, ${el.lon});"
+                        style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%; margin-top:6px;">
+                        LANSEAZĂ CONTRACT AICI
+                    </button>
+                </div>`, { closeButton: false, className: 'dark-popup' });
+
+            venueClusterGroup.addLayer(marker);
+        });
+
+    } catch (err) {
+        console.log(`Eroare ${cat.label}:`, err);
+    }
+}
+
+// Pornire inițială
+async function loadBucharestVenues() {
+    initClusterGroup();
+    await applyFilter('all');
+}
+
+// Funcție publică pentru pastile
+function filterVenues(category) {
+    applyFilter(category);
 }
 
 
