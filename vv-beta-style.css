@@ -395,14 +395,15 @@ body {
     margin-right: 6px;
 }
 
-/* ACTION HUB */
+/* ACTION HUB — fixat deasupra barei de jos, responsive */
 .action-hub {
-    position: absolute;
-    bottom: 105px;
+    position: fixed;
+    bottom: calc(72px + 15px); /* înălțimea dock-ului + distanță */
     right: 16px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 12px;
 }
 
