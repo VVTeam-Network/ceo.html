@@ -1,104 +1,67 @@
 :root { 
-    --bg: #000000; 
-    --premium-dark: #111111;
-    --vv-blue: #0A84FF; 
+    --bg: #030303; 
+    --glass: rgba(20, 20, 22, 0.7);
     --gold: #D4AF37; 
-    --danger: #ff3b30; 
-    --safe-green: #34c759;
-    --text-muted: #8e8e93;
-    --glass-border: rgba(255,255,255,0.08);
+    --border: rgba(255, 255, 255, 0.08);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; }
 
-/* ================= ECRAN 1 & 2: SPLASH SCREEN & ALIAS ================= */
-#splash-screen, #alias-screen { position: fixed; inset: 0; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-.vv-massive-logo { font-size: 100px; font-weight: 900; color: #ffffff; letter-spacing: -5px; line-height: 1; margin-bottom: 5px; text-shadow: 0 0 40px rgba(255, 255, 255, 0.4); }
-.glass-premium { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15); padding: 8px 25px; border-radius: 12px; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 15px; }
-.slogan-text { font-size: 12px; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 40px; font-weight: 600; }
+/* OVERLAYS (SPLASH & TUTORIAL) */
+.premium-overlay { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
 
-.rules-container { background: rgba(10, 10, 12, 0.8); border: 1px solid rgba(255,59,48,0.3); border-radius: 15px; padding: 20px; width: 90%; max-width: 400px; margin-bottom: 25px; text-align: left; height: 180px; overflow-y: auto; }
-.rules-container h3 { color: var(--danger); font-size: 13px; margin-bottom: 15px; letter-spacing: 1px; text-align: center; }
-.rules-container ul { list-style: none; padding: 0; }
-.rules-container li { font-size: 11px; color: #d1d1d6; margin-bottom: 12px; line-height: 1.5; }
+/* LOGO PULSATING ANIMATION */
+.vv-massive-logo { font-size: 110px; font-weight: 900; color: #fff; letter-spacing: -6px; line-height: 1; margin-bottom: 5px; }
+.pulse-logo { animation: premiumGlow 2.5s infinite alternate ease-in-out; }
+@keyframes premiumGlow { 
+    0% { text-shadow: 0 0 10px rgba(255,255,255,0.1); transform: scale(1); } 
+    100% { text-shadow: 0 0 40px rgba(255,255,255,0.6), 0 0 80px rgba(255,255,255,0.2); transform: scale(1.02); } 
+}
 
-.tc-box { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; width: 90%; max-width: 400px; }
-.custom-checkbox { width: 22px; height: 22px; accent-color: var(--vv-blue); cursor: pointer; }
-.custom-label { font-size: 11px; color: #fff; font-weight: 600; text-align: left; line-height: 1.4; }
+.glass-premium { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); padding: 8px 25px; border-radius: 12px; font-size: 16px; font-weight: 800; letter-spacing: 6px; margin-bottom: 10px; }
+.slogan-text { font-size: 11px; color: #888; letter-spacing: 3px; margin-bottom: 40px; }
 
-.key-input { background: var(--premium-dark); border: 1px solid var(--glass-border); padding: 18px; border-radius: 12px; color: #fff; text-align: center; font-size: 14px; outline: none; width: 300px; margin-bottom: 15px; letter-spacing: 2px; }
-.btn-main { background: #fff; color: #000; border: none; padding: 18px; width: 300px; border-radius: 12px; font-weight: 800; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
-.btn-main.disabled { opacity: 0.3; pointer-events: none; background: #555; color: #888; }
-.btn-launch { width: 100%; padding: 15px; background: #fff; color: #000; border: none; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+/* REGULAMENT BOX */
+.rules-glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; width: 100%; max-width: 350px; margin-bottom: 30px; backdrop-filter: blur(15px); }
+.gold-title { color: var(--gold); font-size: 14px; letter-spacing: 2px; margin-bottom: 15px; text-align: center; }
+.rules-glass-box p { font-size: 12px; color: #aaa; margin-bottom: 12px; line-height: 1.5; }
+.rules-glass-box b { color: #fff; }
 
-/* ================= ECRAN 3: TUTORIAL (4 PAȘI) ================= */
-#tutorial-screen { position: fixed; inset: 0; background: #000; z-index: 100000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-.tutorial-card { display: none; flex-direction: column; align-items: center; text-align: center; padding: 40px 30px; width: 90%; max-width: 350px; background: var(--premium-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; animation: fadeIn 0.4s; }
-.tutorial-card.active { display: flex; }
-.tut-icon { font-size: 60px; color: #fff; margin-bottom: 25px; text-shadow: 0 0 20px rgba(255,255,255,0.3); }
-.tutorial-card h2 { color: #fff; font-size: 20px; margin-bottom: 15px; letter-spacing: 1px; }
-.tutorial-card p { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 35px; }
+/* CUSTOM PREMIUM CHECKBOX */
+.premium-checkbox-container { display: flex; align-items: center; position: relative; cursor: pointer; margin-bottom: 40px; width: 100%; max-width: 350px; }
+.premium-checkbox-container input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+.checkmark { height: 24px; width: 24px; background-color: #111; border: 1px solid #444; border-radius: 6px; display: flex; justify-content: center; align-items: center; transition: 0.3s; margin-right: 15px; flex-shrink: 0; }
+.premium-checkbox-container input:checked ~ .checkmark { background-color: var(--gold); border-color: var(--gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+.premium-checkbox-container input:checked ~ .checkmark:after { content: "✔"; color: #000; font-size: 14px; font-weight: 900; }
+.checkbox-text { font-size: 12px; color: #ccc; line-height: 1.4; }
 
-/* ================= APLICAȚIA PRINCIPALĂ (HARTĂ & HUD) ================= */
-#map-view { position: relative; flex: 1; height: calc(100vh - 80px); }
-#map { width: 100%; height: 100%; z-index: 1; background: #000; }
-.stealth-hud { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 1000; display: flex; justify-content: space-between; pointer-events: none; }
-.glass-pill { background: rgba(10,10,12,0.85); backdrop-filter: blur(10px); padding: 10px 18px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; pointer-events: auto; }
-.vv-dot { width: 6px; height: 6px; background: var(--safe-green); border-radius: 50%; box-shadow: 0 0 8px var(--safe-green); }
+/* BUTTONS */
+.btn-black-card { background: #fff; color: #000; border: none; padding: 18px; width: 100%; max-width: 350px; border-radius: 12px; font-weight: 800; letter-spacing: 1px; transition: 0.3s; }
+.btn-black-card.disabled { opacity: 0.2; pointer-events: none; }
 
-#radar-banner { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3); color: var(--vv-blue); padding: 8px 15px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1px; display: none; backdrop-filter: blur(5px); white-space: nowrap; }
+/* TUTORIAL SLIDES */
+.tutorial-slide { display: none; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 350px; animation: fadeIn 0.5s ease; }
+.tutorial-slide.active { display: flex; }
+.gold-icon { font-size: 60px; color: var(--gold); margin-bottom: 30px; text-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+.tutorial-slide h2 { font-size: 22px; margin-bottom: 15px; }
+.tutorial-slide p { font-size: 14px; color: #aaa; line-height: 1.6; margin-bottom: 40px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.action-hub { position: absolute; bottom: 30px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 15px; }
-.fab-btn { width: 55px; height: 55px; border-radius: 50%; background: rgba(10,10,12,0.9); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 20px; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); position: relative; }
-.fab-radar.active { background: rgba(10, 132, 255, 0.2); border-color: var(--vv-blue); color: var(--vv-blue); box-shadow: 0 0 20px rgba(10, 132, 255, 0.4); }
-.fab-cam { background: #fff; color: #000; border: none; width: 65px; height: 65px; font-size: 24px; }
-.inbox-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 10px; display: none; }
+/* APP & HUD */
+#map-view { position: relative; height: 100vh; width: 100vw; }
+#map { width: 100%; height: 100%; background: #000; }
+.stealth-hud { position: absolute; top: 50px; left: 20px; right: 20px; z-index: 1000; display: flex; justify-content: space-between; pointer-events: none; }
+.glass-pill { background: var(--glass); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 30px; border: 1px solid var(--border); font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.vv-dot { width: 8px; height: 8px; background: #34c759; border-radius: 50%; box-shadow: 0 0 10px #34c759; }
 
-/* ================= DOCK MENU (JOS) ================= */
-.stealth-dock { height: 80px; background: #050505; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px; z-index: 1000; position: fixed; bottom: 0; width: 100%; }
-.dock-icon { color: #555; font-size: 22px; cursor: pointer; padding: 15px; transition: 0.3s; }
-.dock-icon.active { color: #fff; }
-.btn-soon { background: var(--premium-dark); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); padding: 10px 20px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
+/* PREMIUM CAMERA BUTTON */
+.action-hub { position: absolute; bottom: 40px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 15px; }
+.fab-btn { width: 55px; height: 55px; border-radius: 50%; background: var(--glass); border: 1px solid var(--border); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 20px; backdrop-filter: blur(10px); }
+.cam-btn-premium { width: 65px; height: 65px; background: #fff; color: #000; font-size: 24px; box-shadow: 0 0 20px rgba(255,255,255,0.2); border: none; }
 
-/* ================= PROFIL ================= */
-#profile-screen { flex-direction: column; padding: 30px 20px; height: calc(100vh - 80px); overflow-y: auto; background: var(--bg); }
-.profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; margin-top: 20px; }
-.profile-title { font-size: 24px; font-weight: 800; }
-.settings-icon { font-size: 20px; color: var(--text-muted); cursor: pointer; }
-.real-black-card { background: #0a0a0c; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 30px; margin-bottom: 20px; box-shadow: inset 0 0 40px rgba(255,255,255,0.02); }
-.card-logo-silver { font-size: 35px; font-weight: 900; background: linear-gradient(135deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
-.card-slogan-main { font-size: 14px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px; }
-.card-slogan-sub { font-size: 10px; color: var(--gold); letter-spacing: 2px; }
-.locked-value-container { display: flex; justify-content: space-between; align-items: center; background: var(--premium-dark); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-.locked-value-icon { font-size: 24px; color: #fff; opacity: 0.5; }
-.value-col { display: flex; flex-direction: column; }
-.value-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-.value-number { font-size: 18px; font-weight: 800; font-family: monospace; }
-.feedback-btn { background: var(--premium-dark); border-radius: 15px; padding: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
-.feedback-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 18px; }
-.feedback-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-.feedback-subtitle { font-size: 11px; color: var(--text-muted); }
-
-/* ================= MODALE & MENIURI ================= */
-.sheet-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100000; align-items: flex-end; backdrop-filter: blur(5px); }
-.sheet-modal.active { display: flex; }
-.sheet-content { background: #111; width: 100%; border-radius: 25px 25px 0 0; padding: 30px; padding-bottom: 50px; animation: slideUp 0.3s forwards; border-top: 1px solid rgba(255,255,255,0.1); }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.vv-input { width: 100%; background: #000; border: 1px solid var(--glass-border); padding: 18px; border-radius: 12px; color: #fff; font-size: 14px; outline: none; font-family: sans-serif; }
-.reward-group { display: flex; gap: 10px; margin-bottom: 25px; }
-.reward-btn { flex: 1; padding: 15px; background: #000; border: 1px solid var(--glass-border); border-radius: 12px; text-align: center; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; transition: 0.2s; }
-.reward-btn.active { background: rgba(10, 132, 255, 0.1); border-color: var(--vv-blue); color: var(--vv-blue); }
-.mission-item-card { background: #000; border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 16px; margin-bottom: 15px; }
-
-/* ================= HARTA LEAFLET (MODIFICĂRI) ================= */
-.leaflet-container { background: #000 !important; font-family: sans-serif; }
-.hotzone-pulse { animation: pulseAnim 2s infinite; }
-@keyframes pulseAnim { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 0.4; } 100% { transform: scale(0.95); opacity: 0.8; } }
-.target-crosshair { border: 2px solid var(--vv-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; background: rgba(10, 132, 255, 0.2); }
-.crosshair-center { width: 6px; height: 6px; background: var(--vv-blue); border-radius: 50%; }
-.dark-popup .leaflet-popup-content-wrapper { background: rgba(10,10,12,0.95); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; backdrop-filter: blur(10px); }
-.dark-popup .leaflet-popup-tip { background: rgba(10,10,12,0.95); border: 1px solid rgba(255,255,255,0.1); }
+/* DARK PREMIUM LEAFLET POPUP (Reparat) */
+.leaflet-container { background: #000 !important; }
+.leaflet-popup-content-wrapper { background: rgba(15, 15, 15, 0.95) !important; color: #fff !important; border: 1px solid rgba(212, 175, 55, 0.3) !important; border-radius: 12px !important; backdrop-filter: blur(15px) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; }
+.leaflet-popup-tip { background: rgba(15, 15, 15, 0.95) !important; border: 1px solid rgba(212, 175, 55, 0.3) !important; }
 .leaflet-control-attribution { display: none !important; }
