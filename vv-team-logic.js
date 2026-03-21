@@ -231,7 +231,7 @@ function loadFeedback() {
     `;
 }
 
-// ================= WIPE DATABASE (DELETE ALL) =================
+// ================= WIPE DATABASE =================
 async function deleteAllBetaData() {
     let promptWord = prompt("ATENȚIE: Această acțiune va șterge TOATE pozele și misiunile din sistem! Scrie: RESET");
     if(promptWord !== "RESET") { alert("Procedură anulată."); return; }
@@ -253,15 +253,44 @@ function loadKeys() {
         const list = document.getElementById('keys-list');
         list.innerHTML = '';
         snap.forEach(doc => {
-            list.innerHTML += `<div class="key-item"><span>${doc.data().key}</span><span class="key-status">ACTIV <i class="fas fa-check"></i></span></div>`;
+            const data = doc.data();
+            const statusColor = data.active ? 'var(--safe-green)' : '#ff3b30';
+            const statusText = data.active ? 'ACTIV ✓' : 'DEZACTIVAT';
+            list.innerHTML += `
+                <div class="key-item">
+                    <span>${data.key}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="key-status" style="color:${statusColor};">${statusText}</span>
+                        <button onclick="toggleKey('${doc.id}', ${data.active})" style="
+                            background: ${data.active ? 'rgba(255,59,48,0.15)' : 'rgba(52,199,89,0.15)'};
+                            border: 1px solid ${data.active ? 'rgba(255,59,48,0.3)' : 'rgba(52,199,89,0.3)'};
+                            color: ${data.active ? '#ff3b30' : '#34c759'};
+                            padding: 4px 10px; border-radius: 6px; font-size: 11px;
+                            font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+                        ">${data.active ? 'DEZACTIVEAZĂ' : 'ACTIVEAZĂ'}</button>
+                    </div>
+                </div>`;
         });
     });
 }
 
+// ================= FIX: active: true la generare =================
 async function generateKey() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let newKey = '';
-    for(let i=0; i<6; i++) newKey += chars.charAt(Math.floor(Math.random() * chars.length));
-    try { await db.collection('access_keys').add({ key: newKey, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); } 
-    catch(e) { alert("Eroare."); }
+    for(let i = 0; i < 6; i++) newKey += chars.charAt(Math.floor(Math.random() * chars.length));
+    try {
+        await db.collection('access_keys').add({
+            key: newKey,
+            active: true,        // ← FIX: câmpul care lipsea
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch(e) { alert("Eroare generare cheie."); }
+}
+
+// Activează / dezactivează o cheie existentă
+async function toggleKey(docId, currentState) {
+    try {
+        await db.collection('access_keys').doc(docId).update({ active: !currentState });
+    } catch(e) { alert("Eroare: " + e.message); }
 }
