@@ -1,14 +1,15 @@
 :root { 
-    --bg: #000; 
-    --premium-dark: #111;
+    --bg: #000000; 
+    --premium-dark: #111111;
     --vv-blue: #0A84FF; 
     --gold: #D4AF37; 
     --danger: #ff3b30; 
     --safe-green: #34c759;
     --text-muted: #8e8e93;
-    --glass-border: rgba(255,255,255,0.06);
+    --glass-border: rgba(255,255,255,0.08);
 }
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
 /* ================= ECRAN 1 & 2: SPLASH SCREEN & ALIAS ================= */
@@ -23,12 +24,13 @@ body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; disp
 .rules-container li { font-size: 11px; color: #d1d1d6; margin-bottom: 12px; line-height: 1.5; }
 
 .tc-box { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; width: 90%; max-width: 400px; }
-.custom-checkbox { width: 20px; height: 20px; accent-color: var(--vv-blue); cursor: pointer; }
-.custom-label { font-size: 11px; color: #fff; font-weight: 600; text-align: left; }
+.custom-checkbox { width: 22px; height: 22px; accent-color: var(--vv-blue); cursor: pointer; }
+.custom-label { font-size: 11px; color: #fff; font-weight: 600; text-align: left; line-height: 1.4; }
 
 .key-input { background: var(--premium-dark); border: 1px solid var(--glass-border); padding: 18px; border-radius: 12px; color: #fff; text-align: center; font-size: 14px; outline: none; width: 300px; margin-bottom: 15px; letter-spacing: 2px; }
 .btn-main { background: #fff; color: #000; border: none; padding: 18px; width: 300px; border-radius: 12px; font-weight: 800; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
 .btn-main.disabled { opacity: 0.3; pointer-events: none; background: #555; color: #888; }
+.btn-launch { width: 100%; padding: 15px; background: #fff; color: #000; border: none; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
 
 /* ================= ECRAN 3: TUTORIAL (4 PAȘI) ================= */
 #tutorial-screen { position: fixed; inset: 0; background: #000; z-index: 100000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
@@ -38,60 +40,61 @@ body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; disp
 .tutorial-card h2 { color: #fff; font-size: 20px; margin-bottom: 15px; letter-spacing: 1px; }
 .tutorial-card p { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 35px; }
 
-/* ================= APLICAȚIA (HARTĂ & HUD) ================= */
+/* ================= APLICAȚIA PRINCIPALĂ (HARTĂ & HUD) ================= */
 #map-view { position: relative; flex: 1; height: calc(100vh - 80px); }
 #map { width: 100%; height: 100%; z-index: 1; background: #000; }
 .stealth-hud { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 1000; display: flex; justify-content: space-between; pointer-events: none; }
 .glass-pill { background: rgba(10,10,12,0.85); backdrop-filter: blur(10px); padding: 10px 18px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; pointer-events: auto; }
 .vv-dot { width: 6px; height: 6px; background: var(--safe-green); border-radius: 50%; box-shadow: 0 0 8px var(--safe-green); }
 
-#radar-banner { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3); color: var(--vv-blue); padding: 8px 15px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1px; display: none; backdrop-filter: blur(5px); }
+#radar-banner { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3); color: var(--vv-blue); padding: 8px 15px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1px; display: none; backdrop-filter: blur(5px); white-space: nowrap; }
 
 .action-hub { position: absolute; bottom: 30px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 15px; }
-.fab-btn { width: 55px; height: 55px; border-radius: 50%; background: rgba(10,10,12,0.9); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 20px; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+.fab-btn { width: 55px; height: 55px; border-radius: 50%; background: rgba(10,10,12,0.9); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 20px; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); position: relative; }
 .fab-radar.active { background: rgba(10, 132, 255, 0.2); border-color: var(--vv-blue); color: var(--vv-blue); box-shadow: 0 0 20px rgba(10, 132, 255, 0.4); }
 .fab-cam { background: #fff; color: #000; border: none; width: 65px; height: 65px; font-size: 24px; }
 .inbox-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 10px; display: none; }
 
 /* ================= DOCK MENU (JOS) ================= */
-.stealth-dock { height: 80px; background: #080808; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px; z-index: 1000; position: fixed; bottom: 0; width: 100%; }
+.stealth-dock { height: 80px; background: #050505; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px; z-index: 1000; position: fixed; bottom: 0; width: 100%; }
 .dock-icon { color: #555; font-size: 22px; cursor: pointer; padding: 15px; transition: 0.3s; }
 .dock-icon.active { color: #fff; }
 .btn-soon { background: var(--premium-dark); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); padding: 10px 20px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
 
 /* ================= PROFIL ================= */
-#profile-screen { display: none; flex-direction: column; padding: 30px 20px; height: calc(100vh - 80px); overflow-y: auto; }
-.profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+#profile-screen { flex-direction: column; padding: 30px 20px; height: calc(100vh - 80px); overflow-y: auto; background: var(--bg); }
+.profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; margin-top: 20px; }
 .profile-title { font-size: 24px; font-weight: 800; }
 .settings-icon { font-size: 20px; color: var(--text-muted); cursor: pointer; }
 .real-black-card { background: #0a0a0c; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 30px; margin-bottom: 20px; box-shadow: inset 0 0 40px rgba(255,255,255,0.02); }
 .card-logo-silver { font-size: 35px; font-weight: 900; background: linear-gradient(135deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
 .card-slogan-main { font-size: 14px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px; }
 .card-slogan-sub { font-size: 10px; color: var(--gold); letter-spacing: 2px; }
-.locked-value-container { display: flex; justify-content: space-between; background: var(--premium-dark); border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+.locked-value-container { display: flex; justify-content: space-between; align-items: center; background: var(--premium-dark); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+.locked-value-icon { font-size: 24px; color: #fff; opacity: 0.5; }
 .value-col { display: flex; flex-direction: column; }
 .value-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
 .value-number { font-size: 18px; font-weight: 800; font-family: monospace; }
-.feedback-btn { background: var(--premium-dark); border-radius: 15px; padding: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 30px; cursor: pointer; }
+.feedback-btn { background: var(--premium-dark); border-radius: 15px; padding: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
 .feedback-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 18px; }
 .feedback-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
 .feedback-subtitle { font-size: 11px; color: var(--text-muted); }
 
-/* ================= MODALE & MENIURI (HARTA) ================= */
-.sheet-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100000; align-items: flex-end; }
+/* ================= MODALE & MENIURI ================= */
+.sheet-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100000; align-items: flex-end; backdrop-filter: blur(5px); }
 .sheet-modal.active { display: flex; }
-.sheet-content { background: #111; width: 100%; border-radius: 25px 25px 0 0; padding: 30px; padding-bottom: 50px; animation: slideUp 0.3s forwards; }
+.sheet-content { background: #111; width: 100%; border-radius: 25px 25px 0 0; padding: 30px; padding-bottom: 50px; animation: slideUp 0.3s forwards; border-top: 1px solid rgba(255,255,255,0.1); }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.vv-input { width: 100%; background: #000; border: 1px solid var(--glass-border); padding: 18px; border-radius: 12px; color: #fff; font-size: 14px; outline: none; }
+.vv-input { width: 100%; background: #000; border: 1px solid var(--glass-border); padding: 18px; border-radius: 12px; color: #fff; font-size: 14px; outline: none; font-family: sans-serif; }
 .reward-group { display: flex; gap: 10px; margin-bottom: 25px; }
-.reward-btn { flex: 1; padding: 15px; background: #000; border: 1px solid var(--glass-border); border-radius: 12px; text-align: center; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; }
+.reward-btn { flex: 1; padding: 15px; background: #000; border: 1px solid var(--glass-border); border-radius: 12px; text-align: center; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; transition: 0.2s; }
 .reward-btn.active { background: rgba(10, 132, 255, 0.1); border-color: var(--vv-blue); color: var(--vv-blue); }
 .mission-item-card { background: #000; border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 16px; margin-bottom: 15px; }
 
-/* LEAFLET OVERRIDES */
-.leaflet-container { background: #000 !important; }
+/* ================= HARTA LEAFLET (MODIFICĂRI) ================= */
+.leaflet-container { background: #000 !important; font-family: sans-serif; }
 .hotzone-pulse { animation: pulseAnim 2s infinite; }
 @keyframes pulseAnim { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 0.4; } 100% { transform: scale(0.95); opacity: 0.8; } }
 .target-crosshair { border: 2px solid var(--vv-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; background: rgba(10, 132, 255, 0.2); }
