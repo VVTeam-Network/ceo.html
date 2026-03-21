@@ -27,8 +27,8 @@
             <h3>REGULAMENT INTERN STRICT</h3>
             <ul>
                 <li><strong>1. PURĂ REALITATE:</strong> Interzisă folosirea filtrelor sau pozelor vechi din galerie. Totul se face live, la fața locului.</li>
-                <li><strong>2. INTIMITATE 100%:</strong> Zero fețe filmate intenționat. Orice invadare a spațiului privat este pedepsită.</li>
-                <li><strong>3. TOLERANȚĂ ZERO:</strong> Frauda duce la ban permanent pe dispozitiv și blocarea fondurilor.</li>
+                <li><strong>2. INTIMITATE 100%:</strong> Zero fețe filmate intenționat fără acord. Orice invadare a spațiului privat este pedepsită.</li>
+                <li><strong>3. TOLERANȚĂ ZERO:</strong> Orice fraudă duce la ban permanent pe dispozitiv și blocarea fondurilor.</li>
                 <li><strong>4. RESPONSABILITATE:</strong> Ești 100% responsabil legal pentru conținutul pe care îl transmiți în aplicație.</li>
             </ul>
         </div>
@@ -38,7 +38,7 @@
             <label for="tc-checkbox" class="custom-label">Am citit și accept condițiile. Îmi asum responsabilitatea.</label>
         </div>
         
-        <input type="text" class="key-input" id="access-key" placeholder="Access Key (Ex: 123456)">
+        <input type="text" class="key-input" id="access-key" placeholder="Access Key">
         <button class="btn-main disabled" id="btn-accept" onclick="startBootSequence()">Accept și Decriptez</button>
     </div>
 
@@ -53,25 +53,25 @@
         <div class="tutorial-card active" id="tut-1">
             <i class="fas fa-satellite-dish tut-icon"></i>
             <h2>1. Radarul și Harta</h2>
-            <p>Harta urbană îți arată poziția exactă. Lansează Radarul Onyx pentru a scana zona de contracte sau pentru a plasa tu o cerere de inteligență.</p>
+            <p>Harta urbană îți arată poziția exactă. Lansează Radarul Onyx pentru a scana zona de contracte sau pentru a plasa tu o cerere de inteligență oriunde în oraș.</p>
             <button class="btn-main" onclick="nextTutorial(2)">Următorul</button>
         </div>
         <div class="tutorial-card" id="tut-2">
             <i class="fas fa-crosshairs tut-icon"></i>
             <h2>2. Bursa de Contracte</h2>
-            <p>Apasă pe oriunde pe hartă ca să lansezi un contract și să oferi VV Coins. Sau accesează lista de misiuni și acceptă unul activ.</p>
+            <p>Apasă pe oriunde pe hartă ca să lansezi un contract și să oferi VV Coins. Sau accesează lista de misiuni și fii primul care acceptă un contract activ.</p>
             <button class="btn-main" onclick="nextTutorial(3)">Următorul</button>
         </div>
         <div class="tutorial-card" id="tut-3">
             <i class="fas fa-camera tut-icon"></i>
             <h2>3. Camera VV PROOF</h2>
-            <p>Singurul mod de a trimite dovezi este prin camera VV, care aplică automat un watermark securizat cu data și ora exactă.</p>
+            <p>Aplicația blochează galeria foto. Singurul mod de a trimite dovezi este prin camera VV, care aplică automat un watermark securizat cu data și ora exactă.</p>
             <button class="btn-main" onclick="nextTutorial(4)">Următorul</button>
         </div>
         <div class="tutorial-card" id="tut-4">
             <i class="fas fa-wallet tut-icon"></i>
             <h2>4. Profit și Retragere</h2>
-            <p>Fiecare misiune aprobată îți bagă VV Coins în cont. Adună VV pentru a debloca statutul ONYX sau conversia în LEI.</p>
+            <p>Fiecare misiune aprobată îți bagă VV Coins în cont. Adună VV pentru a debloca statutul ONYX sau pentru conversie în LEI la lansarea oficială.</p>
             <button class="btn-main" onclick="finishTutorial()">Începe Misiunea</button>
         </div>
     </div>
@@ -94,7 +94,7 @@
             </div>
         </div>
 
-        <div id="profile-screen">
+        <div id="profile-screen" style="display:none;">
             <div class="profile-header">
                 <div class="profile-title" id="profile-main-name">...</div>
                 <div class="settings-icon" onclick="openSettings()"><i class="fas fa-fingerprint"></i></div>
@@ -107,7 +107,7 @@
             </div>
 
             <div class="locked-value-container">
-                <div class="locked-value-icon"><i class="fas fa-lock"></i></div>
+                <div class="locked-value-icon"><i class="fas fa-fingerprint"></i></div>
                 <div class="value-col" style="align-items: flex-start;">
                     <span class="value-label">Balanță</span>
                     <span class="value-number" style="color: #D4AF37;"><span id="profile-vv-val">...</span> VV</span>
@@ -138,18 +138,18 @@
     <div id="feedModal" style="display: none; position: fixed; inset: 0; z-index: 100000; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px);">
         <div style="background: rgba(10, 10, 12, 0.95); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; width: 85%; max-width: 360px; text-align: center;">
             <div style="color: #fff; font-size: 16px; text-transform: uppercase; margin-bottom: 15px; font-weight: 900; letter-spacing: 2px;">REALITY IS BACK.</div>
-            <div style="color: #0A84FF; font-size: 18px; font-weight: 900; margin-bottom: 25px;">VV 1.0 SOON</div>
+            <div style="color: #0A84FF; font-size: 18px; font-weight: 900; margin-bottom: 25px; letter-spacing: 2px;">VV 1.0 SOON</div>
             <div style="color: #8e8e93; font-size: 13px; line-height: 1.6; text-align: left; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 25px;">
                 <span style="color: #fff; font-weight: 800;"><i class="fas fa-stream"></i> GLOBAL FEED</span><br>
-                Vezi atmosfera orașului. Fără filtre, fără fake-uri. Pură realitate urbană.<br><br>
+                Vezi atmosfera orașului. Fără filtre, fără fake-uri. Pură realitate urbană, livrată de agenți direct la tine pe ecran.<br><br>
                 <span style="color: #D4AF37; font-weight: 800;"><i class="fas fa-university"></i> THE CITY VAULT</span><br>
-                Descoperă ce e nou în oraș. Locațiile premium plasează misiuni cu recompense.
+                Descoperă ce e nou în orașul tău. Locațiile premium pot plasa evenimente sau misiuni oficiale cu recompense masive.
             </div>
-            <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch" style="background:transparent; border:1px solid rgba(255,255,255,0.1); color:#8e8e93;">ÎNCHIDE</button>
+            <button onclick="document.getElementById('feedModal').style.display = 'none';" class="btn-launch" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #8e8e93;">ÎNCHIDE</button>
         </div>
     </div>
 
-    <div class="sheet-modal" id="settings-modal"><div class="sheet-content"><h2 style="color:#fff; margin-bottom:20px;">Setări</h2><button class="btn-launch" onclick="logoutAgent()" style="background: rgba(255,59,48,0.1); color:#ff3b30; border:1px solid rgba(255,59,48,0.3);">DECONECTARE</button><button class="btn-launch" style="background:transparent; color:#8e8e93; border:1px solid rgba(255,255,255,0.1); margin-top:10px;" onclick="closeModal('settings-modal')">ÎNCHIDE</button></div></div>
+    <div class="sheet-modal" id="settings-modal"><div class="sheet-content"><h2 style="color:#fff; margin-bottom:20px;">Setări Sistem</h2><button class="btn-launch" onclick="logoutAgent()" style="background: rgba(255,59,48,0.1); color:#ff3b30; border: 1px solid rgba(255,59,48,0.3);">DECONECTARE</button><button class="btn-launch" style="background:transparent; color:#8e8e93; border:1px solid rgba(255,255,255,0.1); margin-top:10px;" onclick="closeModal('settings-modal')">ÎNCHIDE</button></div></div>
     
     <div class="sheet-modal" id="feedback-modal"><div class="sheet-content"><h2 style="color:#fff; margin-bottom:5px;">Suport VVTeam</h2><textarea id="feedback-msg-input" class="vv-input" style="height: 100px; margin-bottom: 25px;" placeholder="Scrie mesajul tău..."></textarea><button class="btn-launch" onclick="sendFeedback()">TRIMITE MESAJUL</button><button class="btn-launch" style="background:transparent; border:1px solid rgba(255,255,255,0.1); color:#8e8e93; margin-top:12px;" onclick="closeModal('feedback-modal')">ÎNCHIDE</button></div></div>
 
@@ -162,13 +162,21 @@
     <div class="sheet-modal" id="tips-modal"><div class="sheet-content"><h2 style="color:#fff; margin-bottom:25px;">Confirmare Plată</h2><div class="reward-group"><div class="reward-btn active" id="tip-btn-0" onclick="selectTip(0)">FĂRĂ</div><div class="reward-btn" id="tip-btn-5" onclick="selectTip(5)">5 VV</div><div class="reward-btn" id="tip-btn-10" onclick="selectTip(10)">10 VV</div></div><input type="number" id="custom-tip" class="vv-input" style="margin-bottom:30px;" placeholder="Sumă VV (Opțional)"><button class="btn-launch" onclick="finalizeApprovalWithTips()">TRIMITE PLATA</button></div></div>
 
     <div id="camera-screen" style="display:none; position:fixed; inset:0; background:#000; z-index:999999; flex-direction:column;">
-        <div class="cam-header" style="display:flex; justify-content:space-between; padding:20px;"><div onclick="closeCamera()" style="cursor:pointer;"><i class="fas fa-times" style="font-size:24px; color:#fff;"></i></div><div style="color:#fff; font-weight:700;">VV PROOF</div><div style="width:24px;"></div></div>
-        <div class="cam-viewfinder" style="flex:1; background:#111; overflow:hidden;"><video id="real-camera-video" style="width:100%; height:100%; object-fit:cover;" autoplay playsinline muted></video></div>
-        <div class="cam-controls" id="shutter-container" style="padding:40px; display:flex; justify-content:center;"><div class="shutter-btn" onclick="takePicture()" style="width:70px; height:70px; border-radius:50%; background:#fff; border:5px solid rgba(255,255,255,0.3); cursor:pointer;"></div></div>
-        <div id="post-photo-menu" style="display:none; padding:30px; background:#111;">
-            <textarea id="photo-msg" style="width:100%; padding:15px; border-radius:10px; background:#222; border:none; color:#fff; margin-bottom:15px;" placeholder="Adaugă detalii..."></textarea>
-            <button id="send-btn" onclick="uploadPhotoToCEO()" style="width:100%; padding:15px; border-radius:10px; background:#fff; color:#000; font-weight:bold; border:none; margin-bottom:10px;">TRIMITE RAPORT</button>
-            <button onclick="retakePhoto()" style="width:100%; padding:15px; border-radius:10px; background:transparent; color:#888; border:1px solid #444;">REFĂ POZA</button>
+        <div class="cam-header" style="display:flex; justify-content:space-between; padding:20px; z-index:10;">
+            <div onclick="closeCamera()" style="cursor:pointer;"><i class="fas fa-times" style="font-size:24px; color:#fff;"></i></div>
+            <div style="color:#fff; font-weight:700; letter-spacing:1px;">VV PROOF</div>
+            <div style="width:24px;"></div>
+        </div>
+        <div class="cam-viewfinder" style="flex:1; background:#111; overflow:hidden; position:relative;">
+            <video id="real-camera-video" style="width:100%; height:100%; object-fit:cover;" autoplay playsinline muted></video>
+        </div>
+        <div class="cam-controls" id="shutter-container" style="padding:40px; display:flex; justify-content:center; background:#000; z-index:10;">
+            <div class="shutter-btn" onclick="takePicture()" style="width:70px; height:70px; border-radius:50%; background:#fff; border:5px solid rgba(255,255,255,0.3); cursor:pointer;"></div>
+        </div>
+        <div id="post-photo-menu" style="display:none; padding:30px; background:#111; z-index:10;">
+            <textarea id="photo-msg" style="width:100%; padding:15px; border-radius:10px; background:#222; border:none; color:#fff; margin-bottom:15px; font-family:sans-serif;" placeholder="Adaugă detalii..."></textarea>
+            <button id="send-btn" onclick="uploadPhotoToCEO()" style="width:100%; padding:15px; border-radius:10px; background:#fff; color:#000; font-weight:bold; border:none; margin-bottom:10px; cursor:pointer;">TRIMITE RAPORT</button>
+            <button onclick="retakePhoto()" style="width:100%; padding:15px; border-radius:10px; background:transparent; color:#888; border:1px solid #444; cursor:pointer; font-weight:bold;">REFĂ POZA</button>
         </div>
     </div>
 
