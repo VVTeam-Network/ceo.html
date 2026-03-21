@@ -395,16 +395,54 @@ body {
     margin-right: 6px;
 }
 
-/* ACTION HUB — fixat deasupra barei de jos, responsive */
-.action-hub {
+/* ACTION SIDEBAR — grup fix dreapta, camera jos ca hero button */
+.action-hub { display: none; } /* păstrat pentru compatibilitate */
+
+.action-sidebar {
     position: fixed;
-    bottom: calc(72px + 15px); /* înălțimea dock-ului + distanță */
-    right: 16px;
+    bottom: calc(72px + 20px);
+    right: 15px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
+}
+
+/* MARKER CLUSTER custom styling */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+    background-clip: padding-box;
+}
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+    width: 34px;
+    height: 34px;
+    margin-left: 3px;
+    margin-top: 3px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, sans-serif;
+}
+.marker-cluster-small { width: 40px; height: 40px; }
+.marker-cluster-medium { width: 46px; height: 46px; }
+.marker-cluster-large { width: 52px; height: 52px; }
+.marker-cluster-large div {
+    background: rgba(212,175,55,0.2);
+    border-color: rgba(212,175,55,0.5);
+    color: #fff;
+    font-size: 13px;
 }
 
 .fab-btn {
