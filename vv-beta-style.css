@@ -168,9 +168,31 @@ body {
 .custom-checkbox {
     width: 22px;
     height: 22px;
-    accent-color: #fff;
+    accent-color: #000;
     cursor: pointer;
     flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.custom-checkbox:checked {
+    background: #fff;
+    border-color: #fff;
+}
+
+.custom-checkbox:checked::after {
+    content: "✓";
+    color: #000;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1;
 }
 
 .custom-label {
@@ -900,3 +922,53 @@ body {
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+/* ============================================
+   QUICK FILTER BAR
+   ============================================ */
+.quick-filter-bar {
+    position: absolute;
+    top: 110px;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    gap: 8px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    pointer-events: all;
+}
+
+.quick-filter-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-pill {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    user-select: none;
+}
+
+.filter-pill:active {
+    transform: scale(0.95);
+}
+
+.filter-pill.active {
+    background: rgba(255,255,255,0.92);
+    color: #000;
+    border-color: transparent;
+    box-shadow: 0 2px 12px rgba(255,255,255,0.15);
+}
