@@ -202,8 +202,8 @@ function initMap() {
         }
     });
 
-    // Click pe hartă → lansează contract
-    map.on('click', e => {
+    // Click pe hartă → Reverse Geocoding + lansează contract
+    map.on('click', async e => {
         if (targetMarker) map.removeLayer(targetMarker);
 
         const crosshairIcon = L.divIcon({
@@ -215,25 +215,151 @@ function initMap() {
 
         targetMarker = L.marker(e.latlng, { icon: crosshairIcon }).addTo(map);
 
+        // Popup loading
+        const loadingPopup = `
+            <div style="text-align:center; padding:4px; min-width:160px;">
+                <div style="font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:2px; font-weight:700;">SE SCANEAZĂ...</div>
+            </div>`;
+        targetMarker.bindPopup(loadingPopup, { closeButton: false, className: 'dark-popup' }).openPopup();
+
+        // Reverse Geocoding via Nominatim (gratuit, fără API key)
+        let locationName = 'Locație necunoscută';
+        try {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+                { headers: { 'Accept-Language': 'ro' } }
+            );
+            const data = await res.json();
+            if (data && data.address) {
+                locationName = data.address.road
+                    || data.address.pedestrian
+                    || data.address.neighbourhood
+                    || data.address.suburb
+                    || data.display_name
+                    || 'Locație necunoscută';
+            }
+        } catch (err) {
+            console.log('Geocoding err:', err);
+        }
+
         const popupContent = `
-            <div style="text-align:center; padding:4px; min-width:150px;">
-                <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:10px; font-weight:700; letter-spacing:2px;">ZONĂ ȚINTĂ</div>
+            <div style="text-align:center; padding:4px; min-width:160px;">
+                <div style="font-size:9px; color:rgba(255,255,255,0.35); margin-bottom:5px; font-weight:700; letter-spacing:2px;">ZONĂ ȚINTĂ</div>
+                <div style="font-size:13px; color:#fff; font-weight:800; margin-bottom:10px; line-height:1.3;">${locationName}</div>
                 <button onclick="map.closePopup(); openCreateMissionModal(${e.latlng.lat}, ${e.latlng.lng});"
                     style="background:rgba(255,255,255,0.92); color:#000; border:none; padding:11px 16px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%; letter-spacing:0.5px;">
                     LANSEAZĂ CONTRACT
                 </button>
             </div>`;
 
-        targetMarker.bindPopup(popupContent, {
-            closeButton: false,
-            className: 'dark-popup'
-        }).openPopup();
+        targetMarker.getPopup().setContent(popupContent);
     });
 
     // Încărcăm misiunile existente pe hartă
     loadMissionsOnMap();
 
+    // Încărcăm locațiile din București
+    loadBucharestVenues();
+
     setTimeout(() => { if (map) map.invalidateSize(); }, 400);
+}
+
+// ================= LOCAȚII BUCUREȘTI (Overpass API) =================
+async function loadBucharestVenues() {
+    if (!map) return;
+
+    const categories = [
+        {
+            label: 'Club / Nightlife',
+            emoji: '🎵',
+            color: 'rgba(138, 43, 226, 0.85)',
+            border: 'rgba(180, 100, 255, 0.6)',
+            query: `node["amenity"="nightclub"](44.35,25.95,44.52,26.22);`
+        },
+        {
+            label: 'Bar / Lounge',
+            emoji: '🍸',
+            color: 'rgba(10, 100, 200, 0.85)',
+            border: 'rgba(10, 132, 255, 0.6)',
+            query: `node["amenity"="bar"](44.35,25.95,44.52,26.22);`
+        },
+        {
+            label: 'Restaurant',
+            emoji: '🍽️',
+            color: 'rgba(200, 80, 30, 0.85)',
+            border: 'rgba(255, 120, 50, 0.6)',
+            query: `node["amenity"="restaurant"](44.35,25.95,44.52,26.22);`
+        },
+        {
+            label: 'Hotel',
+            emoji: '🏨',
+            color: 'rgba(20, 140, 80, 0.85)',
+            border: 'rgba(52, 199, 89, 0.5)',
+            query: `node["tourism"="hotel"](44.35,25.95,44.52,26.22);`
+        }
+    ];
+
+    for (const cat of categories) {
+        try {
+            const overpassQuery = `[out:json][timeout:15];(${cat.query});out body;`;
+            const res = await fetch('https://overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: overpassQuery
+            });
+            const data = await res.json();
+            if (!data.elements) continue;
+
+            const elements = data.elements.slice(0, 60);
+
+            elements.forEach(el => {
+                if (!el.lat || !el.lon) return;
+
+                const name = el.tags?.name || el.tags?.['name:ro'] || cat.label;
+                const address = el.tags?.['addr:street']
+                    ? `${el.tags['addr:street']}${el.tags['addr:housenumber'] ? ' ' + el.tags['addr:housenumber'] : ''}`
+                    : '';
+                const phone = el.tags?.phone || el.tags?.['contact:phone'] || '';
+                const opening = el.tags?.opening_hours || '';
+
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div style="
+                        background: ${cat.color};
+                        backdrop-filter: blur(10px);
+                        border: 1px solid ${cat.border};
+                        border-radius: 50%;
+                        width: 32px; height: 32px;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 13px;
+                        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+                        cursor: pointer;
+                    ">${cat.emoji}</div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const marker = L.marker([el.lat, el.lon], { icon }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="padding:4px; min-width:190px;">
+                        <div style="font-size:10px; color:rgba(255,255,255,0.35); margin-bottom:5px; letter-spacing:2px; font-weight:700;">${cat.label.toUpperCase()}</div>
+                        <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:8px; line-height:1.3;">${name}</div>
+                        ${address ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📍 ${address}</div>` : ''}
+                        ${opening ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">🕐 ${opening}</div>` : ''}
+                        ${phone ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:8px;">📞 ${phone}</div>` : ''}
+                        <button onclick="map.closePopup(); openCreateMissionModal(${el.lat}, ${el.lon});"
+                            style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%; margin-top:6px;">
+                            LANSEAZĂ CONTRACT AICI
+                        </button>
+                    </div>`, { closeButton: false, className: 'dark-popup' });
+            });
+
+        } catch (err) {
+            console.log(`Eroare încărcare ${cat.label}:`, err);
+        }
+    }
 }
 
 // ================= RADAR =================
