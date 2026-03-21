@@ -260,8 +260,38 @@ function initMap() {
     // Încărcăm misiunile existente pe hartă
     loadMissionsOnMap();
 
+    // Inițializăm cluster ÎNAINTE de venues
+    venueClusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 45,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            const size = count < 10 ? 38 : count < 30 ? 46 : 54;
+            return L.divIcon({
+                html: `<div style="
+                    width:${size}px; height:${size}px;
+                    background: rgba(5,5,7,0.9);
+                    backdrop-filter: blur(15px);
+                    -webkit-backdrop-filter: blur(15px);
+                    border: 1px solid rgba(212,175,55,0.6);
+                    border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    color: #D4AF37; font-size: 13px; font-weight: 900;
+                    font-family: -apple-system, sans-serif;
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.6);
+                ">${count}</div>`,
+                className: '',
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2]
+            });
+        }
+    });
+    map.addLayer(venueClusterGroup);
+
     // Încărcăm locațiile din București
-    loadBucharestVenues();
+    setTimeout(() => { loadBucharestVenues(); }, 800);
 
     setTimeout(() => { if (map) map.invalidateSize(); }, 400);
 }
@@ -304,41 +334,14 @@ const VENUE_CATEGORIES = {
     }
 };
 
-// Inițializare cluster la pornirea hărții
-function initClusterGroup() {
-    venueClusterGroup = L.markerClusterGroup({
-        maxClusterRadius: 45,
-        spiderfyOnMaxZoom: true,
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: true,
-        iconCreateFunction: function(cluster) {
-            const count = cluster.getChildCount();
-            const size = count < 10 ? 38 : count < 30 ? 46 : 54;
-            return L.divIcon({
-                html: `<div style="
-                    width:${size}px; height:${size}px;
-                    background: rgba(5,5,7,0.9);
-                    backdrop-filter: blur(15px);
-                    -webkit-backdrop-filter: blur(15px);
-                    border: 1px solid rgba(212,175,55,0.6);
-                    border-radius: 50%;
-                    display: flex; align-items: center; justify-content: center;
-                    color: #D4AF37; font-size: 13px; font-weight: 900;
-                    font-family: -apple-system, sans-serif;
-                    box-shadow: 0 2px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(212,175,55,0.1);
-                ">${count}</div>`,
-                className: '',
-                iconSize: [size, size],
-                iconAnchor: [size/2, size/2]
-            });
-        }
-    });
-    map.addLayer(venueClusterGroup);
-}
-
 // MOTOR PRINCIPAL — încarcă o categorie din Overpass și o afișează
 async function applyFilter(category) {
-    if (!map || !venueClusterGroup) return;
+    if (!map) return;
+    // Dacă clusterGroup nu e gata, așteptăm
+    if (!venueClusterGroup) {
+        setTimeout(() => applyFilter(category), 500);
+        return;
+    }
 
     // Update UI pastile
     currentCategory = category;
@@ -436,7 +439,6 @@ async function loadCategoryMarkers(catKey, cat, limit) {
 
 // Pornire inițială
 async function loadBucharestVenues() {
-    initClusterGroup();
     await applyFilter('all');
 }
 
