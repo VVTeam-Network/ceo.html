@@ -417,18 +417,25 @@ body {
     margin-right: 6px;
 }
 
-/* ACTION SIDEBAR — grup fix dreapta, camera jos ca hero button */
-.action-hub { display: none; } /* păstrat pentru compatibilitate */
+/* ACTION SIDEBAR — fix la milimetru deasupra dock-ului */
+.action-hub { display: none; }
 
 .action-sidebar {
     position: fixed;
-    bottom: calc(72px + 20px);
-    right: 15px;
-    z-index: 1000;
+    right: 16px;
+    bottom: calc(72px + 20px); /* dock height + 20px distanta */
+    z-index: 2000;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
+}
+
+/* Pe iPhone cu safe area (notch/home bar) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .action-sidebar {
+        bottom: calc(72px + 20px + env(safe-area-inset-bottom));
+    }
 }
 
 /* MARKER CLUSTER custom styling */
