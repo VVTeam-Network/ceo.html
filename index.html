@@ -23,7 +23,7 @@
 
 <!-- ========== SPLASH SCREEN ========== -->
 <div id="splash-screen">
-    <div class="vv-massive-logo">VV</div>
+    <div class="vv-massive-logo" style="letter-spacing: 18px; padding-left: 18px;">VV</div>
     <div class="glass-premium">PREMIUM BETA</div>
     <div class="slogan-text">THE ERA OF FAKE REALITY IS OVER</div>
 
@@ -109,6 +109,17 @@
 
         <div id="radar-banner">
             <i class="fas fa-gem radar-banner-icon"></i> RADAR ONYX ACTIV
+        </div>
+
+        <!-- QUICK FILTER BAR -->
+        <div class="quick-filter-bar" id="quick-filter-bar">
+            <div class="filter-pill active" id="filter-all" onclick="filterVenues('all')">Toate</div>
+            <div class="filter-pill" id="filter-nightlife" onclick="filterVenues('nightlife')">🎵 Nightlife</div>
+            <div class="filter-pill" id="filter-bar" onclick="filterVenues('bar')">🍸 Baruri</div>
+            <div class="filter-pill" id="filter-restaurant" onclick="filterVenues('restaurant')">🍽️ Resto</div>
+            <div class="filter-pill" id="filter-hotel" onclick="filterVenues('hotel')">🏨 Hoteluri</div>
+            <div class="filter-pill" id="filter-supermarket" onclick="filterVenues('supermarket')">🛒 Super</div>
+            <div class="filter-pill" id="filter-hypermarket" onclick="filterVenues('hypermarket')">📦 Jumbo</div>
         </div>
 
         <div class="action-sidebar" id="action-hub">
