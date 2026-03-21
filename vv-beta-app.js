@@ -266,31 +266,76 @@ function initMap() {
     setTimeout(() => { if (map) map.invalidateSize(); }, 400);
 }
 
-// ================= LOCAȚII BUCUREȘTI (Overpass API + Clustering) =================
+// ================= LOCAȚII BUCUREȘTI — FILTRARE + CLUSTERING =================
+
+// Variabile globale pentru venues
+let venueClusterGroup = null;
+let allVenueMarkers = []; // [{marker, category}]
+
+const VENUE_CATEGORIES = {
+    nightlife: {
+        label: 'Club / Nightlife', emoji: '🎵',
+        color: 'rgba(138,43,226,0.92)', border: 'rgba(180,100,255,0.8)',
+        size: 30, zIndex: 500, limit: 25,
+        query: `node["amenity"="nightclub"](around:5000,44.4325,26.1038);`
+    },
+    bar: {
+        label: 'Bar / Lounge', emoji: '🍸',
+        color: 'rgba(10,100,200,0.92)', border: 'rgba(10,132,255,0.8)',
+        size: 28, zIndex: 400, limit: 25,
+        query: `node["amenity"="bar"](around:5000,44.4325,26.1038);`
+    },
+    restaurant: {
+        label: 'Restaurant', emoji: '🍽️',
+        color: 'rgba(180,60,20,0.65)', border: 'rgba(255,100,40,0.4)',
+        size: 20, zIndex: 200, limit: 20,
+        query: `node["amenity"="restaurant"](around:5000,44.4325,26.1038);`
+    },
+    hotel: {
+        label: 'Hotel', emoji: '🏨',
+        color: 'rgba(20,120,60,0.65)', border: 'rgba(52,199,89,0.35)',
+        size: 20, zIndex: 200, limit: 15,
+        query: `node["tourism"="hotel"](around:5000,44.4325,26.1038);`
+    },
+    supermarket: {
+        label: 'Supermarket', emoji: '🛒',
+        color: 'rgba(30,120,180,0.85)', border: 'rgba(80,170,230,0.6)',
+        size: 26, zIndex: 300, limit: 40,
+        query: `node["shop"="supermarket"](around:5000,44.4325,26.1038);`
+    },
+    hypermarket: {
+        label: 'Hypermarket / Jumbo', emoji: '📦',
+        color: 'rgba(60,60,80,0.88)', border: 'rgba(150,150,180,0.5)',
+        size: 26, zIndex: 300, limit: 20,
+        query: `node["shop"="department_store"](around:5000,44.4325,26.1038);`
+    }
+};
+
 async function loadBucharestVenues() {
     if (!map) return;
 
-    // Cluster group glassmorphism
-    const clusterGroup = L.markerClusterGroup({
-        maxClusterRadius: 50,
+    // Inițializăm cluster group cu design VV
+    venueClusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 45,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
         iconCreateFunction: function(cluster) {
             const count = cluster.getChildCount();
-            const size = count < 10 ? 36 : count < 20 ? 42 : 50;
+            const size = count < 10 ? 38 : count < 30 ? 46 : 54;
             return L.divIcon({
                 html: `<div style="
                     width:${size}px; height:${size}px;
-                    background: rgba(255,255,255,0.1);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255,255,255,0.25);
+                    background: rgba(5,5,7,0.85);
+                    backdrop-filter: blur(15px);
+                    -webkit-backdrop-filter: blur(15px);
+                    border: 1px solid rgba(212,175,55,0.5);
                     border-radius: 50%;
                     display: flex; align-items: center; justify-content: center;
-                    color: #fff; font-size: 13px; font-weight: 800;
+                    color: #D4AF37; font-size: 13px; font-weight: 900;
                     font-family: -apple-system, sans-serif;
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.15);
+                    letter-spacing: -0.5px;
                 ">${count}</div>`,
                 className: '',
                 iconSize: [size, size],
@@ -299,56 +344,10 @@ async function loadBucharestVenues() {
         }
     });
 
-    // Prioritate: cluburi si baruri mai mari si mai vizibile
-    // Restaurante si hoteluri mai mici si mai transparente
-    const categories = [
-        {
-            label: 'Club / Nightlife',
-            emoji: '🎵',
-            color: 'rgba(138, 43, 226, 0.92)',
-            border: 'rgba(180, 100, 255, 0.8)',
-            size: 30,
-            fontSize: 13,
-            zIndex: 500,
-            limit: 30,
-            query: `node["amenity"="nightclub"](around:5000,44.4325,26.1038);`
-        },
-        {
-            label: 'Bar / Lounge',
-            emoji: '🍸',
-            color: 'rgba(10, 100, 200, 0.92)',
-            border: 'rgba(10, 132, 255, 0.8)',
-            size: 28,
-            fontSize: 12,
-            zIndex: 400,
-            limit: 30,
-            query: `node["amenity"="bar"](around:5000,44.4325,26.1038);`
-        },
-        {
-            label: 'Restaurant',
-            emoji: '🍽️',
-            color: 'rgba(180, 60, 20, 0.65)',
-            border: 'rgba(255, 100, 40, 0.4)',
-            size: 20,
-            fontSize: 10,
-            zIndex: 200,
-            limit: 25,
-            query: `node["amenity"="restaurant"](around:5000,44.4325,26.1038);`
-        },
-        {
-            label: 'Hotel',
-            emoji: '🏨',
-            color: 'rgba(20, 120, 60, 0.65)',
-            border: 'rgba(52, 199, 89, 0.35)',
-            size: 20,
-            fontSize: 10,
-            zIndex: 200,
-            limit: 15,
-            query: `node["tourism"="hotel"](around:5000,44.4325,26.1038);`
-        }
-    ];
+    allVenueMarkers = [];
 
-    for (const cat of categories) {
+    // Încărcăm toate categoriile
+    for (const [catKey, cat] of Object.entries(VENUE_CATEGORIES)) {
         try {
             const overpassQuery = `[out:json][timeout:15];(${cat.query});out body;`;
             const res = await fetch('https://overpass-api.de/api/interpreter', {
@@ -380,7 +379,7 @@ async function loadBucharestVenues() {
                         border-radius: 50%;
                         width: ${s}px; height: ${s}px;
                         display: flex; align-items: center; justify-content: center;
-                        font-size: ${cat.fontSize}px;
+                        font-size: ${Math.round(s*0.45)}px;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.35);
                         cursor: pointer;
                     ">${cat.emoji}</div>`,
@@ -389,7 +388,6 @@ async function loadBucharestVenues() {
                 });
 
                 const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex });
-                clusterGroup.addLayer(marker);
 
                 marker.bindPopup(`
                     <div style="padding:4px; min-width:190px;">
@@ -403,16 +401,41 @@ async function loadBucharestVenues() {
                             LANSEAZĂ CONTRACT AICI
                         </button>
                     </div>`, { closeButton: false, className: 'dark-popup' });
+
+                allVenueMarkers.push({ marker, category: catKey });
+                venueClusterGroup.addLayer(marker);
             });
 
         } catch (err) {
-            console.log(`Eroare încărcare ${cat.label}:`, err);
+            console.log(`Eroare ${cat.label}:`, err);
         }
     }
 
-    // Adăugăm toate markerele pe hartă prin cluster
-    map.addLayer(clusterGroup);
+    map.addLayer(venueClusterGroup);
 }
+
+// ================= FILTER VENUES =================
+function filterVenues(category) {
+    if (!venueClusterGroup) return;
+
+    // Update pills UI
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    const activePill = document.getElementById('filter-' + category);
+    if (activePill) activePill.classList.add('active');
+
+    // Clear cluster
+    venueClusterGroup.clearLayers();
+
+    // Re-adaugă markere filtrate
+    allVenueMarkers.forEach(({ marker, category: cat }) => {
+        if (category === 'all' || category === cat) {
+            venueClusterGroup.addLayer(marker);
+        }
+    });
+
+    showToast(category === 'all' ? 'Toate locațiile' : VENUE_CATEGORIES[category]?.label || category);
+}
+
 
 // ================= RADAR =================
 function toggleRadar() {
