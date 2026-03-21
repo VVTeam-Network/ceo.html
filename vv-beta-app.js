@@ -266,9 +266,38 @@ function initMap() {
     setTimeout(() => { if (map) map.invalidateSize(); }, 400);
 }
 
-// ================= LOCAȚII BUCUREȘTI (Overpass API) =================
+// ================= LOCAȚII BUCUREȘTI (Overpass API + Clustering) =================
 async function loadBucharestVenues() {
     if (!map) return;
+
+    // Cluster group glassmorphism
+    const clusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            const size = count < 10 ? 36 : count < 20 ? 42 : 50;
+            return L.divIcon({
+                html: `<div style="
+                    width:${size}px; height:${size}px;
+                    background: rgba(255,255,255,0.1);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255,255,255,0.25);
+                    border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    color: #fff; font-size: 13px; font-weight: 800;
+                    font-family: -apple-system, sans-serif;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+                ">${count}</div>`,
+                className: '',
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2]
+            });
+        }
+    });
 
     // Prioritate: cluburi si baruri mai mari si mai vizibile
     // Restaurante si hoteluri mai mici si mai transparente
@@ -281,7 +310,7 @@ async function loadBucharestVenues() {
             size: 30,
             fontSize: 13,
             zIndex: 500,
-            limit: 60,
+            limit: 30,
             query: `node["amenity"="nightclub"](around:5000,44.4325,26.1038);`
         },
         {
@@ -292,7 +321,7 @@ async function loadBucharestVenues() {
             size: 28,
             fontSize: 12,
             zIndex: 400,
-            limit: 60,
+            limit: 30,
             query: `node["amenity"="bar"](around:5000,44.4325,26.1038);`
         },
         {
@@ -303,7 +332,7 @@ async function loadBucharestVenues() {
             size: 20,
             fontSize: 10,
             zIndex: 200,
-            limit: 40,
+            limit: 25,
             query: `node["amenity"="restaurant"](around:5000,44.4325,26.1038);`
         },
         {
@@ -314,7 +343,7 @@ async function loadBucharestVenues() {
             size: 20,
             fontSize: 10,
             zIndex: 200,
-            limit: 30,
+            limit: 15,
             query: `node["tourism"="hotel"](around:5000,44.4325,26.1038);`
         }
     ];
@@ -359,7 +388,8 @@ async function loadBucharestVenues() {
                     iconAnchor: [s/2, s/2]
                 });
 
-                const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex }).addTo(map);
+                const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex });
+                clusterGroup.addLayer(marker);
 
                 marker.bindPopup(`
                     <div style="padding:4px; min-width:190px;">
@@ -379,6 +409,9 @@ async function loadBucharestVenues() {
             console.log(`Eroare încărcare ${cat.label}:`, err);
         }
     }
+
+    // Adăugăm toate markerele pe hartă prin cluster
+    map.addLayer(clusterGroup);
 }
 
 // ================= RADAR =================
