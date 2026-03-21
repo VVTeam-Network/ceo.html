@@ -276,28 +276,28 @@ async function loadBucharestVenues() {
             emoji: '🎵',
             color: 'rgba(138, 43, 226, 0.85)',
             border: 'rgba(180, 100, 255, 0.6)',
-            query: `node["amenity"="nightclub"](44.35,25.95,44.52,26.22);`
+            query: `node["amenity"="nightclub"](around:5000,44.4325,26.1038);`
         },
         {
             label: 'Bar / Lounge',
             emoji: '🍸',
             color: 'rgba(10, 100, 200, 0.85)',
             border: 'rgba(10, 132, 255, 0.6)',
-            query: `node["amenity"="bar"](44.35,25.95,44.52,26.22);`
+            query: `node["amenity"="bar"](around:5000,44.4325,26.1038);`
         },
         {
             label: 'Restaurant',
             emoji: '🍽️',
             color: 'rgba(200, 80, 30, 0.85)',
             border: 'rgba(255, 120, 50, 0.6)',
-            query: `node["amenity"="restaurant"](44.35,25.95,44.52,26.22);`
+            query: `node["amenity"="restaurant"](around:5000,44.4325,26.1038);`
         },
         {
             label: 'Hotel',
             emoji: '🏨',
             color: 'rgba(20, 140, 80, 0.85)',
             border: 'rgba(52, 199, 89, 0.5)',
-            query: `node["tourism"="hotel"](44.35,25.95,44.52,26.22);`
+            query: `node["tourism"="hotel"](around:5000,44.4325,26.1038);`
         }
     ];
 
