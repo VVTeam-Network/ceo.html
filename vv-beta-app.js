@@ -270,33 +270,51 @@ function initMap() {
 async function loadBucharestVenues() {
     if (!map) return;
 
+    // Prioritate: cluburi si baruri mai mari si mai vizibile
+    // Restaurante si hoteluri mai mici si mai transparente
     const categories = [
         {
             label: 'Club / Nightlife',
             emoji: '🎵',
-            color: 'rgba(138, 43, 226, 0.85)',
-            border: 'rgba(180, 100, 255, 0.6)',
+            color: 'rgba(138, 43, 226, 0.92)',
+            border: 'rgba(180, 100, 255, 0.8)',
+            size: 30,
+            fontSize: 13,
+            zIndex: 500,
+            limit: 60,
             query: `node["amenity"="nightclub"](around:5000,44.4325,26.1038);`
         },
         {
             label: 'Bar / Lounge',
             emoji: '🍸',
-            color: 'rgba(10, 100, 200, 0.85)',
-            border: 'rgba(10, 132, 255, 0.6)',
+            color: 'rgba(10, 100, 200, 0.92)',
+            border: 'rgba(10, 132, 255, 0.8)',
+            size: 28,
+            fontSize: 12,
+            zIndex: 400,
+            limit: 60,
             query: `node["amenity"="bar"](around:5000,44.4325,26.1038);`
         },
         {
             label: 'Restaurant',
             emoji: '🍽️',
-            color: 'rgba(200, 80, 30, 0.85)',
-            border: 'rgba(255, 120, 50, 0.6)',
+            color: 'rgba(180, 60, 20, 0.65)',
+            border: 'rgba(255, 100, 40, 0.4)',
+            size: 20,
+            fontSize: 10,
+            zIndex: 200,
+            limit: 40,
             query: `node["amenity"="restaurant"](around:5000,44.4325,26.1038);`
         },
         {
             label: 'Hotel',
             emoji: '🏨',
-            color: 'rgba(20, 140, 80, 0.85)',
-            border: 'rgba(52, 199, 89, 0.5)',
+            color: 'rgba(20, 120, 60, 0.65)',
+            border: 'rgba(52, 199, 89, 0.35)',
+            size: 20,
+            fontSize: 10,
+            zIndex: 200,
+            limit: 30,
             query: `node["tourism"="hotel"](around:5000,44.4325,26.1038);`
         }
     ];
@@ -311,7 +329,7 @@ async function loadBucharestVenues() {
             const data = await res.json();
             if (!data.elements) continue;
 
-            const elements = data.elements.slice(0, 60);
+            const elements = data.elements.slice(0, cat.limit);
 
             elements.forEach(el => {
                 if (!el.lat || !el.lon) return;
@@ -323,24 +341,25 @@ async function loadBucharestVenues() {
                 const phone = el.tags?.phone || el.tags?.['contact:phone'] || '';
                 const opening = el.tags?.opening_hours || '';
 
+                const s = cat.size;
                 const icon = L.divIcon({
                     className: '',
                     html: `<div style="
                         background: ${cat.color};
-                        backdrop-filter: blur(10px);
+                        backdrop-filter: blur(8px);
                         border: 1px solid ${cat.border};
                         border-radius: 50%;
-                        width: 32px; height: 32px;
+                        width: ${s}px; height: ${s}px;
                         display: flex; align-items: center; justify-content: center;
-                        font-size: 13px;
-                        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+                        font-size: ${cat.fontSize}px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
                         cursor: pointer;
                     ">${cat.emoji}</div>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    iconSize: [s, s],
+                    iconAnchor: [s/2, s/2]
                 });
 
-                const marker = L.marker([el.lat, el.lon], { icon }).addTo(map);
+                const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex }).addTo(map);
 
                 marker.bindPopup(`
                     <div style="padding:4px; min-width:190px;">
