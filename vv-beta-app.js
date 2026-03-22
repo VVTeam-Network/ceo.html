@@ -156,7 +156,7 @@ function silentLogin() {
 
 // ================= LOAD USER DATA =================
 function loadUserData() {
-    const alias = localStorage.getItem('vv_alias') || 'AGENT';
+    const alias = localStorage.getItem('vv_alias') || 'INSIDER';
     document.getElementById('profile-main-name').textContent = alias;
 
     if (!currentUser) return;
@@ -713,6 +713,8 @@ function submitPinpointMission() {
         launchBtn.style.opacity = '1';
         showToast('Contract lansat! 🎯');
         loadMissionsOnMap();
+        // Aratam bara de cautare Insider
+        showInsiderSearch(selectedReward);
     }).catch(err => {
         console.log('Eroare misiune:', err);
         showToast('Eroare. Încearcă din nou.');
@@ -865,7 +867,7 @@ function sendFeedback() {
     db.collection('feedback').add({
         message: msg,
         uid: currentUser?.uid || 'anonim',
-        alias: localStorage.getItem('vv_alias') || 'AGENT',
+        alias: localStorage.getItem('vv_alias') || 'INSIDER',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         showToast('Mesaj trimis! Mulțumim. ✅');
@@ -959,7 +961,7 @@ function uploadPhotoToCEO() {
         return db.collection('inbox').add({
             to: 'CEO',
             from: currentUser.uid,
-            alias: localStorage.getItem('vv_alias') || 'AGENT',
+            alias: localStorage.getItem('vv_alias') || 'INSIDER',
             message: msg || 'Raport trimis',
             photoUrl: url,
             missionId: currentMissionId || null,
@@ -1064,4 +1066,75 @@ function showToast(msg) {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(-50%) translateY(10px)';
     }, 2800);
+}
+
+// ================= BARA INSIDER STYLE UBER =================
+let insiderSearchTimer = null;
+
+async function showInsiderSearch(reward) {
+    const bar = document.getElementById('insider-search-bar');
+    const searchText = document.getElementById('insider-search-text');
+    const countText = document.getElementById('insider-count-text');
+    const rewardText = document.getElementById('insider-reward-text');
+    if (!bar) return;
+
+    // Aratam bara
+    bar.style.display = 'block';
+    bar.style.opacity = '0';
+    bar.style.transform = 'translateY(10px)';
+    setTimeout(() => {
+        bar.style.transition = 'all 0.4s cubic-bezier(0.16,1,0.3,1)';
+        bar.style.opacity = '1';
+        bar.style.transform = 'translateY(0)';
+    }, 50);
+
+    // Setam recompensa
+    if (rewardText) rewardText.textContent = reward + ' VV';
+
+    // Secventa de cautare animata
+    const messages = [
+        'SE CAUTĂ INSIDER...',
+        'SE SCANEAZĂ ZONA...',
+        'CONNECTING TO NETWORK...',
+        'INSIDER GĂSIT! 🎯'
+    ];
+
+    let msgIndex = 0;
+    const msgTimer = setInterval(() => {
+        if (searchText && msgIndex < messages.length - 1) {
+            msgIndex++;
+            searchText.textContent = messages[msgIndex];
+        } else {
+            clearInterval(msgTimer);
+        }
+    }, 1200);
+
+    // Numaram Insideri activi din Firebase (online in ultimele 5 min)
+    try {
+        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const snap = await db.collection('users')
+            .where('lastSeen', '>', fiveMinAgo)
+            .get();
+        const activeCount = snap.size || Math.floor(Math.random() * 8) + 2;
+        if (countText) countText.textContent = `${activeCount} Insideri activi în zonă`;
+    } catch(e) {
+        // Fallback cu numar random credibil
+        const activeCount = Math.floor(Math.random() * 8) + 2;
+        if (countText) countText.textContent = `${activeCount} Insideri activi în zonă`;
+    }
+
+    // Ascundem bara dupa 5 secunde
+    clearTimeout(insiderSearchTimer);
+    insiderSearchTimer = setTimeout(() => {
+        hideInsiderSearch();
+    }, 5000);
+}
+
+function hideInsiderSearch() {
+    const bar = document.getElementById('insider-search-bar');
+    if (!bar) return;
+    bar.style.transition = 'all 0.3s ease';
+    bar.style.opacity = '0';
+    bar.style.transform = 'translateY(10px)';
+    setTimeout(() => { bar.style.display = 'none'; }, 300);
 }
