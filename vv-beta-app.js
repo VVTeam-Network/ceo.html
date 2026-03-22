@@ -906,21 +906,69 @@ function loadMissionsOnMap() {
 
                     const marker = L.marker([m.lat, m.lng], { icon, zIndexOffset: 1000 }).addTo(map);
 
-                    marker.bindPopup(`
-                        <div style="padding:4px; min-width:190px;">
-                            <div style="font-size:10px; color:rgba(255,59,48,0.8); margin-bottom:6px; letter-spacing:2px; font-weight:700;">CONTRACT ACTIV</div>
-                            <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:8px;">${m.description || 'Misiune'}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                                <span style="font-size:13px; color:#fff; font-weight:900;">${m.reward} VV</span>
-                                ${minsLeft !== null ? `<span style="font-size:11px; color:rgba(255,255,255,0.4);">⏱ ${minsLeft} min</span>` : ''}
-                            </div>
-                            <button onclick="map.closePopup(); acceptMission('${doc.id}');"
-                                style="background:rgba(255,255,255,0.92); color:#000; border:none;
-                                padding:12px; border-radius:10px; font-weight:800;
-                                font-size:12px; cursor:pointer; width:100%;">
-                                ACCEPTĂ MISIUNEA
-                            </button>
-                        </div>`, { closeButton: false, className: 'dark-popup' });
+                    // Logica diferita pentru Creator vs Insider
+                    const isMyMission = m.createdBy === currentUser?.uid;
+
+                    if (isMyMission) {
+                        // CREATOR VIEW — vezi statusul misiunii tale
+                        let creatorContent = '';
+
+                        if (m.status === 'open') {
+                            creatorContent = `
+                                <div style="padding:4px; min-width:200px;">
+                                    <div style="font-size:10px; color:#D4AF37; margin-bottom:5px; letter-spacing:2px; font-weight:700;">MISIUNEA TA</div>
+                                    <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:6px;">${m.description || 'Misiune'}</div>
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                                        <span style="font-size:12px; color:rgba(255,255,255,0.5);">Recompensă</span>
+                                        <span style="font-size:13px; color:#fff; font-weight:900;">${m.reward} VV</span>
+                                    </div>
+                                    <div style="background:rgba(52,199,89,0.1); border:1px solid rgba(52,199,89,0.2); border-radius:8px; padding:8px; text-align:center; margin-bottom:10px;">
+                                        <span style="font-size:11px; color:#34c759;">⏳ Se caută Insider...</span>
+                                    </div>
+                                    <button onclick="map.closePopup(); cancelMyMission('${doc.id}', ${m.reward});"
+                                        style="background:rgba(255,59,48,0.1); color:#ff3b30;
+                                        border:1px solid rgba(255,59,48,0.3);
+                                        padding:10px; border-radius:10px; font-weight:700;
+                                        font-size:12px; cursor:pointer; width:100%;">
+                                        ANULEAZĂ & RECUPEREAZĂ ${m.reward} VV
+                                    </button>
+                                </div>`;
+                        } else {
+                            // Misiunea e completata — vezi poza
+                            creatorContent = `
+                                <div style="padding:4px; min-width:200px;">
+                                    <div style="font-size:10px; color:#34c759; margin-bottom:5px; letter-spacing:2px; font-weight:700;">✅ MISIUNE COMPLETATĂ</div>
+                                    <div style="font-size:13px; color:#fff; font-weight:800; margin-bottom:10px;">${m.description || 'Misiune'}</div>
+                                    ${m.photoUrl ? `<img src="${m.photoUrl}" style="width:100%; border-radius:8px; margin-bottom:8px;" />` : ''}
+                                    <button onclick="map.closePopup(); openMissionResult('${doc.id}');"
+                                        style="background:rgba(255,255,255,0.9); color:#000; border:none;
+                                        padding:10px; border-radius:10px; font-weight:800;
+                                        font-size:12px; cursor:pointer; width:100%;">
+                                        VEZ VV PROOF COMPLET
+                                    </button>
+                                </div>`;
+                        }
+
+                        marker.bindPopup(creatorContent, { closeButton: false, className: 'dark-popup' });
+
+                    } else {
+                        // INSIDER VIEW — accepta misiunea
+                        marker.bindPopup(`
+                            <div style="padding:4px; min-width:190px;">
+                                <div style="font-size:10px; color:rgba(255,59,48,0.8); margin-bottom:6px; letter-spacing:2px; font-weight:700;">CONTRACT ACTIV</div>
+                                <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:8px;">${m.description || 'Misiune'}</div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                    <span style="font-size:13px; color:#fff; font-weight:900;">${m.reward} VV</span>
+                                    ${minsLeft !== null ? `<span style="font-size:11px; color:rgba(255,255,255,0.4);">⏱ ${minsLeft} min</span>` : ''}
+                                </div>
+                                <button onclick="map.closePopup(); acceptMission('${doc.id}');"
+                                    style="background:rgba(255,255,255,0.92); color:#000; border:none;
+                                    padding:12px; border-radius:10px; font-weight:800;
+                                    font-size:12px; cursor:pointer; width:100%;">
+                                    ACCEPTĂ MISIUNEA
+                                </button>
+                            </div>`, { closeButton: false, className: 'dark-popup' });
+                    }
 
                     missionMarkers[doc.id] = marker;
                 }
@@ -1063,6 +1111,108 @@ function openMissionsList() {
         .catch(() => {
             container.innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:30px;">Eroare de conexiune.</div>';
         });
+}
+
+// ================= ANULEAZĂ PROPRIA MISIUNE (cu refund) =================
+async function cancelMyMission(missionId, reward) {
+    if (!currentUser) return;
+    if (!confirm(`Anulezi misiunea și recuperezi ${reward} VV?`)) return;
+
+    try {
+        const batch = db.batch();
+
+        // Stergem misiunea
+        batch.delete(db.collection('missions').doc(missionId));
+
+        // Refund VV Coins
+        batch.update(db.collection('users').doc(currentUser.uid), {
+            balance: firebase.firestore.FieldValue.increment(reward)
+        });
+
+        await batch.commit();
+
+        // Scoatem markerul de pe harta
+        if (missionMarkers[missionId]) {
+            map.removeLayer(missionMarkers[missionId]);
+            delete missionMarkers[missionId];
+        }
+
+        showToast(`✅ Misiune anulată! +${reward} VV recuperați.`);
+    } catch(e) {
+        showToast('Eroare la anulare: ' + e.message);
+    }
+}
+
+// ================= VEZI REZULTATUL MISIUNII (Creator View) =================
+async function openMissionResult(missionId) {
+    try {
+        // Cautam poza in inbox trimisa pentru aceasta misiune
+        const snap = await db.collection('inbox')
+            .where('missionId', '==', missionId)
+            .limit(1).get();
+
+        const modal = document.createElement('div');
+        modal.id = 'mission-result-modal';
+        modal.style.cssText = `
+            position:fixed; inset:0; z-index:99998;
+            background:rgba(0,0,0,0.85);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            display:flex; align-items:center; justify-content:center;
+        `;
+
+        let photoHtml = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:30px;">Poza se procesează...</div>';
+
+        if (!snap.empty) {
+            const data = snap.docs[0].data();
+            if (data.photoUrl) {
+                photoHtml = `
+                    <div style="position:relative;">
+                        <img src="${data.photoUrl}"
+                            style="width:100%; border-radius:12px; display:block;" />
+                        <div style="
+                            position:absolute; bottom:0; left:0; right:0;
+                            background:rgba(0,0,0,0.65);
+                            backdrop-filter:blur(8px);
+                            padding:10px 14px; border-radius:0 0 12px 12px;
+                        ">
+                            <div style="font-size:11px; color:#fff; font-weight:800;">VV PROOF</div>
+                            <div style="font-size:10px; color:rgba(255,255,255,0.5);">
+                                de ${data.alias || 'INSIDER'} · ${data.createdAt?.toDate().toLocaleString('ro-RO') || ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        modal.innerHTML = `
+            <div style="
+                background:rgba(10,10,14,0.98);
+                backdrop-filter:blur(30px);
+                -webkit-backdrop-filter:blur(30px);
+                border:1px solid rgba(255,255,255,0.1);
+                border-radius:24px;
+                padding:24px;
+                width:90%; max-width:360px;
+            ">
+                <div style="font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:3px; margin-bottom:8px;">VV PROOF</div>
+                <div style="font-size:16px; font-weight:800; color:#fff; margin-bottom:16px;">Rezultatul Misiunii</div>
+                ${photoHtml}
+                <button onclick="document.getElementById('mission-result-modal').remove();"
+                    style="width:100%; margin-top:16px; padding:14px; border-radius:12px;
+                    background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.5);
+                    border:1px solid rgba(255,255,255,0.08);
+                    font-weight:700; font-size:13px; cursor:pointer;">
+                    ÎNCHIDE
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    } catch(e) {
+        showToast('Eroare: ' + e.message);
+    }
 }
 
 // ================= ACCEPTĂ MISIUNEA =================
