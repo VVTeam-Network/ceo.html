@@ -1076,3 +1076,53 @@ html, body {
 #insider-search-bar[style*="flex"] {
     display: flex !important;
 }
+
+/* ============================================
+   FIX BARE ALBE + OVERLAY CENTRAT
+   ============================================ */
+
+/* Elimina bara alba de jos si dreapta Safari */
+html, body {
+    background-color: #050507 !important;
+    overscroll-behavior: none !important;
+}
+
+/* Umple toata zona vizibila inclusiv safe areas */
+#app-container {
+    background: #050507;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+#map-view {
+    background: #050507;
+    position: fixed;
+    inset: 0;
+    bottom: 0;
+}
+
+/* OVERLAY INSIDER — fix centrat pe ecran */
+#insider-search-bar {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: none;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 20000 !important;
+}
+
+/* GPU smooth pe animatiile radarului */
+#insider-search-bar > div:first-child {
+    will-change: opacity;
+    transform: translate3d(0,0,0);
+}
+
+#insider-search-bar > div:last-child {
+    will-change: transform, opacity;
+    transform: translate3d(0,0,0);
+}
