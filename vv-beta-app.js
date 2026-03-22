@@ -28,17 +28,29 @@ let capturedImageBlob = null;
 
 // ================= BOOT =================
 window.onload = () => {
+    // FIX iOS swipe back — previne gestul de back in Safari
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches[0].clientX < 20 || e.touches[0].clientX > window.innerWidth - 20) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Previne scroll accidental pe body
+    document.body.addEventListener('touchmove', function(e) {
+        if (e.target === document.body || e.target === document.documentElement) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
     const tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
     const accessKey = localStorage.getItem('vv_access_key');
     
-    // Dacă are cheie salvată și tutorialul e făcut → direct la hartă
     if (tutorialDone === 'DA' && accessKey) {
         document.getElementById('splash-screen').style.display = 'none';
         document.getElementById('tutorial-screen').style.display = 'none';
         showApp();
         silentLogin();
     } else {
-        // User nou sau deconectat → splash screen
         document.getElementById('splash-screen').style.display = 'flex';
     }
 };
@@ -766,8 +778,20 @@ function openMissionsList() {
 }
 
 // ================= ACCEPTĂ MISIUNEA =================
-function acceptMission(missionId) {
+async function acceptMission(missionId) {
     if (!currentUser) { showToast('Nu ești conectat!'); return; }
+
+    // Verificam ca nu e propria misiune
+    try {
+        const missionDoc = await db.collection('missions').doc(missionId).get();
+        if (missionDoc.exists && missionDoc.data().createdBy === currentUser.uid) {
+            showToast('❌ Nu poți accepta misiuni create de tine!');
+            return;
+        }
+    } catch(e) {
+        console.log('Eroare verificare misiune:', e);
+    }
+
     currentMissionId = missionId;
     closeModal('missions-list-modal');
     showToast('Misiune acceptată! Trimite dovada 📸');
@@ -1077,6 +1101,12 @@ async function showInsiderSearch(reward) {
     const countText = document.getElementById('insider-count-text');
     const rewardText = document.getElementById('insider-reward-text');
     if (!bar) return;
+
+    // Pozitionam bara corect deasupra dock-ului
+    const dockHeight = 72;
+    const safeArea = parseInt(getComputedStyle(document.documentElement)
+        .getPropertyValue('--safe-area-bottom') || '0');
+    bar.style.bottom = (dockHeight + 10 + safeArea) + 'px';
 
     // Aratam bara
     bar.style.display = 'block';
