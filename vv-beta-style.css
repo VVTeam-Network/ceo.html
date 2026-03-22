@@ -31,11 +31,24 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
 body {
     background: var(--bg);
     color: var(--text-primary);
-    height: 100vh;
+    height: 100%;
+    width: 100%;
     overflow: hidden;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    touch-action: pan-x pan-y;
 }
 
 /* ============================================
@@ -423,19 +436,12 @@ body {
 .action-sidebar {
     position: fixed;
     right: 16px;
-    bottom: calc(72px + 20px); /* dock height + 20px distanta */
+    bottom: calc(72px + 20px + env(safe-area-inset-bottom, 0px));
     z-index: 2000;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
-}
-
-/* Pe iPhone cu safe area (notch/home bar) */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .action-sidebar {
-        bottom: calc(72px + 20px + env(safe-area-inset-bottom));
-    }
 }
 
 /* MARKER CLUSTER custom styling */
@@ -986,4 +992,19 @@ body {
 @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
+}
+
+/* iOS Swipe Back Block */
+#app-container, #splash-screen, #tutorial-screen, #alias-screen {
+    position: fixed;
+    inset: 0;
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+    touch-action: pan-x pan-y;
+}
+
+/* Doar profil si modals pot face scroll intern */
+#profile-screen {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
