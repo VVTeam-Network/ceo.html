@@ -171,11 +171,57 @@ function loadUserData() {
             document.getElementById('profile-vv-val').textContent = balance;
             document.getElementById('profile-lei-val').textContent = lei;
             document.getElementById('profile-main-name').textContent = data.alias || alias;
+
+            // Update progress bar Onyx
+            updateOnyxProgress(balance);
         }
     });
 
     // Ascultăm inbox-ul
     listenInbox();
+}
+
+// ================= ONYX PROGRESS BAR =================
+function updateOnyxProgress(balance) {
+    const milestones = [500, 1000, 1500];
+    const nextMilestone = milestones.find(m => balance < m) || 1500;
+    const prevMilestone = nextMilestone === 500 ? 0 : milestones[milestones.indexOf(nextMilestone) - 1];
+    
+    // Calculăm procentul spre urmatorul milestone
+    const progress = Math.min(((balance - prevMilestone) / (nextMilestone - prevMilestone)) * 100, 100);
+    
+    // Update bar
+    const bar = document.getElementById('onyx-progress-bar');
+    const label = document.getElementById('onyx-progress-label');
+    if (bar) bar.style.width = progress + '%';
+    if (label) label.textContent = `${balance} / ${nextMilestone} VV`;
+
+    // Update milestone checks
+    milestones.forEach(m => {
+        const check = document.getElementById('check-' + m);
+        const milestone = document.getElementById('milestone-' + m);
+        if (!check || !milestone) return;
+        
+        if (balance >= m) {
+            check.textContent = '✅';
+            check.style.color = '#34c759';
+            milestone.style.opacity = '1';
+        } else if (m === nextMilestone) {
+            check.textContent = `${Math.round(progress)}%`;
+            check.style.color = '#D4AF37';
+            milestone.style.opacity = '1';
+        } else {
+            check.textContent = '—';
+            check.style.color = 'rgba(212,175,55,0.3)';
+            milestone.style.opacity = '0.5';
+        }
+    });
+
+    // Dacă a atins un milestone — toast special
+    if (balance === 500 || balance === 1000 || balance === 1500) {
+        const months = balance === 500 ? 1 : balance === 1000 ? 2 : 3;
+        showToast(`🎉 Felicitări! Ai câștigat ${months} ${months === 1 ? 'lună' : 'luni'} ONYX gratuit!`);
+    }
 }
 
 // ================= HARTA =================
