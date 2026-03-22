@@ -55,9 +55,9 @@
 <!-- ========== ALIAS SCREEN ========== -->
 <div id="alias-screen" style="display:none;">
     <div class="vv-massive-logo" style="font-size:60px; margin-bottom:12px;">VV</div>
-    <div class="splash-title">CREARE IDENTITATE AGENT</div>
+    <div class="splash-title">CREARE IDENTITATE INSIDER</div>
     <input type="text" class="key-input" id="user-alias-input" placeholder="NUMELE DE COD" style="margin-bottom:20px;">
-    <button class="btn-main" onclick="confirmAlias()">CONFIRMĂ IDENTITATEA</button>
+    <button class="btn-main" onclick="confirmAlias()">CONFIRMĂ IDENTITATEA INSIDER</button>
 </div>
 
 <!-- ========== TUTORIAL SCREEN ========== -->
@@ -122,6 +122,38 @@
             <div class="filter-pill" id="filter-mall" onclick="filterVenues('mall')">🛍️ Mall-uri</div>
         </div>
 
+        <!-- BARA UBER-STYLE: Căutare Insider -->
+        <div id="insider-search-bar" style="display:none; position:absolute; bottom:calc(72px + 20px + env(safe-area-inset-bottom, 0px)); left:16px; right:80px; z-index:1500;">
+            <div style="
+                background: rgba(8,8,12,0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius:18px;
+                padding: 16px 20px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            ">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <div style="width:8px; height:8px; background:#34c759; border-radius:50%; box-shadow:0 0 8px #34c759; animation: pulseDot 1.5s infinite; flex-shrink:0;"></div>
+                    <span id="insider-search-text" style="font-size:13px; font-weight:700; color:#fff; letter-spacing:0.5px;">SE CAUTĂ INSIDER...</span>
+                </div>
+                <!-- Progress bar animat -->
+                <div style="background:rgba(255,255,255,0.06); border-radius:10px; height:4px; overflow:hidden;">
+                    <div id="insider-progress" style="
+                        height:100%; border-radius:10px;
+                        background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.8), rgba(255,255,255,0.3));
+                        background-size: 200% 100%;
+                        animation: shimmer 1.5s infinite;
+                        width: 100%;
+                    "></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <span id="insider-count-text" style="font-size:11px; color:rgba(255,255,255,0.4);">— Insideri activi în zonă</span>
+                    <span id="insider-reward-text" style="font-size:11px; color:#D4AF37; font-weight:700;">— VV</span>
+                </div>
+            </div>
+        </div>
+
         <div class="action-sidebar" id="action-hub">
             <div class="fab-btn fab-radar" id="btn-radar" onclick="toggleRadar()">
                 <i class="fas fa-satellite-dish"></i>
@@ -142,7 +174,7 @@
     <!-- PROFILE VIEW -->
     <div id="profile-screen" style="display:none;">
         <div class="profile-header">
-            <div class="profile-title" id="profile-main-name">AGENT</div>
+            <div class="profile-title" id="profile-main-name">INSIDER</div>
             <div class="settings-icon" onclick="openSettings()">
                 <i class="fas fa-fingerprint"></i>
             </div>
@@ -253,7 +285,7 @@
                         <div style="font-size:22px; font-weight:900; color:#fff;">29 <span style="font-size:14px; color:rgba(255,255,255,0.5);">LEI / lună</span></div>
                     </div>
                     <div style="background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:6px 12px;">
-                        <span style="font-size:10px; color:#D4AF37; font-weight:800; letter-spacing:1px;">AGENT</span>
+                        <span style="font-size:10px; color:#D4AF37; font-weight:800; letter-spacing:1px;">INSIDER</span>
                     </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
