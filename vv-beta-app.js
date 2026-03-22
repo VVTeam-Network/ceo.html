@@ -949,6 +949,16 @@ function openCamera() {
     document.getElementById('shutter-container').style.display = 'flex';
     capturedImageBlob = null;
 
+    // Capturam GPS pentru watermark
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            capturedGPS = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude
+            };
+        }, () => { capturedGPS = null; });
+    }
+
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
         .then(stream => {
             currentStream = stream;
@@ -968,6 +978,9 @@ function closeCamera() {
     }
 }
 
+// Stocam GPS pentru watermark
+let capturedGPS = null;
+
 function takePicture() {
     const video = document.getElementById('real-camera-video');
     const canvas = document.createElement('canvas');
@@ -976,18 +989,32 @@ function takePicture() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0);
 
-    // Watermark VV PROOF
     const now = new Date();
     const timeStr = now.toLocaleString('ro-RO');
-    ctx.font = 'bold 18px -apple-system';
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 6;
-    ctx.fillText('VV PROOF · ' + timeStr, 14, canvas.height - 14);
+
+    // Watermark premium cu GPS
+    const gpsStr = capturedGPS
+        ? `${capturedGPS.lat.toFixed(5)}, ${capturedGPS.lng.toFixed(5)}`
+        : 'GPS N/A';
+
+    // Background watermark
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, canvas.height - 70, canvas.width, 70);
+
+    // Text VV PROOF
+    ctx.font = 'bold 15px -apple-system';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 4;
+    ctx.fillText('VV PROOF', 14, canvas.height - 46);
+
+    ctx.font = '12px -apple-system';
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fillText('📍 ' + gpsStr, 14, canvas.height - 28);
+    ctx.fillText('🕐 ' + timeStr, 14, canvas.height - 10);
 
     canvas.toBlob(blob => {
         capturedImageBlob = blob;
-        // Preview
         const url = URL.createObjectURL(blob);
         document.getElementById('real-camera-video').style.display = 'none';
         const preview = document.createElement('img');
@@ -995,7 +1022,7 @@ function takePicture() {
         preview.style.cssText = 'width:100%; height:100%; object-fit:cover;';
         preview.id = 'preview-img';
         document.querySelector('.cam-viewfinder').appendChild(preview);
-    }, 'image/jpeg', 0.88);
+    }, 'image/jpeg', 0.92);
 
     document.getElementById('shutter-container').style.display = 'none';
     document.getElementById('post-photo-menu').style.display = 'block';
@@ -1023,17 +1050,42 @@ function uploadPhotoToCEO() {
     const ref = storage.ref(fileName);
 
     ref.put(capturedImageBlob).then(() => ref.getDownloadURL()).then(url => {
-        return db.collection('inbox').add({
+        const alias = localStorage.getItem('vv_alias') || 'INSIDER';
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+
+        // Scriem in AMBELE colectii simultan
+        const batch = db.batch();
+
+        // 1. inbox — pentru notificari CEO
+        const inboxRef = db.collection('inbox').doc();
+        batch.set(inboxRef, {
             to: 'CEO',
             from: currentUser.uid,
-            alias: localStorage.getItem('vv_alias') || 'INSIDER',
-            message: msg || 'Raport trimis',
+            alias: alias,
+            message: msg || 'Captură trimisă',
             photoUrl: url,
             missionId: currentMissionId || null,
             reward: selectedReward,
             read: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: now
         });
+
+        // 2. photos — pentru Global Feed in panoul CEO
+        const photoRef = db.collection('photos').doc();
+        batch.set(photoRef, {
+            url: url,
+            message: msg || 'Captură VV',
+            agentId: currentUser.uid,
+            alias: alias,
+            missionId: currentMissionId || null,
+            gpsLat: capturedGPS ? capturedGPS.lat : null,
+            gpsLng: capturedGPS ? capturedGPS.lng : null,
+            timestamp: Date.now(),
+            createdAt: now,
+            flagged: false
+        });
+
+        return batch.commit();
     }).then(() => {
         showToast('Raport trimis cu succes! ✅');
         sendBtn.textContent = 'TRIMITE RAPORT';
