@@ -81,19 +81,7 @@ window.onload = () => {
 
 // ================= TOGGLE ACCEPT BUTTON =================
 function toggleAcceptButton() {
-    const cb = document.getElementById('tc-checkbox');
-    const btn = document.getElementById('btn-accept');
-    if (cb.checked) {
-        btn.classList.remove('disabled');
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'auto';
-        btn.style.color = '#000';
-        btn.style.background = 'rgba(255,255,255,0.95)';
-    } else {
-        btn.classList.add('disabled');
-        btn.style.opacity = '0.15';
-        btn.style.pointerEvents = 'none';
-    }
+    // Butonul e mereu activ — validarea se face la click
 }
 
 // ================= BOOT SEQUENCE (după Accept) =================
@@ -101,10 +89,17 @@ function startBootSequence() {
     const key = document.getElementById('access-key').value.trim().toUpperCase();
     const btn = document.getElementById('btn-accept');
     const keyInput = document.getElementById('access-key');
+    const cb = document.getElementById('tc-checkbox');
 
     // Stergem orice eroare anterioara
     const existingError = document.getElementById('key-error-msg');
     if (existingError) existingError.remove();
+
+    // Validare checkbox — primul pas
+    if (!cb || !cb.checked) {
+        showKeyError('Trebuie să accepți regulamentul mai întâi.');
+        return;
+    }
 
     if (!key) {
         showKeyError('Introdu cheia de acces.');
