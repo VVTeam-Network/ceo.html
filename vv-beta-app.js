@@ -697,14 +697,35 @@ function selectReward(val) {
     if (btn) btn.classList.add('active');
 }
 
-function submitPinpointMission() {
+async function submitPinpointMission() {
     const desc = document.getElementById('mission-desc').value.trim();
     if (!desc) { showToast('Descrie misiunea!'); return; }
     if (!currentUser) { showToast('Nu ești conectat!'); return; }
 
     const launchBtn = document.getElementById('btn-launch-radar');
-    launchBtn.textContent = 'SE LANSEAZĂ...';
+    launchBtn.textContent = 'SE VERIFICĂ...';
     launchBtn.style.opacity = '0.6';
+
+    // COOLDOWN: verificam daca are deja o misiune activa
+    try {
+        const existing = await db.collection('missions')
+            .where('createdBy', '==', currentUser.uid)
+            .where('status', '==', 'open')
+            .limit(1).get();
+        
+        if (!existing.empty) {
+            showToast('⚠️ Ai deja un contract activ!');
+            launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+            launchBtn.style.opacity = '1';
+            return;
+        }
+    } catch(e) { console.log('Cooldown check err:', e); }
+
+    launchBtn.textContent = 'SE LANSEAZĂ...';
+
+    // Calculam expiry: (reward * 1.5) + 5 minute
+    const expiryMinutes = Math.round((selectedReward * 1.5) + 5);
+    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
     // Verificăm dacă userul are destui VV
     db.collection('users').doc(currentUser.uid).get().then(doc => {
@@ -716,9 +737,7 @@ function submitPinpointMission() {
             return;
         }
 
-        // Scădem VV și creăm misiunea
         const batch = db.batch();
-
         const missionRef = db.collection('missions').doc();
         batch.set(missionRef, {
             description: desc,
@@ -727,6 +746,8 @@ function submitPinpointMission() {
             lng: missionLng || 26.1038,
             createdBy: currentUser.uid,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+            expiryMinutes: expiryMinutes,
             status: 'open'
         });
 
@@ -741,9 +762,8 @@ function submitPinpointMission() {
         document.getElementById('mission-desc').value = '';
         launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
         launchBtn.style.opacity = '1';
-        showToast('Contract lansat! 🎯');
+        // NU mai afisam toast — overlayul e suficient
         loadMissionsOnMap();
-        // Aratam bara de cautare Insider
         showInsiderSearch(selectedReward);
     }).catch(err => {
         console.log('Eroare misiune:', err);
@@ -767,8 +787,11 @@ function openMissionsList() {
             }
 
             container.innerHTML = '';
+            const now = new Date();
             snap.forEach(doc => {
                 const m = doc.data();
+                // Sarim misiunile expirate
+                if (m.expiresAt && m.expiresAt.toDate() < now) return;
                 const div = document.createElement('div');
                 div.style.cssText = `
                     background: rgba(255,255,255,0.05);
