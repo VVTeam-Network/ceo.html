@@ -111,16 +111,43 @@ function confirmAlias() {
 
     localStorage.setItem('vv_alias', alias);
 
-    // Creem contul anonim în Firebase
-    auth.signInAnonymously().then(cred => {
+    auth.signInAnonymously().then(async cred => {
         currentUser = cred.user;
-        return db.collection('users').doc(cred.user.uid).set({
+
+        // Generam 3 chei unice pentru acest user
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const generateKey = () => Array.from({length: 6}, () => 
+            chars[Math.floor(Math.random() * chars.length)]).join('');
+        
+        const userKeys = [generateKey(), generateKey(), generateKey()];
+        
+        // Salvam userul cu cheile lui
+        await db.collection('users').doc(cred.user.uid).set({
             alias: alias,
             balance: 100,
             rating: 5,
             joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            accessKey: localStorage.getItem('vv_access_key')
+            accessKey: localStorage.getItem('vv_access_key'),
+            inviteKeys: userKeys,
+            keysBalance: 3
         });
+
+        // Salvam cheile in colectia access_keys ca sa fie valide
+        const batch = db.batch();
+        userKeys.forEach(key => {
+            const ref = db.collection('access_keys').doc();
+            batch.set(ref, {
+                key: key,
+                active: true,
+                generatedBy: cred.user.uid,
+                generatedByAlias: alias,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                used: false
+            });
+        });
+        await batch.commit();
+
+        return Promise.resolve();
     }).then(() => {
         document.getElementById('alias-screen').style.display = 'none';
         document.getElementById('tutorial-screen').style.display = 'flex';
@@ -198,6 +225,53 @@ function loadUserData() {
 
     // Ascultăm inbox-ul
     listenInbox();
+
+    // Incarcam cheile de invitatie ale userului
+    loadInviteKeys();
+}
+
+// ================= CHEI INVITATIE USER =================
+function loadInviteKeys() {
+    if (!currentUser) return;
+
+    db.collection('users').doc(currentUser.uid).get().then(doc => {
+        if (!doc.exists) return;
+        const keys = doc.data().inviteKeys || [];
+        const container = document.getElementById('invite-keys-container');
+        if (!container) return;
+
+        if (keys.length === 0) {
+            container.innerHTML = '<div style="font-size:12px; color:rgba(255,255,255,0.3);">Nicio cheie disponibilă.</div>';
+            return;
+        }
+
+        container.innerHTML = keys.map(key => `
+            <div style="
+                display:flex; justify-content:space-between; align-items:center;
+                background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:10px; padding:12px 16px;
+                margin-bottom:8px;
+            ">
+                <span style="font-family:monospace; font-size:16px; font-weight:700; color:#fff; letter-spacing:2px;">${key}</span>
+                <button onclick="copyKey('${key}')" style="
+                    background:rgba(255,255,255,0.08);
+                    border:1px solid rgba(255,255,255,0.12);
+                    border-radius:8px; padding:6px 12px;
+                    color:rgba(255,255,255,0.6); font-size:11px;
+                    font-weight:700; cursor:pointer; letter-spacing:1px;
+                ">COPIAZĂ</button>
+            </div>
+        `).join('');
+    });
+}
+
+function copyKey(key) {
+    navigator.clipboard.writeText(key).then(() => {
+        showToast('Cheie copiată! Trimite-o unui prieten 🎯');
+    }).catch(() => {
+        showToast('Cheie: ' + key);
+    });
 }
 
 // ================= ONYX PROGRESS BAR =================
@@ -1119,6 +1193,39 @@ function openModal(id) {
 function closeModal(id) {
     const modal = document.getElementById(id);
     if (modal) modal.style.display = 'none';
+}
+
+// ================= RECRUTARE VV TEAM =================
+async function submitApplication() {
+    const skill = document.getElementById('recruit-skill')?.value.trim();
+    const portfolio = document.getElementById('recruit-portfolio')?.value.trim();
+
+    if (!skill) { showToast('Spune-ne ce știi să construiești!'); return; }
+
+    const btn = event.target;
+    btn.textContent = 'SE TRIMITE...';
+    btn.style.opacity = '0.6';
+
+    try {
+        await db.collection('talent_pool').add({
+            skill: skill,
+            portfolio: portfolio || 'N/A',
+            alias: localStorage.getItem('vv_alias') || 'INSIDER',
+            uid: currentUser?.uid || 'anonim',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'pending'
+        });
+
+        document.getElementById('recruit-skill').value = '';
+        document.getElementById('recruit-portfolio').value = '';
+        btn.textContent = 'APLICĂ LA VV TEAM';
+        btn.style.opacity = '1';
+        showToast('✅ Aplicație trimisă! Te vom contacta.');
+    } catch(e) {
+        btn.textContent = 'APLICĂ LA VV TEAM';
+        btn.style.opacity = '1';
+        showToast('Eroare. Încearcă din nou.');
+    }
 }
 
 // ================= TOAST NOTIFICATION =================
