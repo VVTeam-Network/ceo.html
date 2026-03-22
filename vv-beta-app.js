@@ -311,32 +311,39 @@ const VENUE_CATEGORIES = {
     nightlife: {
         label: 'Club / Nightlife', emoji: '🎵',
         color: 'rgba(138,43,226,0.92)', border: 'rgba(180,100,255,0.8)',
-        size: 30, zIndex: 500,
+        size: 30, zIndex: 500, cacheDays: 1,
         query: `[out:json][timeout:15];(node["amenity"="nightclub"](around:5000,44.4325,26.1038););out body;`
     },
     bar: {
         label: 'Bar / Lounge', emoji: '🍸',
         color: 'rgba(10,100,200,0.92)', border: 'rgba(10,132,255,0.8)',
-        size: 28, zIndex: 400,
+        size: 28, zIndex: 400, cacheDays: 1,
         query: `[out:json][timeout:15];(node["amenity"="bar"](around:5000,44.4325,26.1038););out body;`
     },
     restaurant: {
         label: 'Restaurant', emoji: '🍽️',
         color: 'rgba(180,60,20,0.75)', border: 'rgba(255,100,40,0.5)',
-        size: 22, zIndex: 200,
+        size: 22, zIndex: 200, cacheDays: 1,
         query: `[out:json][timeout:15];(node["amenity"="restaurant"](around:5000,44.4325,26.1038););out body;`
     },
     hotel: {
         label: 'Hotel', emoji: '🏨',
         color: 'rgba(20,120,60,0.75)', border: 'rgba(52,199,89,0.45)',
-        size: 22, zIndex: 200,
+        size: 22, zIndex: 200, cacheDays: 7,
         query: `[out:json][timeout:15];(node["tourism"="hotel"](around:5000,44.4325,26.1038););out body;`
     },
     shopping: {
-        label: 'Shopping', emoji: '🛒',
+        label: 'Supermarketuri', emoji: '🛒',
         color: 'rgba(20,100,180,0.88)', border: 'rgba(60,160,240,0.6)',
-        size: 26, zIndex: 300,
-        query: `[out:json][timeout:25];(node["shop"~"supermarket|department_store|convenience"](around:5000,44.4325,26.1038););out body;`
+        size: 24, zIndex: 300, cacheDays: 7,
+        query: `[out:json][timeout:25];(node["shop"~"supermarket|convenience"](around:5000,44.4325,26.1038););out body;`
+    },
+    mall: {
+        label: 'Mall-uri & Jumbo', emoji: '🛍️',
+        color: 'rgba(120,40,180,0.88)', border: 'rgba(180,80,255,0.6)',
+        size: 32, zIndex: 600, cacheDays: 7,
+        isMall: true,
+        query: `[out:json][timeout:25];(nwr["shop"="mall"](around:15000,44.4325,26.1038);nwr["name"~"(?i)Jumbo|Fashion House|AFI|Baneasa|Promenada|Mega Mall|Sun Plaza|Cotroceni|Liberty|Vitantis"](around:15000,44.4325,26.1038););out center;`
     }
 };
 
@@ -394,35 +401,75 @@ async function applyFilter(category) {
     }
 }
 
+// ================= CACHE HELPERS =================
+function getCacheKey(catKey) { return `vv_cache_${catKey}`; }
+function getCacheTimestampKey(catKey) { return `vv_cache_ts_${catKey}`; }
+
+function loadFromCache(catKey, cacheDays) {
+    try {
+        const ts = localStorage.getItem(getCacheTimestampKey(catKey));
+        if (!ts) return null;
+        const age = (Date.now() - parseInt(ts)) / (1000 * 60 * 60 * 24);
+        if (age > cacheDays) { 
+            console.log(`[VV Cache] ${catKey} expirat (${age.toFixed(1)} zile)`);
+            return null; 
+        }
+        const raw = localStorage.getItem(getCacheKey(catKey));
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        console.log(`[VV Cache] ${catKey} din cache (${age.toFixed(1)} zile vechi) — ${data.length} elemente`);
+        return data;
+    } catch(e) { return null; }
+}
+
+function saveToCache(catKey, elements) {
+    try {
+        localStorage.setItem(getCacheKey(catKey), JSON.stringify(elements));
+        localStorage.setItem(getCacheTimestampKey(catKey), Date.now().toString());
+        console.log(`[VV Cache] ${catKey} salvat (${elements.length} elemente)`);
+    } catch(e) { console.warn('[VV Cache] LocalStorage plin:', e); }
+}
+
 // Fetch + adaugă markeri pentru o categorie
 async function loadCategoryMarkers(catKey, cat, limit) {
     let addedCount = 0;
     try {
-        console.log(`[VV] Fetch ${catKey}...`);
-        
-        const res = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: cat.query
-        });
+        // Verificăm cache-ul mai întâi
+        const cacheDays = cat.cacheDays || 1;
+        let elements = loadFromCache(catKey, cacheDays);
 
-        if (!res.ok) {
-            console.error(`[VV] HTTP ${res.status} pentru ${catKey} — ${res.statusText}`);
-            if (res.status === 429) console.error('[VV] 429 Too Many Requests — prea multe cereri!');
-            return 0;
+        if (!elements) {
+            // Cache miss — fetch de la Overpass
+            console.log(`[VV] Fetch live ${catKey}...`);
+            const res = await fetch('https://overpass-api.de/api/interpreter', {
+                method: 'POST',
+                body: cat.query
+            });
+
+            if (!res.ok) {
+                console.error(`[VV] HTTP ${res.status} pentru ${catKey} — ${res.statusText}`);
+                if (res.status === 429) console.error('[VV] 429 Too Many Requests!');
+                return 0;
+            }
+
+            const data = await res.json();
+            if (!data.elements || data.elements.length === 0) {
+                console.warn(`[VV] Niciun element găsit pentru ${catKey}`);
+                return 0;
+            }
+
+            elements = data.elements;
+            saveToCache(catKey, elements);
+            console.log(`[VV] ${catKey}: ${elements.length} elemente de la API`);
         }
 
-        const data = await res.json();
-        
-        if (!data.elements || data.elements.length === 0) {
-            console.warn(`[VV] Niciun element găsit pentru ${catKey}`);
-            return 0;
-        }
+        const sliced = elements.slice(0, limit);
 
-        console.log(`[VV] ${catKey}: ${data.elements.length} elemente găsite`);
-        const elements = data.elements.slice(0, limit);
-
-        elements.forEach(el => {
-            if (!el.lat || !el.lon) return;
+        sliced.forEach(el => {
+            // Fallback coordonate: node → el.lat/lon, way/relation → el.center.lat/lon
+            const lat = el.lat || (el.center && el.center.lat);
+            const lon = el.lon || (el.center && el.center.lon);
+            if (!lat || !lon) return;
 
             const name = el.tags?.name || el.tags?.['name:ro'] || el.tags?.brand || cat.label;
             const address = el.tags?.['addr:street']
@@ -451,7 +498,7 @@ async function loadCategoryMarkers(catKey, cat, limit) {
                 iconAnchor: [s/2, s/2]
             });
 
-            const marker = L.marker([el.lat, el.lon], { icon, zIndexOffset: cat.zIndex });
+            const marker = L.marker([lat, lon], { icon, zIndexOffset: cat.zIndex });
 
             marker.bindPopup(`
                 <div style="padding:4px; min-width:190px;">
@@ -461,7 +508,7 @@ async function loadCategoryMarkers(catKey, cat, limit) {
                     ${address ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📍 ${address}</div>` : ''}
                     ${opening ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">🕐 ${opening}</div>` : ''}
                     ${phone ? `<div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:8px;">📞 ${phone}</div>` : ''}
-                    <button onclick="map.closePopup(); openCreateMissionModal(${el.lat}, ${el.lon});"
+                    <button onclick="map.closePopup(); openCreateMissionModal('${lat}', '${lon}')"
                         style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%; margin-top:6px;">
                         LANSEAZĂ CONTRACT AICI
                     </button>
