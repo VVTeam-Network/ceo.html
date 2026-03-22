@@ -162,6 +162,10 @@ function showApp() {
 function silentLogin() {
     auth.signInAnonymously().then(cred => {
         currentUser = cred.user;
+        // Actualizam lastActive pentru prezenta reala
+        db.collection('users').doc(cred.user.uid).update({
+            lastActive: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(() => {}); // Ignoram eroarea daca documentul nu exista inca
         loadUserData();
     }).catch(err => console.log('Silent login err:', err));
 }
@@ -244,8 +248,17 @@ function initMap() {
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '',
-        maxZoom: 19
+        maxZoom: 19,
+        detectRetina: true  // Fix harta blurry pe ecrane Retina
     }).addTo(map);
+
+    // Limitam harta la Romania + tari vecine
+    const romaniaBounds = L.latLngBounds(
+        L.latLng(43.5, 20.0),  // Sud-Vest
+        L.latLng(48.5, 30.5)   // Nord-Est
+    );
+    map.setMaxBounds(romaniaBounds);
+    map.options.minZoom = 6;
 
     // GPS
     map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
@@ -1139,18 +1152,20 @@ async function showInsiderSearch(reward) {
         }
     }, 1200);
 
-    // Numaram Insideri activi din Firebase (online in ultimele 5 min)
+    // Numaram Insideri activi REAL din Firebase (online in ultimele 15 min)
     try {
-        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
         const snap = await db.collection('users')
-            .where('lastSeen', '>', fiveMinAgo)
+            .where('lastActive', '>', fifteenMinAgo)
             .get();
-        const activeCount = snap.size || Math.floor(Math.random() * 8) + 2;
-        if (countText) countText.textContent = `${activeCount} Insideri activi în zonă`;
+        if (snap.size > 0) {
+            if (countText) countText.textContent = `${snap.size} Insideri activi în zonă`;
+        } else {
+            if (countText) countText.textContent = 'Insideri în rețea';
+        }
     } catch(e) {
-        // Fallback cu numar random credibil
-        const activeCount = Math.floor(Math.random() * 8) + 2;
-        if (countText) countText.textContent = `${activeCount} Insideri activi în zonă`;
+        console.log('Eroare count insideri:', e);
+        if (countText) countText.textContent = 'Insideri în rețea';
     }
 
     // Ascundem bara dupa 5 secunde
