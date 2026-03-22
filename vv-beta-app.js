@@ -26,31 +26,57 @@ let capturedImageBlob = null;
 
 // ================= BOOT =================
 window.onload = () => {
-    // FIX iOS swipe back — previne gestul de back in Safari
+    // FIX iOS swipe back
     document.addEventListener('touchstart', function(e) {
         if (e.touches[0].clientX < 20 || e.touches[0].clientX > window.innerWidth - 20) {
             e.preventDefault();
         }
     }, { passive: false });
 
-    // Previne scroll accidental pe body
     document.body.addEventListener('touchmove', function(e) {
         if (e.target === document.body || e.target === document.documentElement) {
             e.preventDefault();
         }
     }, { passive: false });
 
-    const tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
-    const accessKey = localStorage.getItem('vv_access_key');
-    
-    if (tutorialDone === 'DA' && accessKey) {
-        document.getElementById('splash-screen').style.display = 'none';
-        document.getElementById('tutorial-screen').style.display = 'none';
-        showApp();
-        silentLogin();
-    } else {
-        document.getElementById('splash-screen').style.display = 'flex';
-    }
+    // Setam persistence LOCAL ca Firebase sa tina minte sesiunea
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+        const tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
+        const accessKey = localStorage.getItem('vv_access_key');
+
+        if (tutorialDone === 'DA' && accessKey) {
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('tutorial-screen').style.display = 'none';
+            showApp();
+            // Nu mai facem silentLogin separat — folosim onAuthStateChanged
+        } else {
+            document.getElementById('splash-screen').style.display = 'flex';
+        }
+    }).catch(() => {
+        // Fallback daca persistence nu merge
+        const tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
+        const accessKey = localStorage.getItem('vv_access_key');
+        if (tutorialDone === 'DA' && accessKey) {
+            document.getElementById('splash-screen').style.display = 'none';
+            showApp();
+        } else {
+            document.getElementById('splash-screen').style.display = 'flex';
+        }
+    });
+
+    // AUTH STATE LISTENER — sursa de adevar pentru sesiune
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            // Setam loading state imediat
+            const hudEl = document.getElementById('hud-balance');
+            if (hudEl && hudEl.textContent === '— VV') {
+                hudEl.textContent = '... VV';
+            }
+            // Incarcam datele
+            loadUserData();
+        }
+    });
 };
 
 // ================= TOGGLE ACCEPT BUTTON =================
@@ -184,17 +210,31 @@ function showApp() {
 }
 
 // ================= SILENT LOGIN =================
-let lastActiveUpdated = false; // Flag — scriem o singura data per sesiune
+let lastActiveUpdated = false;
 
 function silentLogin() {
+    // Daca userul e deja logat nu facem nimic
+    const current = auth.currentUser;
+    if (current) {
+        currentUser = current;
+        if (!lastActiveUpdated) {
+            lastActiveUpdated = true;
+            db.collection('users').doc(current.uid).update({
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(() => {});
+        }
+        loadUserData();
+        return;
+    }
+
+    // Altfel logam anonim
     auth.signInAnonymously().then(cred => {
         currentUser = cred.user;
-        // Update lastActive DOAR o singura data per sesiune — economie Firebase
         if (!lastActiveUpdated) {
             lastActiveUpdated = true;
             db.collection('users').doc(cred.user.uid).update({
                 lastActive: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(() => {}); // Ignoram daca documentul nu exista inca
+            }).catch(() => {});
         }
         loadUserData();
     }).catch(err => console.log('Silent login err:', err));
