@@ -478,6 +478,108 @@
             </div>
         </div>
 
+        <!-- INVITĂ PRIETENI -->
+        <div style="margin-bottom:16px;">
+            <div style="
+                background:rgba(255,255,255,0.04);
+                backdrop-filter:blur(20px);
+                -webkit-backdrop-filter:blur(20px);
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:18px; padding:22px;
+            ">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                    <div style="
+                        width:36px; height:36px;
+                        background:rgba(52,199,89,0.12);
+                        border:1px solid rgba(52,199,89,0.25);
+                        border-radius:10px;
+                        display:flex; align-items:center; justify-content:center;
+                    ">
+                        <i class="fas fa-user-plus" style="color:#34c759; font-size:14px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:14px; font-weight:800; color:#fff;">Invită în VV Beta</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.3);">3 chei exclusive pentru prietenii tăi</div>
+                    </div>
+                </div>
+                <div id="invite-keys-container">
+                    <div style="font-size:12px; color:rgba(255,255,255,0.2); text-align:center; padding:10px;">
+                        Se încarcă cheile...
+                    </div>
+                </div>
+                <div style="
+                    margin-top:12px; padding:10px 14px;
+                    background:rgba(52,199,89,0.06);
+                    border:1px solid rgba(52,199,89,0.15);
+                    border-radius:10px;
+                ">
+                    <p style="font-size:11px; color:rgba(52,199,89,0.6); text-align:center; line-height:1.5;">
+                        Fiecare cheie poate fi folosită o singură dată.<br>
+                        Prietenul tău primește 100 VV la activare.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECRUTARE PREMIUM -->
+        <div style="margin-top:8px; margin-bottom:20px;">
+            <div style="
+                background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+                backdrop-filter: blur(24px);
+                -webkit-backdrop-filter: blur(24px);
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 22px;
+                padding: 28px 22px;
+                position: relative;
+                overflow: hidden;
+            ">
+                <!-- Glow subtil -->
+                <div style="position:absolute; top:-40px; right:-40px; width:120px; height:120px;
+                    background:radial-gradient(circle, rgba(10,132,255,0.08) 0%, transparent 70%);
+                    border-radius:50%; pointer-events:none;"></div>
+
+                <div style="font-size:10px; color:rgba(10,132,255,0.7); letter-spacing:3px; font-weight:700; margin-bottom:8px;">
+                    VV TECHNOLOGIES
+                </div>
+                <div style="font-size:18px; font-weight:900; color:#fff; margin-bottom:6px; line-height:1.2;">
+                    JOIN THE ELITE
+                </div>
+                <div style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:20px; line-height:1.6;">
+                    Nu căutăm angajați.<br>Căutăm arhitecți de imperii.<br>
+                    <span style="color:rgba(255,255,255,0.25); font-size:11px;">Built in Romania. Designed for the world.</span>
+                </div>
+
+                <input type="text" id="recruit-skill" 
+                    placeholder="Ce știi să construiești?"
+                    style="
+                        width:100%; background:rgba(255,255,255,0.05);
+                        border:1px solid rgba(255,255,255,0.1);
+                        border-radius:12px; padding:14px 16px;
+                        color:#fff; font-size:13px; outline:none;
+                        margin-bottom:10px; font-family:inherit;
+                    ">
+
+                <input type="text" id="recruit-portfolio"
+                    placeholder="GitHub / Portofoliu / Link"
+                    style="
+                        width:100%; background:rgba(255,255,255,0.05);
+                        border:1px solid rgba(255,255,255,0.1);
+                        border-radius:12px; padding:14px 16px;
+                        color:#fff; font-size:13px; outline:none;
+                        margin-bottom:16px; font-family:inherit;
+                    ">
+
+                <button onclick="submitApplication()" style="
+                    width:100%; padding:16px;
+                    background:rgba(255,255,255,0.92);
+                    color:#000; border:none;
+                    border-radius:12px; font-weight:800;
+                    font-size:13px; letter-spacing:0.5px;
+                    cursor:pointer;
+                ">APLICĂ LA VV TEAM</button>
+            </div>
+        </div>
+
         <!-- FOOTER -->
         <div style="text-align:center; padding-bottom:10px;">
             <span style="font-size:11px; color:rgba(255,255,255,0.15); letter-spacing:1px;">© VV Technologies 2026</span>
