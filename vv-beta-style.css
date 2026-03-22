@@ -1126,3 +1126,17 @@ html, body {
     will-change: transform, opacity;
     transform: translate3d(0,0,0);
 }
+
+/* ============================================
+   ANIMATIE MISIUNI PE HARTĂ
+   ============================================ */
+@keyframes missionPulse {
+    0%, 100% { 
+        box-shadow: 0 0 16px rgba(255,59,48,0.4);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 28px rgba(255,59,48,0.7), 0 0 50px rgba(255,59,48,0.2);
+        transform: scale(1.08);
+    }
+}
