@@ -168,6 +168,60 @@
             </div>
         </div>
 
+        <!-- VV ONYX PROGRESS -->
+        <div id="onyx-progress-card" style="
+            background: linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(212,175,55,0.02) 100%);
+            border: 1px solid rgba(212,175,55,0.2);
+            border-radius:18px; padding:20px; margin-bottom:16px;">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-gem" style="color:#D4AF37; font-size:14px;"></i>
+                    <span style="font-size:13px; font-weight:800; color:#D4AF37; letter-spacing:1px;">ONYX GRATUIT</span>
+                </div>
+                <span id="onyx-progress-label" style="font-size:11px; color:rgba(255,255,255,0.4); font-weight:600;">— / 500 VV</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="background:rgba(255,255,255,0.06); border-radius:10px; height:8px; margin-bottom:12px; overflow:hidden;">
+                <div id="onyx-progress-bar" style="
+                    height:100%; border-radius:10px;
+                    background: linear-gradient(90deg, #D4AF37, #fff3a0);
+                    width:0%; transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+                    box-shadow: 0 0 8px rgba(212,175,55,0.4);
+                "></div>
+            </div>
+
+            <!-- Milestone-uri -->
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <div id="milestone-500" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; color:rgba(255,255,255,0.45);">⬡ 500 VV → <strong style="color:rgba(255,255,255,0.7);">1 lună ONYX</strong></span>
+                    <span id="check-500" style="font-size:11px; color:rgba(212,175,55,0.4);">—</span>
+                </div>
+                <div id="milestone-1000" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; color:rgba(255,255,255,0.45);">⬡ 1000 VV → <strong style="color:rgba(255,255,255,0.7);">2 luni ONYX</strong></span>
+                    <span id="check-1000" style="font-size:11px; color:rgba(212,175,55,0.4);">—</span>
+                </div>
+                <div id="milestone-1500" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; color:rgba(255,255,255,0.45);">⬡ 1500 VV → <strong style="color:rgba(255,255,255,0.7);">3 luni ONYX</strong></span>
+                    <span id="check-1500" style="font-size:11px; color:rgba(212,175,55,0.4);">—</span>
+                </div>
+            </div>
+
+            <!-- Disclaimer transparent -->
+            <div style="
+                margin-top:14px; padding:12px;
+                background:rgba(255,255,255,0.03);
+                border:1px solid rgba(255,255,255,0.06);
+                border-radius:10px;">
+                <p style="font-size:11px; color:rgba(255,255,255,0.3); line-height:1.6; text-align:center;">
+                    ⚠️ VV Coins <strong style="color:rgba(255,255,255,0.5);">nu se convertesc în bani</strong>. 
+                    Sunt folosiți exclusiv pentru recompense în platformă. 
+                    La VV 1.0 pot fi folosiți pentru abonamente gratuite ONYX.
+                </p>
+            </div>
+        </div>
+
         <div class="feedback-btn" onclick="openFeedbackModal()">
             <div class="feedback-icon"><i class="fas fa-headset"></i></div>
             <div class="feedback-text">
