@@ -1450,12 +1450,12 @@ function uploadPhotoToCEO() {
         const alias = localStorage.getItem('vv_alias') || 'INSIDER';
         const now = firebase.firestore.FieldValue.serverTimestamp();
 
-        // Scriem in AMBELE colectii simultan
+        // Scriem in toate colectiile necesare
         const batch = db.batch();
 
-        // 1. inbox — pentru notificari CEO
-        const inboxRef = db.collection('inbox').doc();
-        batch.set(inboxRef, {
+        // 1. inbox CEO — pentru panoul de control
+        const inboxCEORef = db.collection('inbox').doc();
+        batch.set(inboxCEORef, {
             to: 'CEO',
             from: currentUser.uid,
             alias: alias,
@@ -1467,7 +1467,7 @@ function uploadPhotoToCEO() {
             createdAt: now
         });
 
-        // 2. photos — pentru Global Feed in panoul CEO
+        // 2. photos — pentru Global Feed CEO
         const photoRef = db.collection('photos').doc();
         batch.set(photoRef, {
             url: url,
@@ -1481,6 +1481,44 @@ function uploadPhotoToCEO() {
             createdAt: now,
             flagged: false
         });
+
+        // 3. Notificare catre CREATORUL misiunii — vede poza pentru care a platit
+        if (currentMissionId) {
+            try {
+                const missionDoc = await db.collection('missions').doc(currentMissionId).get();
+                if (missionDoc.exists) {
+                    const missionData = missionDoc.data();
+                    const creatorId = missionData.createdBy;
+
+                    if (creatorId && creatorId !== currentUser.uid) {
+                        // Trimitem notificare creatorului
+                        const inboxCreatorRef = db.collection('inbox').doc();
+                        batch.set(inboxCreatorRef, {
+                            to: creatorId,
+                            from: currentUser.uid,
+                            alias: alias,
+                            message: msg || `Insider a completat: "${missionData.description}"`,
+                            photoUrl: url,
+                            missionId: currentMissionId,
+                            reward: missionData.reward || selectedReward,
+                            read: false,
+                            type: 'mission_result',
+                            createdAt: now
+                        });
+
+                        // Actualizam statusul misiunii la completed
+                        batch.update(db.collection('missions').doc(currentMissionId), {
+                            status: 'completed',
+                            photoUrl: url,
+                            solverId: currentUser.uid,
+                            solvedAt: now
+                        });
+                    }
+                }
+            } catch(e) {
+                console.log('[VV] Eroare update misiune:', e);
+            }
+        }
 
         return batch.commit();
     }).then(() => {
