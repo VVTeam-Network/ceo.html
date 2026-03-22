@@ -223,11 +223,56 @@ function loadUserData() {
         }
     });
 
-    // Ascultăm inbox-ul
+        // Ascultăm inbox-ul
     listenInbox();
 
-    // Incarcam cheile de invitatie ale userului
+    // Incarcam cheile de invitatie
     loadInviteKeys();
+
+    // Incarcam leaderboard
+    loadLeaderboard();
+}
+
+// ================= LEADERBOARD CĂMIN =================
+function loadLeaderboard() {
+    db.collection('users')
+        .orderBy('balance', 'desc')
+        .limit(10)
+        .onSnapshot(snap => {
+            const container = document.getElementById('leaderboard-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+            let rank = 1;
+
+            snap.forEach(doc => {
+                const u = doc.data();
+                const isMe = doc.id === currentUser?.uid;
+                const medals = ['🥇', '🥈', '🥉'];
+                const medal = rank <= 3 ? medals[rank-1] : `#${rank}`;
+
+                container.innerHTML += `
+                    <div style="
+                        display:flex; align-items:center; gap:12px;
+                        padding:12px 16px;
+                        background:${isMe ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)'};
+                        border:1px solid ${isMe ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)'};
+                        border-radius:12px; margin-bottom:8px;
+                    ">
+                        <span style="font-size:18px; width:28px; text-align:center;">${medal}</span>
+                        <div style="flex:1;">
+                            <div style="font-size:13px; font-weight:700; color:${isMe ? '#D4AF37' : '#fff'};">
+                                ${u.alias || 'INSIDER'} ${isMe ? '· Tu' : ''}
+                            </div>
+                        </div>
+                        <div style="font-size:14px; font-weight:900; color:${isMe ? '#D4AF37' : 'rgba(255,255,255,0.7)'};">
+                            ${(u.balance || 0).toLocaleString()} VV
+                        </div>
+                    </div>
+                `;
+                rank++;
+            });
+        });
 }
 
 // ================= CHEI INVITATIE USER =================
@@ -688,47 +733,81 @@ function filterVenues(category) {
 
 // Radar Onyx eliminat — hartă curată
 
-// ================= MISIUNI PE HARTĂ =================
+// ================= MISIUNI PE HARTĂ — REAL-TIME PENTRU TOȚI =================
+let missionMarkers = {}; // Tinem evidenta markerelor active
+
 function loadMissionsOnMap() {
     if (!map) return;
 
-    db.collection('missions').where('status', '==', 'open').get().then(snap => {
-        snap.forEach(doc => {
-            const m = doc.data();
-            if (!m.lat || !m.lng) return;
+    const now = new Date();
 
-            const icon = L.divIcon({
-                className: '',
-                html: `<div style="
-                    background: rgba(255,255,255,0.1);
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255,255,255,0.25);
-                    border-radius: 50%;
-                    width: 36px; height: 36px;
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 14px; color: #fff;
-                    box-shadow: 0 0 15px rgba(255,255,255,0.1);
-                ">📍</div>`,
-                iconSize: [36, 36],
-                iconAnchor: [18, 18]
+    // Listener real-time — toti Insiderii vad aceleasi misiuni live
+    db.collection('missions')
+        .where('status', '==', 'open')
+        .onSnapshot(snap => {
+            snap.docChanges().forEach(change => {
+                const doc = change.doc;
+                const m = doc.data();
+
+                if (change.type === 'removed' || change.type === 'modified') {
+                    // Stergem marker-ul vechi
+                    if (missionMarkers[doc.id]) {
+                        map.removeLayer(missionMarkers[doc.id]);
+                        delete missionMarkers[doc.id];
+                    }
+                }
+
+                if (change.type === 'added' || change.type === 'modified') {
+                    if (!m.lat || !m.lng) return;
+                    if (m.status !== 'open') return;
+
+                    // Verificam expiry
+                    if (m.expiresAt && m.expiresAt.toDate() < now) return;
+
+                    const minsLeft = m.expiresAt
+                        ? Math.max(0, Math.round((m.expiresAt.toDate() - now) / 60000))
+                        : null;
+
+                    const icon = L.divIcon({
+                        className: '',
+                        html: `<div style="
+                            background: rgba(255,59,48,0.85);
+                            backdrop-filter: blur(10px);
+                            -webkit-backdrop-filter: blur(10px);
+                            border: 2px solid rgba(255,100,80,0.6);
+                            border-radius: 50%;
+                            width: 38px; height: 38px;
+                            display: flex; align-items: center; justify-content: center;
+                            font-size: 16px;
+                            box-shadow: 0 0 16px rgba(255,59,48,0.4);
+                            animation: missionPulse 2s infinite;
+                        ">🎯</div>`,
+                        iconSize: [38, 38],
+                        iconAnchor: [19, 19]
+                    });
+
+                    const marker = L.marker([m.lat, m.lng], { icon, zIndexOffset: 1000 }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="padding:4px; min-width:190px;">
+                            <div style="font-size:10px; color:rgba(255,59,48,0.8); margin-bottom:6px; letter-spacing:2px; font-weight:700;">CONTRACT ACTIV</div>
+                            <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:8px;">${m.description || 'Misiune'}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <span style="font-size:13px; color:#fff; font-weight:900;">${m.reward} VV</span>
+                                ${minsLeft !== null ? `<span style="font-size:11px; color:rgba(255,255,255,0.4);">⏱ ${minsLeft} min</span>` : ''}
+                            </div>
+                            <button onclick="map.closePopup(); acceptMission('${doc.id}');"
+                                style="background:rgba(255,255,255,0.92); color:#000; border:none;
+                                padding:12px; border-radius:10px; font-weight:800;
+                                font-size:12px; cursor:pointer; width:100%;">
+                                ACCEPTĂ MISIUNEA
+                            </button>
+                        </div>`, { closeButton: false, className: 'dark-popup' });
+
+                    missionMarkers[doc.id] = marker;
+                }
             });
-
-            const marker = L.marker([m.lat, m.lng], { icon }).addTo(map);
-
-            marker.bindPopup(`
-                <div style="padding:4px; min-width:180px;">
-                    <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:6px; letter-spacing:1px;">CONTRACT ACTIV</div>
-                    <div style="font-size:13px; color:#fff; font-weight:700; margin-bottom:10px;">${m.description || 'Misiune'}</div>
-                    <div style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:12px;">Recompensă: <strong style="color:#fff;">${m.reward} VV</strong></div>
-                    <button onclick="map.closePopup(); acceptMission('${doc.id}');"
-                        style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%;">
-                        ACCEPTĂ MISIUNEA
-                    </button>
-                </div>`, { closeButton: false, className: 'dark-popup' });
-
-            radarLayers.push(marker);
         });
-    });
 }
 
 // ================= MODAL CREATE MISSION =================
