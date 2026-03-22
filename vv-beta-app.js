@@ -159,13 +159,18 @@ function showApp() {
 }
 
 // ================= SILENT LOGIN =================
+let lastActiveUpdated = false; // Flag — scriem o singura data per sesiune
+
 function silentLogin() {
     auth.signInAnonymously().then(cred => {
         currentUser = cred.user;
-        // Actualizam lastActive pentru prezenta reala
-        db.collection('users').doc(cred.user.uid).update({
-            lastActive: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(() => {}); // Ignoram eroarea daca documentul nu exista inca
+        // Update lastActive DOAR o singura data per sesiune — economie Firebase
+        if (!lastActiveUpdated) {
+            lastActiveUpdated = true;
+            db.collection('users').doc(cred.user.uid).update({
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(() => {}); // Ignoram daca documentul nu exista inca
+        }
         loadUserData();
     }).catch(err => console.log('Silent login err:', err));
 }
@@ -1152,20 +1157,24 @@ async function showInsiderSearch(reward) {
         }
     }, 1200);
 
-    // Numaram Insideri activi REAL din Firebase (online in ultimele 15 min)
+    // Numaram Insideri activi REAL — cu fallback psihologic pentru numere mici
     try {
         const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
         const snap = await db.collection('users')
             .where('lastActive', '>', fifteenMinAgo)
             .get();
-        if (snap.size > 0) {
+
+        if (snap.size >= 2) {
+            // Aratam numarul real doar daca e relevant
             if (countText) countText.textContent = `${snap.size} Insideri activi în zonă`;
         } else {
-            if (countText) countText.textContent = 'Insideri în rețea';
+            // Sub 2 — suspans, nu dezamagire
+            if (countText) countText.textContent = 'Se caută Insideri în rețea...';
+            if (searchText) searchText.textContent = 'CONNECTING TO NETWORK...';
         }
     } catch(e) {
-        console.log('Eroare count insideri:', e);
-        if (countText) countText.textContent = 'Insideri în rețea';
+        console.log('Eroare count:', e);
+        if (countText) countText.textContent = 'Se caută Insideri în rețea...';
     }
 
     // Ascundem bara dupa 5 secunde
