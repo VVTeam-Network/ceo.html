@@ -1126,14 +1126,12 @@ async function showInsiderSearch(reward) {
         .getPropertyValue('--safe-area-bottom') || '0');
     bar.style.bottom = (dockHeight + 10 + safeArea) + 'px';
 
-    // Aratam bara
-    bar.style.display = 'block';
+    // Aratam overlay centrat
+    bar.style.display = 'flex';
     bar.style.opacity = '0';
-    bar.style.transform = 'translateY(10px)';
     setTimeout(() => {
-        bar.style.transition = 'all 0.4s cubic-bezier(0.16,1,0.3,1)';
+        bar.style.transition = 'opacity 0.3s ease';
         bar.style.opacity = '1';
-        bar.style.transform = 'translateY(0)';
     }, 50);
 
     // Setam recompensa
@@ -1181,14 +1179,14 @@ async function showInsiderSearch(reward) {
     clearTimeout(insiderSearchTimer);
     insiderSearchTimer = setTimeout(() => {
         hideInsiderSearch();
-    }, 5000);
+    }, 6000);
 }
 
 function hideInsiderSearch() {
     const bar = document.getElementById('insider-search-bar');
     if (!bar) return;
-    bar.style.transition = 'all 0.3s ease';
+    bar.style.transition = 'opacity 0.3s ease';
     bar.style.opacity = '0';
-    bar.style.transform = 'translateY(10px)';
     setTimeout(() => { bar.style.display = 'none'; }, 300);
+    clearTimeout(insiderSearchTimer);
 }
