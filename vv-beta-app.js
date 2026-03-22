@@ -720,8 +720,61 @@ async function loadCategoryMarkers(catKey, cat, limit) {
     }
 }
 
+// Mall-uri fixe hardcodate — Fashion House + toate mall-urile mari
+const FIXED_MALLS = [
+    { name: 'Fashion House Outlet Militari', lat: 44.4289, lng: 25.9978, emoji: '🛍️' },
+    { name: 'Fashion House Pallady', lat: 44.4198, lng: 26.2089, emoji: '🛍️' },
+    { name: 'AFI Cotroceni', lat: 44.4311, lng: 26.0542, emoji: '🏬' },
+    { name: 'Băneasa Shopping City', lat: 44.5089, lng: 26.0834, emoji: '🏬' },
+    { name: 'Mega Mall', lat: 44.4478, lng: 26.1623, emoji: '🏬' },
+    { name: 'Sun Plaza', lat: 44.3889, lng: 26.0823, emoji: '🏬' },
+    { name: 'Promenada Mall', lat: 44.4734, lng: 26.0912, emoji: '🏬' },
+    { name: 'Liberty Center', lat: 44.3978, lng: 26.0234, emoji: '🏬' },
+    { name: 'Vitantis Shopping Center', lat: 44.3823, lng: 26.1045, emoji: '🏬' },
+    { name: 'Jumbo Militari', lat: 44.4312, lng: 25.9945, emoji: '📦' },
+    { name: 'Jumbo Băneasa', lat: 44.5012, lng: 26.0756, emoji: '📦' },
+    { name: 'Jumbo Titan', lat: 44.4134, lng: 26.1823, emoji: '📦' },
+];
+
+function loadFixedMalls() {
+    if (!venueClusterGroup) return;
+    FIXED_MALLS.forEach(mall => {
+        const icon = L.divIcon({
+            className: '',
+            html: `<div style="
+                background: rgba(120,40,180,0.92);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 2px solid rgba(180,80,255,0.7);
+                border-radius: 50%;
+                width: 34px; height: 34px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 15px;
+                box-shadow: 0 2px 12px rgba(120,40,180,0.4);
+                cursor: pointer;
+            ">${mall.emoji}</div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+
+        const marker = L.marker([mall.lat, mall.lng], { icon, zIndexOffset: 700 });
+        marker.bindPopup(`
+            <div style="padding:4px; min-width:190px;">
+                <div style="font-size:10px; color:rgba(180,80,255,0.8); margin-bottom:5px; letter-spacing:2px; font-weight:700;">MALL / OUTLET</div>
+                <div style="font-size:14px; color:#fff; font-weight:800; margin-bottom:12px;">${mall.name}</div>
+                <button onclick="map.closePopup(); openCreateMissionModal(${mall.lat}, ${mall.lng});"
+                    style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%;">
+                    LANSEAZĂ CONTRACT AICI
+                </button>
+            </div>`, { closeButton: false, className: 'dark-popup' });
+
+        venueClusterGroup.addLayer(marker);
+    });
+}
+
 // Pornire inițială
 async function loadBucharestVenues() {
+    loadFixedMalls();
     await applyFilter('all');
 }
 
