@@ -17,8 +17,6 @@ const storage = firebase.storage();
 // ================= VARIABILE GLOBALE =================
 let map = null;
 let currentStream = null;
-let radarActive = false;
-let radarLayers = [];
 let targetMarker = null;
 let currentUser = null;
 let currentMissionId = null;
@@ -614,29 +612,7 @@ function filterVenues(category) {
 }
 
 
-// ================= RADAR =================
-function toggleRadar() {
-    radarActive = !radarActive;
-    const btn = document.getElementById('btn-radar');
-    const banner = document.getElementById('radar-banner');
-
-    if (radarActive) {
-        btn.style.color = '#fff';
-        btn.style.borderColor = 'rgba(255,255,255,0.4)';
-        btn.style.background = 'rgba(255,255,255,0.15)';
-        banner.style.display = 'block';
-        loadMissionsOnMap();
-        showToast('Radar Onyx Activat');
-    } else {
-        btn.style.color = '';
-        btn.style.borderColor = '';
-        btn.style.background = '';
-        banner.style.display = 'none';
-        radarLayers.forEach(l => map.removeLayer(l));
-        radarLayers = [];
-        showToast('Radar Oprit');
-    }
-}
+// Radar Onyx eliminat — hartă curată
 
 // ================= MISIUNI PE HARTĂ =================
 function loadMissionsOnMap() {
