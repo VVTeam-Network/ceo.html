@@ -85,46 +85,116 @@ function toggleAcceptButton() {
     const btn = document.getElementById('btn-accept');
     if (cb.checked) {
         btn.classList.remove('disabled');
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.color = '#000';
+        btn.style.background = 'rgba(255,255,255,0.95)';
     } else {
         btn.classList.add('disabled');
+        btn.style.opacity = '0.15';
+        btn.style.pointerEvents = 'none';
     }
 }
 
 // ================= BOOT SEQUENCE (după Accept) =================
 function startBootSequence() {
-    const key = document.getElementById('access-key').value.trim();
+    const key = document.getElementById('access-key').value.trim().toUpperCase();
+    const btn = document.getElementById('btn-accept');
+    const keyInput = document.getElementById('access-key');
+
+    // Stergem orice eroare anterioara
+    const existingError = document.getElementById('key-error-msg');
+    if (existingError) existingError.remove();
+
     if (!key) {
-        showToast('Introdu cheia de acces!');
+        showKeyError('Introdu cheia de acces.');
         return;
     }
 
-    const btn = document.getElementById('btn-accept');
-    btn.textContent = 'Se verifică...';
-    btn.classList.add('disabled');
+    if (key.length < 4) {
+        showKeyError('Cheie prea scurtă.');
+        return;
+    }
 
-    // Verificăm cheia în Firestore colecția 'access_keys'
-    db.collection('access_keys').where('key', '==', key).where('active', '==', true).get()
+    // Feedback vizual imediat
+    btn.textContent = 'SE VERIFICĂ...';
+    btn.classList.add('disabled');
+    btn.style.opacity = '0.7';
+    keyInput.style.borderColor = 'rgba(255,255,255,0.2)';
+
+    db.collection('access_keys')
+        .where('key', '==', key)
+        .where('active', '==', true)
+        .get()
         .then(snap => {
             if (snap.empty) {
-                showToast('Cheie invalidă sau expirată.');
-                btn.textContent = 'Accept și Decriptez';
-                btn.classList.remove('disabled');
-                return;
+                // Verificam daca exista dar e inactiva
+                return db.collection('access_keys')
+                    .where('key', '==', key)
+                    .get()
+                    .then(snap2 => {
+                        btn.textContent = 'DECRIPTEZ & INTRU';
+                        btn.classList.remove('disabled');
+                        btn.style.opacity = '1';
+                        keyInput.style.borderColor = 'rgba(255,59,48,0.5)';
+
+                        if (!snap2.empty) {
+                            showKeyError('Cheie deja folosită sau dezactivată.');
+                        } else {
+                            showKeyError('Cheie invalidă. Verifică și încearcă din nou.');
+                        }
+                    });
             }
 
-            // Cheie validă → salvăm în localStorage
+            // Cheie valida
             localStorage.setItem('vv_access_key', key);
+            btn.textContent = 'ACCES ACORDAT ✓';
+            btn.style.background = 'rgba(52,199,89,0.9)';
 
-            // Trecem la alias screen
-            document.getElementById('splash-screen').style.display = 'none';
-            document.getElementById('alias-screen').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('alias-screen').style.display = 'flex';
+            }, 400);
         })
         .catch(err => {
-            console.log('Eroare verificare cheie:', err);
-            showToast('Eroare de conexiune. Încearcă din nou.');
-            btn.textContent = 'Accept și Decriptez';
+            console.error('[VV] Eroare cheie:', err.code, err.message);
+            btn.textContent = 'DECRIPTEZ & INTRU';
             btn.classList.remove('disabled');
+            btn.style.opacity = '1';
+
+            if (err.code === 'permission-denied') {
+                showKeyError('Eroare permisiuni. Contactează VV Team.');
+            } else if (err.code === 'unavailable') {
+                showKeyError('Fără conexiune. Verifică internetul.');
+            } else {
+                showKeyError('Eroare temporară. Încearcă din nou.');
+            }
         });
+}
+
+function showKeyError(msg) {
+    const existing = document.getElementById('key-error-msg');
+    if (existing) existing.remove();
+
+    const err = document.createElement('div');
+    err.id = 'key-error-msg';
+    err.style.cssText = `
+        color: #ff3b30;
+        font-size: 12px;
+        text-align: center;
+        margin-top: -8px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        width: 100%;
+        max-width: 390px;
+    `;
+    err.textContent = '⚠️ ' + msg;
+
+    const keyInput = document.getElementById('access-key');
+    if (keyInput && keyInput.parentNode) {
+        keyInput.parentNode.insertBefore(err, keyInput.nextSibling);
+    }
 }
 
 // ================= CONFIRMARE ALIAS =================
