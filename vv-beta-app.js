@@ -28,11 +28,17 @@ let capturedImageBlob = null;
 
 // ================= BOOT =================
 window.onload = () => {
-    const done = localStorage.getItem('vv_premium_tutorial_done');
-    if (done === 'DA') {
+    const tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
+    const accessKey = localStorage.getItem('vv_access_key');
+    
+    // Dacă are cheie salvată și tutorialul e făcut → direct la hartă
+    if (tutorialDone === 'DA' && accessKey) {
+        document.getElementById('splash-screen').style.display = 'none';
+        document.getElementById('tutorial-screen').style.display = 'none';
         showApp();
         silentLogin();
     } else {
+        // User nou sau deconectat → splash screen
         document.getElementById('splash-screen').style.display = 'flex';
     }
 };
@@ -330,14 +336,13 @@ const VENUE_CATEGORIES = {
         label: 'Shopping', emoji: '🛒',
         color: 'rgba(20,100,180,0.88)', border: 'rgba(60,160,240,0.6)',
         size: 26, zIndex: 300,
-        query: `[out:json][timeout:20];(node["shop"~"supermarket|department_store"](around:6000,44.4325,26.1038);node["brand"~"Lidl|Kaufland|Mega Image|Profi|Jumbo|Carrefour|Auchan"](around:6000,44.4325,26.1038););out body;`
+        query: `[out:json][timeout:25];(node["shop"~"supermarket|department_store|convenience"](around:5000,44.4325,26.1038););out body;`
     }
 };
 
 // MOTOR PRINCIPAL — încarcă o categorie din Overpass și o afișează
 async function applyFilter(category) {
     if (!map) return;
-    // Dacă clusterGroup nu e gata, așteptăm
     if (!venueClusterGroup) {
         setTimeout(() => applyFilter(category), 500);
         return;
@@ -353,34 +358,67 @@ async function applyFilter(category) {
     venueClusterGroup.clearLayers();
 
     if (category === 'all') {
-        // Încărcăm toate categoriile
-        showToast('Se încarcă toate locațiile...');
+        showToast('Se încarcă locațiile...');
+        let totalAdded = 0;
         for (const [catKey, cat] of Object.entries(VENUE_CATEGORIES)) {
-            await loadCategoryMarkers(catKey, cat, 25);
+            try {
+                const added = await loadCategoryMarkers(catKey, cat, 20);
+                totalAdded += added;
+            } catch(e) {
+                console.error(`[VV] Eroare categorie ${catKey}:`, e);
+            }
         }
-        showToast('Toate locațiile încărcate ✅');
+        if (totalAdded > 0) {
+            showToast(`${totalAdded} locații încărcate ✅`);
+        } else {
+            showToast('Eroare încărcare. Încearcă din nou.');
+        }
         return;
     }
 
     const cat = VENUE_CATEGORIES[category];
     if (!cat) return;
 
-    showToast(`Se caută ${cat.label}...`);
-    const limit = category === 'shopping' ? 50 : 40;
-    await loadCategoryMarkers(category, cat, limit);
-    showToast(`${cat.emoji} ${cat.label} încărcate!`);
+    showToast(`Se caută ${cat.emoji} ${cat.label}...`);
+    try {
+        const limit = category === 'shopping' ? 50 : 40;
+        const added = await loadCategoryMarkers(category, cat, limit);
+        if (added > 0) {
+            showToast(`${cat.emoji} ${added} locații găsite!`);
+        } else {
+            showToast(`${cat.emoji} Nicio locație găsită în zonă.`);
+        }
+    } catch(e) {
+        console.error(`[VV] Eroare filtrare ${category}:`, e);
+        showToast('Eroare conexiune. Încearcă din nou. 🔄');
+    }
 }
 
 // Fetch + adaugă markeri pentru o categorie
 async function loadCategoryMarkers(catKey, cat, limit) {
+    let addedCount = 0;
     try {
+        console.log(`[VV] Fetch ${catKey}...`);
+        
         const res = await fetch('https://overpass-api.de/api/interpreter', {
             method: 'POST',
             body: cat.query
         });
-        const data = await res.json();
-        if (!data.elements) return;
 
+        if (!res.ok) {
+            console.error(`[VV] HTTP ${res.status} pentru ${catKey} — ${res.statusText}`);
+            if (res.status === 429) console.error('[VV] 429 Too Many Requests — prea multe cereri!');
+            return 0;
+        }
+
+        const data = await res.json();
+        
+        if (!data.elements || data.elements.length === 0) {
+            console.warn(`[VV] Niciun element găsit pentru ${catKey}`);
+            return 0;
+        }
+
+        console.log(`[VV] ${catKey}: ${data.elements.length} elemente găsite`);
         const elements = data.elements.slice(0, limit);
 
         elements.forEach(el => {
@@ -430,10 +468,15 @@ async function loadCategoryMarkers(catKey, cat, limit) {
                 </div>`, { closeButton: false, className: 'dark-popup' });
 
             venueClusterGroup.addLayer(marker);
+            addedCount++;
         });
 
+        console.log(`[VV] ${catKey}: ${addedCount} markere adăugate pe hartă`);
+        return addedCount;
+
     } catch (err) {
-        console.log(`Eroare ${cat.label}:`, err);
+        console.error(`[VV] CATCH ${catKey}:`, err.message || err);
+        return 0;
     }
 }
 
