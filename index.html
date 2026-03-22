@@ -122,35 +122,85 @@
             <div class="filter-pill" id="filter-mall" onclick="filterVenues('mall')">🛍️ Mall-uri</div>
         </div>
 
-        <!-- BARA UBER-STYLE: Căutare Insider -->
-        <div id="insider-search-bar" style="display:none; position:fixed; bottom:90px; left:16px; right:80px; z-index:1500;">
+        <!-- OVERLAY UBER-STYLE: Căutare Insider — CENTRAT PE ECRAN -->
+        <div id="insider-search-bar" style="display:none; position:fixed; inset:0; z-index:9000; justify-content:center; align-items:center;">
+            
+            <!-- Backdrop blur -->
+            <div style="position:absolute; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);"></div>
+            
+            <!-- Card central -->
             <div style="
-                background: rgba(8,8,12,0.95);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border: 1px solid rgba(255,255,255,0.12);
-                border-radius:18px;
-                padding: 16px 20px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                position:relative; z-index:1;
+                background: rgba(8,8,14,0.97);
+                backdrop-filter: blur(30px);
+                -webkit-backdrop-filter: blur(30px);
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 28px;
+                padding: 40px 32px 32px;
+                width: 85%;
+                max-width: 320px;
+                text-align: center;
+                box-shadow: 0 24px 60px rgba(0,0,0,0.7);
             ">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                    <div style="width:8px; height:8px; background:#34c759; border-radius:50%; box-shadow:0 0 8px #34c759; animation: pulseDot 1.5s infinite; flex-shrink:0;"></div>
-                    <span id="insider-search-text" style="font-size:13px; font-weight:700; color:#fff; letter-spacing:0.5px;">SE CAUTĂ INSIDER...</span>
+                <!-- Radar pulsând -->
+                <div style="position:relative; width:80px; height:80px; margin:0 auto 24px;">
+                    <div style="position:absolute; inset:0; border-radius:50%; background:rgba(255,255,255,0.04); animation:radarPulse1 2s infinite;"></div>
+                    <div style="position:absolute; inset:10px; border-radius:50%; background:rgba(255,255,255,0.06); animation:radarPulse2 2s infinite 0.3s;"></div>
+                    <div style="position:absolute; inset:20px; border-radius:50%; background:rgba(255,255,255,0.08); animation:radarPulse3 2s infinite 0.6s;"></div>
+                    <div style="
+                        position:absolute; inset:28px;
+                        border-radius:50%;
+                        background: rgba(255,255,255,0.9);
+                        display:flex; align-items:center; justify-content:center;
+                        box-shadow: 0 0 20px rgba(255,255,255,0.3);
+                    ">
+                        <i class="fas fa-satellite-dish" style="font-size:12px; color:#000;"></i>
+                    </div>
                 </div>
-                <!-- Progress bar animat -->
-                <div style="background:rgba(255,255,255,0.06); border-radius:10px; height:4px; overflow:hidden;">
-                    <div id="insider-progress" style="
+
+                <!-- Text principal -->
+                <div id="insider-search-text" style="
+                    font-size:15px; font-weight:900; color:#fff;
+                    letter-spacing:1px; margin-bottom:8px;
+                    text-transform:uppercase;
+                ">SE CAUTĂ INSIDER...</div>
+
+                <!-- Subtext count -->
+                <div id="insider-count-text" style="
+                    font-size:12px; color:rgba(255,255,255,0.4);
+                    margin-bottom:24px; font-weight:500;
+                ">Se scanează rețeaua...</div>
+
+                <!-- Progress bar shimmer -->
+                <div style="background:rgba(255,255,255,0.06); border-radius:10px; height:3px; overflow:hidden; margin-bottom:20px;">
+                    <div style="
                         height:100%; border-radius:10px;
-                        background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.8), rgba(255,255,255,0.3));
+                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
                         background-size: 200% 100%;
-                        animation: shimmer 1.5s infinite;
-                        width: 100%;
+                        animation: shimmer 1.2s infinite;
+                        width:100%;
                     "></div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                    <span id="insider-count-text" style="font-size:11px; color:rgba(255,255,255,0.4);">— Insideri activi în zonă</span>
-                    <span id="insider-reward-text" style="font-size:11px; color:#D4AF37; font-weight:700;">— VV</span>
+
+                <!-- Recompensa + anulare -->
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:6px; height:6px; background:#34c759; border-radius:50%; box-shadow:0 0 6px #34c759; animation:pulseDot 1.5s infinite;"></div>
+                        <span style="font-size:11px; color:rgba(255,255,255,0.35); letter-spacing:1px;">VV NETWORK</span>
+                    </div>
+                    <span id="insider-reward-text" style="font-size:13px; color:#fff; font-weight:900;">— VV</span>
                 </div>
+
+                <!-- Buton anulare -->
+                <div onclick="hideInsiderSearch();" style="
+                    margin-top:20px;
+                    padding:12px;
+                    background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:12px;
+                    font-size:12px; color:rgba(255,255,255,0.3);
+                    cursor:pointer; font-weight:600; letter-spacing:1px;
+                ">ANULEAZĂ</div>
             </div>
         </div>
 
