@@ -200,36 +200,61 @@ function silentLogin() {
     }).catch(err => console.log('Silent login err:', err));
 }
 
-// ================= LOAD USER DATA =================
+// ================= LOAD USER DATA — cu retry si null checks =================
 function loadUserData() {
     const alias = localStorage.getItem('vv_alias') || 'INSIDER';
-    document.getElementById('profile-main-name').textContent = alias;
+    const nameEl = document.getElementById('profile-main-name');
+    if (nameEl) nameEl.textContent = alias;
 
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('[VV] currentUser null, retry 1s...');
+        setTimeout(loadUserData, 1000);
+        return;
+    }
 
-    db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
-        if (doc.exists) {
+    const userRef = db.collection('users').doc(currentUser.uid);
+
+    // Daca documentul nu exista il cream cu balance 100
+    userRef.get().then(doc => {
+        if (!doc.exists) {
+            console.log('[VV] Cream document user nou...');
+            return userRef.set({
+                alias: alias,
+                balance: 100,
+                rating: 5,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                accessKey: localStorage.getItem('vv_access_key') || ''
+            });
+        }
+    }).then(() => {
+        // Listener live
+        userRef.onSnapshot(doc => {
+            if (!doc.exists) return;
             const data = doc.data();
-            const balance = data.balance || 0;
+            const balance = typeof data.balance === 'number' ? data.balance : 0;
             const lei = (balance * 0.5).toFixed(2);
 
-            document.getElementById('hud-balance').textContent = balance + ' VV';
-            document.getElementById('profile-vv-val').textContent = balance;
-            document.getElementById('profile-lei-val').textContent = lei;
-            document.getElementById('profile-main-name').textContent = data.alias || alias;
+            const hudEl = document.getElementById('hud-balance');
+            const vvEl = document.getElementById('profile-vv-val');
+            const leiEl = document.getElementById('profile-lei-val');
+            const nameEl2 = document.getElementById('profile-main-name');
 
-            // Update progress bar Onyx
+            if (hudEl) hudEl.textContent = balance + ' VV';
+            if (vvEl) vvEl.textContent = balance;
+            if (leiEl) leiEl.textContent = lei;
+            if (nameEl2) nameEl2.textContent = data.alias || alias;
+
             updateOnyxProgress(balance);
-        }
+        }, err => {
+            console.error('[VV] onSnapshot error:', err.code, err.message);
+        });
+    }).catch(err => {
+        console.error('[VV] loadUserData error:', err.code, err.message);
+        setTimeout(loadUserData, 2000);
     });
 
-        // Ascultăm inbox-ul
     listenInbox();
-
-    // Incarcam cheile de invitatie
     loadInviteKeys();
-
-    // Incarcam leaderboard
     loadLeaderboard();
 }
 
