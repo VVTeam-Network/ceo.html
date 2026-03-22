@@ -1008,3 +1008,50 @@ body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
+
+/* ============================================
+   FIX BARE ALBE iOS Safari
+   ============================================ */
+html, body {
+    background: #050507 !important;
+}
+
+/* Elimina bara alba de jos Safari */
+#map-view, #app-container {
+    background: #050507;
+}
+
+.stealth-dock {
+    background: rgba(8,8,10,0.98) !important;
+}
+
+/* ============================================
+   GPU ACCELERATION — Native Feel
+   ============================================ */
+* {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fab-btn, .filter-pill, .btn-main, .btn-launch, .dock-icon {
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0,0,0);
+}
+
+.sheet-content {
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0,0,0);
+}
+
+/* Animatii folosesc transform nu top/bottom */
+@keyframes slideUp {
+    from { transform: translate3d(0, 100%, 0); opacity: 0.5; }
+    to { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.98); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
