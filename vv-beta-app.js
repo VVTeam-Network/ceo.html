@@ -1299,7 +1299,13 @@ function uploadPhotoToCEO() {
         sendBtn.style.opacity = '1';
         document.getElementById('photo-msg').value = '';
         currentMissionId = null;
+        capturedImageBlob = null;
+        capturedGPS = null;
         closeCamera();
+        // Revenim la harta dupa 1.5s
+        setTimeout(() => {
+            switchTab('map');
+        }, 1500);
     }).catch(err => {
         console.log('Upload err:', err);
         showToast('Eroare upload. Încearcă din nou.');
@@ -1318,6 +1324,40 @@ function logoutAgent() {
     localStorage.removeItem('vv_access_key');
     localStorage.removeItem('vv_alias');
     auth.signOut().then(() => location.reload());
+}
+
+// ================= CLEAN BETA — sterge zgomotul de test =================
+async function cleanBetaData() {
+    const promptWord = prompt("Curăță misiunile și pozele de test?\nScrie: RESET");
+    if (promptWord !== "RESET") { showToast('Anulat.'); return; }
+
+    showToast('Se curăță...');
+
+    try {
+        for (const col of ['missions', 'photos', 'inbox']) {
+            const snap = await db.collection(col).get();
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            if (!snap.empty) await batch.commit();
+        }
+
+        // Curatam markerii fantoma de pe harta
+        if (missionMarkers) {
+            Object.values(missionMarkers).forEach(m => { try { map.removeLayer(m); } catch(e){} });
+            Object.keys(missionMarkers).forEach(k => delete missionMarkers[k]);
+        }
+
+        // Curatam cache venues
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('vv_cache_')) localStorage.removeItem(k);
+        });
+
+        showToast('✅ Gata! Sistem curat.');
+        setTimeout(() => location.reload(), 2000);
+
+    } catch(e) {
+        showToast('Eroare: ' + e.message);
+    }
 }
 
 // ================= SWITCH TAB =================
