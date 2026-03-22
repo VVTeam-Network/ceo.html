@@ -1055,3 +1055,24 @@ html, body {
     from { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.98); }
     to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
+
+/* ============================================
+   RADAR ANIMATIONS — Insider Search Overlay
+   ============================================ */
+@keyframes radarPulse1 {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.15); opacity: 0.1; }
+}
+@keyframes radarPulse2 {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 0.15; }
+}
+@keyframes radarPulse3 {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.25); opacity: 0.2; }
+}
+
+/* Overlay display flex cand e vizibil */
+#insider-search-bar[style*="flex"] {
+    display: flex !important;
+}
