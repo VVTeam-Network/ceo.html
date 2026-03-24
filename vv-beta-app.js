@@ -1,3 +1,8 @@
+// ================= NUCLEAR DEBUG — STERGE DUPA TEST =================
+window.onerror = function(msg, url, line, col, error) {
+    alert('CRASH: ' + msg + ' | Linia: ' + line);
+    return true;
+};
 // ================= FIREBASE CONFIG =================
 const firebaseConfig = {
     apiKey: "AIzaSyDGv4kEClO0RHCLvXVLOT-vyPHw6bsxYVc",
@@ -26,6 +31,7 @@ let capturedImageBlob = null;
 
 // ================= BOOT =================
 window.onload = () => {
+    alert('PAS 2: Pagina incarcata');
     // FIX iOS swipe back
     document.addEventListener('touchstart', function(e) {
         if (e.touches[0].clientX < 20 || e.touches[0].clientX > window.innerWidth - 20) {
