@@ -725,13 +725,12 @@
 
 <script>
     window.onerror = function(msg, url, line) {
-        alert("🚨 EROARE FATALĂ: " + msg + "\nLinia: " + line);
+        alert("🚨 EROARE: " + msg + "\nLinia: " + line);
         return true;
     };
-    window.addEventListener('unhandledrejection', function(event) {
-        alert("🚨 EROARE PROMISIUNE: " + event.reason);
-    });
 </script>
+<script src="vv-beta-app.js?v=1001"></script>
+
 
 <script src="vv-beta-app.js?v=999"></script>
 </body>
