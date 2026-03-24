@@ -368,7 +368,7 @@ function loadLeaderboard() {
 
             snap.forEach(doc => {
                 const u = doc.data();
-                const isMe = doc.id === currentUser?.uid;
+                const isMe = doc.id === (currentUser ? currentUser.uid : null);
                 const medals = ['🥇', '🥈', '🥉'];
                 const medal = rank <= 3 ? medals[rank-1] : `#${rank}`;
 
@@ -785,13 +785,13 @@ async function loadCategoryMarkers(catKey, cat, limit) {
             const lon = el.lon || (el.center && el.center.lon);
             if (!lat || !lon) return;
 
-            const name = el.tags?.name || el.tags?.['name:ro'] || el.tags?.brand || cat.label;
-            const address = el.tags?.['addr:street']
+            const name = (el.tags && el.tags.name) || (el.tags && el.tags['name:ro']) || (el.tags && el.tags.brand) || cat.label;
+            const address = (el.tags && el.tags['addr:street'])
                 ? `${el.tags['addr:street']}${el.tags['addr:housenumber'] ? ' ' + el.tags['addr:housenumber'] : ''}`
                 : '';
-            const phone = el.tags?.phone || el.tags?.['contact:phone'] || '';
-            const opening = el.tags?.opening_hours || '';
-            const brand = el.tags?.brand || '';
+            const phone = (el.tags && el.tags.phone) || (el.tags && el.tags['contact:phone']) || '';
+            const opening = (el.tags && el.tags.opening_hours) || '';
+            const brand = (el.tags && el.tags.brand) || '';
 
             const s = cat.size;
             const icon = L.divIcon({
@@ -963,7 +963,7 @@ function loadMissionsOnMap() {
                     const marker = L.marker([m.lat, m.lng], { icon, zIndexOffset: 1000 }).addTo(map);
 
                     // Logica diferita pentru Creator vs Insider
-                    const isMyMission = m.createdBy === currentUser?.uid;
+                    const isMyMission = m.createdBy === (currentUser ? currentUser.uid : null);
 
                     if (isMyMission) {
                         // CREATOR VIEW — vezi statusul misiunii tale
@@ -1080,7 +1080,7 @@ async function submitPinpointMission() {
 
     // Verificăm dacă userul are destui VV
     db.collection('users').doc(currentUser.uid).get().then(doc => {
-        const balance = doc.data()?.balance || 0;
+        const balance = (doc.data() ? doc.data().balance : 0) || 0;
         if (balance < selectedReward) {
             showToast('VV insuficienți!');
             launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
@@ -1234,7 +1234,7 @@ async function openMissionResult(missionId) {
                         ">
                             <div style="font-size:11px; color:#fff; font-weight:800;">VV PROOF</div>
                             <div style="font-size:10px; color:rgba(255,255,255,0.5);">
-                                de ${data.alias || 'INSIDER'} · ${data.createdAt?.toDate().toLocaleString('ro-RO') || ''}
+                                de ${data.alias || 'INSIDER'} · ${(data.createdAt ? data.createdAt.toDate().toLocaleString('ro-RO') : '') || ''}
                             </div>
                         </div>
                     </div>
@@ -1384,7 +1384,7 @@ function sendFeedback() {
 
     db.collection('feedback').add({
         message: msg,
-        uid: currentUser?.uid || 'anonim',
+        uid: (currentUser ? currentUser.uid : null) || 'anonim',
         alias: localStorage.getItem('vv_alias') || 'INSIDER',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
@@ -1678,8 +1678,8 @@ function closeModal(id) {
 
 // ================= RECRUTARE VV TEAM =================
 async function submitApplication() {
-    const skill = document.getElementById('recruit-skill')?.value.trim();
-    const portfolio = document.getElementById('recruit-portfolio')?.value.trim();
+    const skill = (document.getElementById('recruit-skill') ? document.getElementById('recruit-skill').value.trim() : '');
+    const portfolio = (document.getElementById('recruit-portfolio') ? document.getElementById('recruit-portfolio').value.trim() : '');
 
     if (!skill) { showToast('Spune-ne ce știi să construiești!'); return; }
 
@@ -1692,7 +1692,7 @@ async function submitApplication() {
             skill: skill,
             portfolio: portfolio || 'N/A',
             alias: localStorage.getItem('vv_alias') || 'INSIDER',
-            uid: currentUser?.uid || 'anonim',
+            uid: (currentUser ? currentUser.uid : null) || 'anonim',
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'pending'
         });
