@@ -1493,7 +1493,7 @@ function uploadPhotoToCEO() {
     const fileName = 'proofs/' + currentUser.uid + '_' + Date.now() + '.jpg';
     const ref = storage.ref(fileName);
 
-    ref.put(capturedImageBlob).then(() => ref.getDownloadURL()).then(url => {
+    ref.put(capturedImageBlob).then(() => ref.getDownloadURL()).then(async url => {
         const alias = localStorage.getItem('vv_alias') || 'INSIDER';
         const now = firebase.firestore.FieldValue.serverTimestamp();
 
