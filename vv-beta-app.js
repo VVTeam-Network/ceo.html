@@ -85,17 +85,14 @@ function toggleAcceptButton() {
 }
 
 // ================= BOOT SEQUENCE (după Accept) =================
-function startBootSequence() {
+async function startBootSequence() {
     const key = document.getElementById('access-key').value.trim().toUpperCase();
     const btn = document.getElementById('btn-accept');
-    const keyInput = document.getElementById('access-key');
     const cb = document.getElementById('tc-checkbox');
 
-    // Stergem orice eroare anterioara
     const existingError = document.getElementById('key-error-msg');
     if (existingError) existingError.remove();
 
-    // Validare checkbox — primul pas
     if (!cb || !cb.checked) {
         showKeyError('Trebuie să accepți regulamentul mai întâi.');
         return;
@@ -106,66 +103,55 @@ function startBootSequence() {
         return;
     }
 
-    if (key.length < 4) {
-        showKeyError('Cheie prea scurtă.');
-        return;
-    }
-
-    // Feedback vizual imediat
     btn.textContent = 'SE VERIFICĂ...';
-    btn.classList.add('disabled');
     btn.style.opacity = '0.7';
-    keyInput.style.borderColor = 'rgba(255,255,255,0.2)';
+    btn.style.pointerEvents = 'none';
 
-    db.collection('access_keys')
-        .where('key', '==', key)
-        .where('active', '==', true)
-        .get()
-        .then(snap => {
-            if (snap.empty) {
-                // Verificam daca exista dar e inactiva
-                return db.collection('access_keys')
-                    .where('key', '==', key)
-                    .get()
-                    .then(snap2 => {
-                        btn.textContent = 'DECRIPTEZ & INTRU';
-                        btn.classList.remove('disabled');
-                        btn.style.opacity = '1';
-                        keyInput.style.borderColor = 'rgba(255,59,48,0.5)';
+    try {
+        // Pas 1 — verificam cheia in Firestore
+        const snap = await db.collection('access_keys')
+            .where('key', '==', key)
+            .where('active', '==', true)
+            .get();
 
-                        if (!snap2.empty) {
-                            showKeyError('Cheie deja folosită sau dezactivată.');
-                        } else {
-                            showKeyError('Cheie invalidă. Verifică și încearcă din nou.');
-                        }
-                    });
-            }
+        if (snap.empty) {
+            const snap2 = await db.collection('access_keys')
+                .where('key', '==', key).get();
+            throw new Error(snap2.empty
+                ? 'Cheie invalidă: ' + key
+                : 'Cheie dezactivată. Cere una nouă.');
+        }
 
-            // Cheie valida
-            localStorage.setItem('vv_access_key', key);
-            btn.textContent = 'ACCES ACORDAT ✓';
-            btn.style.background = 'rgba(52,199,89,0.9)';
+        // Pas 2 — salvam cheia
+        localStorage.setItem('vv_access_key', key);
 
-            setTimeout(() => {
-                document.getElementById('splash-screen').style.display = 'none';
-                document.getElementById('alias-screen').style.display = 'flex';
-            }, 400);
-        })
-        .catch(err => {
-            console.error('[VV] Eroare cheie:', err.code, err.message);
-            btn.textContent = 'DECRIPTEZ & INTRU';
-            btn.classList.remove('disabled');
-            btn.style.opacity = '1';
+        // Pas 3 — logam anonim
+        btn.textContent = 'SE CONECTEAZĂ...';
+        await auth.signInAnonymously();
 
-            if (err.code === 'permission-denied') {
-                showKeyError('Eroare permisiuni. Contactează VV Team.');
-            } else if (err.code === 'unavailable') {
-                showKeyError('Fără conexiune. Verifică internetul.');
-            } else {
-                showKeyError('Eroare temporară. Încearcă din nou.');
-            }
-        });
+        // Pas 4 — succes
+        btn.textContent = 'ACCES ACORDAT ✓';
+        btn.style.background = 'rgba(52,199,89,0.9)';
+        btn.style.color = '#000';
+        btn.style.opacity = '1';
+
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('alias-screen').style.display = 'flex';
+        }, 500);
+
+    } catch(err) {
+        console.error('[VV Boot]', err.code, err.message);
+        btn.textContent = 'DECRIPTEZ & INTRU';
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.background = '';
+        btn.style.color = '';
+        // Eroarea exacta vizibila pe ecran
+        showKeyError('❌ ' + (err.message || JSON.stringify(err)));
+    }
 }
+
 
 function showKeyError(msg) {
     const existing = document.getElementById('key-error-msg');
@@ -175,14 +161,19 @@ function showKeyError(msg) {
     err.id = 'key-error-msg';
     err.style.cssText = `
         color: #ff3b30;
-        font-size: 12px;
+        font-size: 14px;
         text-align: center;
-        margin-top: -8px;
-        margin-bottom: 8px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        font-weight: 700;
         width: 100%;
         max-width: 390px;
+        padding: 10px 14px;
+        background: rgba(255,59,48,0.1);
+        border: 1px solid rgba(255,59,48,0.3);
+        border-radius: 10px;
+        line-height: 1.4;
+        word-break: break-all;
     `;
     err.textContent = '⚠️ ' + msg;
 
