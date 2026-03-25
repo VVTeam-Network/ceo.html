@@ -915,12 +915,15 @@ function loadMissionsOnMap() {
                 const m = doc.data();
 
                 if (change.type === 'removed' || change.type === 'modified') {
-                    // Stergem marker-ul vechi
+                    // Stergem marker-ul vechi intotdeauna
                     if (missionMarkers[doc.id]) {
-                        map.removeLayer(missionMarkers[doc.id]);
+                        try { map.removeLayer(missionMarkers[doc.id]); } catch(e) {}
                         delete missionMarkers[doc.id];
                     }
                 }
+
+                // Daca misiunea nu mai e open — nu o mai afisam
+                if (m.status !== 'open') return;
 
                 if (change.type === 'added' || change.type === 'modified') {
                     if (!m.lat || !m.lng) return;
@@ -1481,9 +1484,27 @@ function retakePhoto() {
     document.getElementById('post-photo-menu').style.display = 'none';
 }
 
-function uploadPhotoToCEO() {
+async function uploadPhotoToCEO() {
     if (!capturedImageBlob) { showToast('Nu ai capturat nicio poză!'); return; }
     if (!currentUser) { showToast('Nu ești conectat!'); return; }
+
+    // VVeye — validare antifraudă dacă modulul e disponibil
+    if (typeof VVeye !== 'undefined' && VVeye.validateProof) {
+        try {
+            const validation = await VVeye.validateProof(
+                capturedImageBlob,
+                { lat: missionLat, lng: missionLng },
+                capturedGPS
+            );
+            if (!validation.valid) {
+                showToast('❌ ' + (validation.reason || 'Dovadă invalidă VVeye'));
+                return;
+            }
+        } catch(e) {
+            console.log('[VVeye] Eroare validare:', e.message);
+            // Continuam fara validare daca modulul da eroare
+        }
+    }
 
     const msg = document.getElementById('photo-msg').value.trim();
     const sendBtn = document.getElementById('send-btn');
@@ -1493,7 +1514,7 @@ function uploadPhotoToCEO() {
     const fileName = 'proofs/' + currentUser.uid + '_' + Date.now() + '.jpg';
     const ref = storage.ref(fileName);
 
-    ref.put(capturedImageBlob).then(() => ref.getDownloadURL()).then(async url => {
+    ref.put(capturedImageBlob).then(() => ref.getDownloadURL()).then(url => {
         const alias = localStorage.getItem('vv_alias') || 'INSIDER';
         const now = firebase.firestore.FieldValue.serverTimestamp();
 
