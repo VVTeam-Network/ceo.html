@@ -287,56 +287,80 @@ function silentLogin() {
     }).catch(err => console.log('Silent login err:', err));
 }
 
-// ================= LOAD USER DATA — cu retry si null checks =================
+// ================= LOAD USER DATA — robust cu retry =================
+let userDataListener = null; // tinem referinta la listener
+
 function loadUserData() {
     const alias = localStorage.getItem('vv_alias') || 'INSIDER';
-    const nameEl = document.getElementById('profile-main-name');
+
+    // Setam alias imediat din localStorage
+    var nameEl = document.getElementById('profile-main-name');
     if (nameEl) nameEl.textContent = alias;
 
+    // Setam loading state
+    var hudEl = document.getElementById('hud-balance');
+    if (hudEl && hudEl.textContent === '— VV') hudEl.textContent = '... VV';
+
     if (!currentUser) {
-        console.log('[VV] currentUser null, retry 1s...');
+        console.log('[VV] currentUser null — retry 1s');
         setTimeout(loadUserData, 1000);
         return;
     }
 
-    const userRef = db.collection('users').doc(currentUser.uid);
+    var uid = currentUser.uid;
+    var userRef = db.collection('users').doc(uid);
 
-    // Daca documentul nu exista il cream cu balance 100
-    userRef.get().then(doc => {
+    // Verificam daca documentul exista
+    userRef.get().then(function(doc) {
         if (!doc.exists) {
-            console.log('[VV] Cream document user nou...');
+            console.log('[VV] Document inexistent — cream cu 100 VV');
             return userRef.set({
                 alias: alias,
                 balance: 100,
                 rating: 5,
                 joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                accessKey: localStorage.getItem('vv_access_key') || ''
+                accessKey: localStorage.getItem('vv_access_key') || '',
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
-    }).then(() => {
-        // Listener live
-        userRef.onSnapshot(doc => {
+    }).then(function() {
+        // Oprim listener-ul vechi daca exista
+        if (userDataListener) {
+            userDataListener();
+            userDataListener = null;
+        }
+
+        // Listener live pentru balanta
+        userDataListener = userRef.onSnapshot(function(doc) {
             if (!doc.exists) return;
-            const data = doc.data();
-            const balance = typeof data.balance === 'number' ? data.balance : 0;
-            const lei = (balance * 0.5).toFixed(2);
 
-            const hudEl = document.getElementById('hud-balance');
-            const vvEl = document.getElementById('profile-vv-val');
-            const leiEl = document.getElementById('profile-lei-val');
-            const nameEl2 = document.getElementById('profile-main-name');
+            var data = doc.data();
+            var balance = typeof data.balance === 'number' ? data.balance : 0;
+            var lei = (balance * 0.5).toFixed(2);
 
-            if (hudEl) hudEl.textContent = balance + ' VV';
+            var hudEl2 = document.getElementById('hud-balance');
+            var vvEl = document.getElementById('profile-vv-val');
+            var leiEl = document.getElementById('profile-lei-val');
+            var nameEl2 = document.getElementById('profile-main-name');
+
+            if (hudEl2) hudEl2.textContent = balance + ' VV';
             if (vvEl) vvEl.textContent = balance;
             if (leiEl) leiEl.textContent = lei;
             if (nameEl2) nameEl2.textContent = data.alias || alias;
 
             updateOnyxProgress(balance);
-        }, err => {
-            console.error('[VV] onSnapshot error:', err.code, err.message);
+
+            console.log('[VV] Balanta actualizata:', balance, 'VV');
+        }, function(err) {
+            console.error('[VV] onSnapshot eroare:', err.code, err.message);
+            // Retry la erori de permisiuni
+            if (err.code === 'permission-denied') {
+                setTimeout(loadUserData, 3000);
+            }
         });
-    }).catch(err => {
-        console.error('[VV] loadUserData error:', err.code, err.message);
+
+    }).catch(function(err) {
+        console.error('[VV] loadUserData eroare:', err.code, err.message);
         setTimeout(loadUserData, 2000);
     });
 
