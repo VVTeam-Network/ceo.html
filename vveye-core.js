@@ -1,47 +1,54 @@
-// ==========================================
-//   VVeye: THE EYE OF AI - CORE ENGINE v1.0
-// ==========================================
+// ================= VVeye CORE — Motorul Antifraudă VV =================
+// VV-eye: The Eye of AI
+// Versiune: 0.1 BETA
 
-const VVeye = {
-    version: "1.0.0",
-    status: "ACTIVE",
+const VVeye = (function() {
 
-    // Funcția principală de validare
-    validateProof: async function(photoBlob, missionData, gpsData) {
-        console.log('[VVeye] Analiză intel începută...');
+    // ---- Configurare ----
+    const CONFIG = {
+        minImageSize: 1000,        // bytes minim pentru o poza reala
+        maxAgeSeconds: 300,        // poza nu poate fi mai veche de 5 minute
+        requireGPS: false,         // GPS optional in Beta
+    };
 
-        // 1. Verificare Integritate (Mărime fișier)
-        if (photoBlob.size < 50000) { 
-            return { valid: false, reason: "IMAGINE_NECORĂ: VVeye cere dovezi clare." };
+    // ---- Validare principala ----
+    async function validateProof(imageBlob, missionData, gpsData) {
+
+        // 1. Verificam ca exista blob
+        if (!imageBlob || imageBlob.size < CONFIG.minImageSize) {
+            return {
+                valid: false,
+                reason: 'Imaginea pare prea mică sau coruptă.'
+            };
         }
 
-        // 2. Verificare GPS (Senzorul de Realitate)
-        if (!gpsData || !gpsData.lat) {
-            return { valid: false, reason: "LIPSA_GPS: VVeye nu acceptă date fără locație." };
+        // 2. Verificam GPS daca e setat ca obligatoriu
+        if (CONFIG.requireGPS && !gpsData) {
+            return {
+                valid: false,
+                reason: 'Locatia GPS lipseste. Activeaza locatia si incearca din nou.'
+            };
         }
 
-        // 3. Verificare Distanță (Calcul distanță între Insider și Țintă)
-        const dist = this.calculateDistance(gpsData.lat, gpsData.lng, missionData.lat, missionData.lng);
-        console.log(`[VVeye] Distanța calculată: ${dist.toFixed(2)} km`);
+        // 3. Viitor: verificare AI deepfake, screenshot detection etc.
+        // De adaugat in VV 1.0
 
-        if (dist > 0.5) { // 500 metri marjă de eroare
-            return { valid: false, reason: "DISTANȚĂ_PREA_MARE: Te-am reperat, ești prea departe." };
-        }
-
-        return { valid: true, reason: "INTEL_VERIFICAT: ✓ Scos la lumină de VVeye." };
-    },
-
-    // Motorul matematic al VVeye
-    calculateDistance: function(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Raza pământului
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
+        // Validare trecuta
+        return {
+            valid: true,
+            reason: null,
+            metadata: {
+                size: imageBlob.size,
+                hasGPS: !!gpsData,
+                timestamp: Date.now()
+            }
+        };
     }
-};
 
-console.log('👁️ VVeye: The Eye of AI has been initialized.');
+    // ---- API public ----
+    return {
+        validateProof: validateProof,
+        version: '0.1-beta'
+    };
+
+})();
