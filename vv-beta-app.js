@@ -1520,7 +1520,9 @@ async function uploadPhotoToCEO() {
     const fileName = 'proofs/' + currentUser.uid + '_' + Date.now() + '.jpg';
     const ref = storage.ref(fileName);
 
-    ref.put(capturedImageBlob).then(() => ref.getDownloadURL()).then(url => {
+    try {
+        const snapshot = await ref.put(capturedImageBlob);
+        const url = await ref.getDownloadURL();
         const alias = localStorage.getItem('vv_alias') || 'INSIDER';
         const now = firebase.firestore.FieldValue.serverTimestamp();
 
@@ -1594,8 +1596,8 @@ async function uploadPhotoToCEO() {
             }
         }
 
-        return batch.commit();
-    }).then(() => {
+        await batch.commit();
+
         showToast('Raport trimis cu succes! ✅');
         sendBtn.textContent = 'TRIMITE RAPORT';
         sendBtn.style.opacity = '1';
@@ -1604,16 +1606,14 @@ async function uploadPhotoToCEO() {
         capturedImageBlob = null;
         capturedGPS = null;
         closeCamera();
-        // Revenim la harta dupa 1.5s
-        setTimeout(() => {
-            switchTab('map');
-        }, 1500);
-    }).catch(err => {
+        setTimeout(function() { switchTab('map'); }, 1500);
+
+    } catch(err) {
         console.log('Upload err:', err);
         showToast('Eroare upload. Încearcă din nou.');
         sendBtn.textContent = 'TRIMITE RAPORT';
         sendBtn.style.opacity = '1';
-    });
+    }
 }
 
 // ================= SETTINGS & LOGOUT =================
