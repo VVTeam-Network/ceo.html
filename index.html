@@ -49,7 +49,8 @@
     </div>
 
     <input type="text" class="key-input" id="access-key" placeholder="CHEIE DE ACCES">
-    <button class="btn-main" id="btn-accept" onclick="startBootSequence()">DECRIPTEZ & INTRU</button>
+    <button class="btn-main" id="btn-accept" onclick="try{startBootSequence();}catch(e){document.getElementById('key-error-msg-fallback').textContent='Eroare: '+e.message;document.getElementById('key-error-msg-fallback').style.display='block';}">DECRIPTEZ & INTRU</button>
+    <div id="key-error-msg-fallback" style="display:none;color:#ff3b30;font-size:13px;text-align:center;margin-top:10px;padding:10px;background:rgba(255,59,48,0.1);border-radius:10px;"></div>
 </div>
 
 <!-- ========== ALIAS SCREEN ========== -->
