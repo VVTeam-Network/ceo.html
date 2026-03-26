@@ -767,20 +767,6 @@
     </div>
 </div>
 
-<!-- VVeye Core — fallback inline daca fisierul extern lipseste -->
-<script>
-var VVeye = (function() {
-    async function validateProof(imageBlob, missionData, gpsData) {
-        if (!imageBlob || imageBlob.size < 1000) {
-            return { valid: false, reason: 'Imaginea pare coruptă.' };
-        }
-        return { valid: true, reason: null };
-    }
-    return { validateProof: validateProof, version: '0.1-beta' };
-})();
-</script>
-<!-- Modulul extern VVeye — suprascrie fallback-ul daca e prezent -->
-<script src="vveye-core.js" onerror="console.log('[VVeye] Modul extern indisponibil, folosim fallback.')"></script>
 <script src="vv-beta-app.js"></script>
 </body>
 </html>
