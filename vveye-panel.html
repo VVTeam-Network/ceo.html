@@ -2,159 +2,638 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VVeye | Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VVeye — Fraud Detection</title>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --bg: #050507;
+            --panel: #0a0a0e;
+            --glass: rgba(255,255,255,0.05);
+            --border: rgba(255,255,255,0.08);
+            --red: #ff3b30;
+            --green: #34c759;
+            --gold: #D4AF37;
+            --blue: #0A84FF;
+            --text: #ffffff;
+            --muted: rgba(255,255,255,0.35);
+        }
+
         body {
-            background-color: #000;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            padding-top: max(20px, env(safe-area-inset-top));
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+
+        /* ===== LOGIN ===== */
+        #login-screen {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--bg); z-index: 9999;
+            padding: 40px 24px;
         }
-        .title {
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 3px;
-        }
-        .status-badge {
-            background: rgba(52,199,89,0.1);
-            border: 1px solid rgba(52,199,89,0.3);
-            color: #34c759;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 10px;
+
+        .vveye-logo {
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: var(--red);
             font-weight: 800;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            margin-bottom: 8px;
         }
-        .pulse {
-            width: 6px; height: 6px;
-            background: #34c759;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #34c759;
-            animation: blink 1.5s infinite;
+
+        .vveye-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 4px;
         }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.3;} 100% {opacity: 1;} }
-        
-        /* Statistica de Război */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 24px;
+
+        .vveye-sub {
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            margin-bottom: 48px;
         }
-        .stat-box {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+
+        .login-input {
+            width: 100%; max-width: 320px;
+            background: var(--glass);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 15px 10px;
+            padding: 16px 18px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 12px;
+            font-family: monospace;
+            letter-spacing: 3px;
             text-align: center;
         }
-        .stat-val { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
-        .stat-label { font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;}
-        
-        .val-total { color: #0A84FF; }
-        .val-valid { color: #34c759; }
-        .val-reject { color: #ff3b30; }
 
-        /* Log-ul VVeye */
-        .log-header {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            letter-spacing: 2px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
+        .login-btn {
+            width: 100%; max-width: 320px;
+            padding: 16px;
+            background: var(--red);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 4px;
         }
-        .log-container {
-            background: rgba(10,10,14,0.8);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            height: 60vh;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        .log-entry {
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 8px;
+
+        #login-error {
+            color: var(--red);
             font-size: 12px;
-            border-left: 3px solid #333;
+            margin-top: 10px;
+            display: none;
         }
-        .log-entry.valid { border-left-color: #34c759; }
-        .log-entry.reject { border-left-color: #ff3b30; }
-        
-        .log-time { font-size: 10px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
-        .log-reason { color: #fff; font-weight: 600; line-height: 1.4; }
-        .log-meta { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 6px; }
 
+        /* ===== DASHBOARD ===== */
+        #dashboard { display: none; }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--panel);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .eye-icon {
+            width: 36px; height: 36px;
+            background: rgba(255,59,48,0.15);
+            border: 1px solid rgba(255,59,48,0.3);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+
+        .header-title { font-size: 16px; font-weight: 900; }
+        .header-sub { font-size: 10px; color: var(--red); letter-spacing: 2px; font-weight: 700; }
+
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 18px;
+            min-width: 100px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .stat-num {
+            font-size: 22px;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+
+        .stat-card.red { border-color: rgba(255,59,48,0.3); }
+        .stat-card.red .stat-num { color: var(--red); }
+        .stat-card.green { border-color: rgba(52,199,89,0.3); }
+        .stat-card.green .stat-num { color: var(--green); }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--muted);
+            padding: 20px 24px 12px;
+            text-transform: uppercase;
+        }
+
+        /* ===== PROOF CARDS ===== */
+        .proof-grid {
+            padding: 0 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .proof-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .proof-card.flagged {
+            border-color: rgba(255,59,48,0.4);
+            background: rgba(255,59,48,0.04);
+        }
+
+        .proof-card.approved {
+            border-color: rgba(52,199,89,0.3);
+            opacity: 0.6;
+        }
+
+        .proof-img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .proof-info {
+            padding: 14px 16px;
+        }
+
+        .proof-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .proof-alias {
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .flag-badge {
+            background: rgba(255,59,48,0.15);
+            border: 1px solid rgba(255,59,48,0.3);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 10px;
+            color: var(--red);
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .valid-badge {
+            background: rgba(52,199,89,0.15);
+            border: 1px solid rgba(52,199,89,0.3);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 10px;
+            color: var(--green);
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .proof-meta {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+
+        .proof-meta span {
+            display: block;
+        }
+
+        .proof-gps {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--blue);
+            margin-bottom: 12px;
+        }
+
+        .proof-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-approve {
+            flex: 1;
+            padding: 12px;
+            background: rgba(52,199,89,0.15);
+            border: 1px solid rgba(52,199,89,0.3);
+            border-radius: 10px;
+            color: var(--green);
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-reject {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,59,48,0.15);
+            border: 1px solid rgba(255,59,48,0.3);
+            border-radius: 10px;
+            color: var(--red);
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-approve:disabled,
+        .btn-reject:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        /* Filter tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 24px 16px;
+            overflow-x: auto;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--glass);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .filter-tab.active {
+            background: rgba(255,59,48,0.15);
+            border-color: rgba(255,59,48,0.4);
+            color: var(--red);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="login-screen">
+    <div class="vveye-logo">VV TECHNOLOGIES</div>
+    <div class="vveye-title">VVeye</div>
+    <div class="vveye-sub">FRAUD DETECTION SYSTEM</div>
+
+    <input type="password" id="vveye-pass" class="login-input"
+        placeholder="• • • • • • • •"
+        autocomplete="current-password">
+
+    <div id="login-error">Acces refuzat. Parolă incorectă.</div>
+
+    <button class="login-btn" onclick="vveyeLogin()">
+        <i class="fas fa-eye"></i> ACTIVEAZĂ VVeye
+    </button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+    <!-- Header -->
     <div class="header">
-        <div class="title">👁️ VVEYE PANEL</div>
-        <div class="status-badge">
-            <div class="pulse"></div> AI ONLINE
+        <div class="header-left">
+            <div class="eye-icon">👁️</div>
+            <div>
+                <div class="header-title">VVeye</div>
+                <div class="header-sub">FRAUD DETECTION</div>
+            </div>
         </div>
+        <button class="logout-btn" onclick="vveyeLogout()">
+            <i class="fas fa-sign-out-alt"></i> IEȘI
+        </button>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-box">
-            <div class="stat-val val-total" id="stat-total">0</div>
-            <div class="stat-label">Scanări</div>
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-num" id="stat-total">0</div>
+            <div class="stat-label">Total Dovezi</div>
         </div>
-        <div class="stat-box">
-            <div class="stat-val val-valid" id="stat-valid">0</div>
+        <div class="stat-card red">
+            <div class="stat-num" id="stat-flagged">0</div>
+            <div class="stat-label">Alertate</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-num" id="stat-approved">0</div>
             <div class="stat-label">Aprobate</div>
         </div>
-        <div class="stat-box">
-            <div class="stat-val val-reject" id="stat-reject">0</div>
-            <div class="stat-label">Blocate</div>
+        <div class="stat-card">
+            <div class="stat-num" id="stat-pending">0</div>
+            <div class="stat-label">În așteptare</div>
         </div>
     </div>
 
-    <div class="log-header">
-        <span>LIVE INTELLIGENCE STREAM</span>
-        <span style="color:#0A84FF;"><i class="fas fa-satellite-dish"></i></span>
+    <!-- Filters -->
+    <div class="section-title">VALIDATION FEED</div>
+    <div class="filter-tabs">
+        <div class="filter-tab active" onclick="setFilter('all', this)">Toate</div>
+        <div class="filter-tab" onclick="setFilter('flagged', this)">🚨 Alertate</div>
+        <div class="filter-tab" onclick="setFilter('pending', this)">⏳ În așteptare</div>
+        <div class="filter-tab" onclick="setFilter('approved', this)">✅ Aprobate</div>
     </div>
 
-    <div class="log-container" id="log-container">
-        <div class="log-entry valid">
-            <div class="log-time">19:02:45 | BUCUREȘTI</div>
-            <div class="log-reason">INTEL_VERIFICAT: ✓ Scos la lumină de VVeye. GPS validat.</div>
-            <div class="log-meta">UID: x92j... • Distanță: 0.12km</div>
-        </div>
-        <div class="log-entry reject">
-            <div class="log-time">19:01:12 | IP: CLUJ</div>
-            <div class="log-reason">DISTANȚĂ_PREA_MARE: Te-am reperat, ești prea departe de țintă (2.4km).</div>
-            <div class="log-meta">UID: m44k... • Misiune: #8821</div>
+    <!-- Feed -->
+    <div class="proof-grid" id="proof-grid">
+        <div class="empty-state">
+            <div class="empty-icon">👁️</div>
+            <div>Se încarcă dovezile...</div>
         </div>
     </div>
 
-    <script>
-        // Aici vom băga "țeava" din Firebase ca să curgă datele reale din aplicația principală
-        console.log("VVeye Command Center Inițializat.");
-    </script>
+</div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+var firebaseConfig = {
+    apiKey: "AIzaSyDGv4kEClO0RHCLvXVLOT-vyPHw6bsxYVc",
+    authDomain: "vv-ep-beta.firebaseapp.com",
+    projectId: "vv-ep-beta",
+    storageBucket: "vv-ep-beta.firebasestorage.app"
+};
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+var db = firebase.firestore();
+
+// ===== PAROLA ACCES =====
+var VVEYE_PASSWORD = 'CEO2026';
+var currentFilter = 'all';
+var allProofs = [];
+
+function vveyeLogin() {
+    var pass = document.getElementById('vveye-pass').value;
+    var errEl = document.getElementById('login-error');
+
+    if (pass === VVEYE_PASSWORD) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadProofs();
+    } else {
+        errEl.style.display = 'block';
+        document.getElementById('vveye-pass').value = '';
+        setTimeout(function() { errEl.style.display = 'none'; }, 3000);
+    }
+}
+
+function vveyeLogout() {
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('vveye-pass').value = '';
+}
+
+// Enter pe parola
+document.getElementById('vveye-pass').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') vveyeLogin();
+});
+
+// ===== LOAD PROOFS =====
+function loadProofs() {
+    db.collection('photos')
+        .orderBy('timestamp', 'desc')
+        .limit(50)
+        .onSnapshot(function(snap) {
+            allProofs = [];
+
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                d._id = doc.id;
+                allProofs.push(d);
+            });
+
+            updateStats();
+            renderProofs();
+        }, function(err) {
+            console.error('[VVeye] Eroare:', err);
+        });
+}
+
+function updateStats() {
+    var total = allProofs.length;
+    var flagged = allProofs.filter(function(p) { return p.flagged; }).length;
+    var approved = allProofs.filter(function(p) { return p.approved; }).length;
+    var pending = allProofs.filter(function(p) { return !p.approved && !p.flagged; }).length;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-flagged').textContent = flagged;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-pending').textContent = pending;
+}
+
+function setFilter(filter, el) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(function(t) {
+        t.classList.remove('active');
+    });
+    el.classList.add('active');
+    renderProofs();
+}
+
+function renderProofs() {
+    var grid = document.getElementById('proof-grid');
+    var filtered = allProofs;
+
+    if (currentFilter === 'flagged') {
+        filtered = allProofs.filter(function(p) { return p.flagged; });
+    } else if (currentFilter === 'approved') {
+        filtered = allProofs.filter(function(p) { return p.approved; });
+    } else if (currentFilter === 'pending') {
+        filtered = allProofs.filter(function(p) { return !p.approved && !p.flagged; });
+    }
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div>Nicio dovadă în această categorie.</div></div>';
+        return;
+    }
+
+    grid.innerHTML = '';
+
+    filtered.forEach(function(proof) {
+        var card = document.createElement('div');
+        card.className = 'proof-card' + (proof.flagged ? ' flagged' : '') + (proof.approved ? ' approved' : '');
+
+        var date = proof.timestamp
+            ? new Date(proof.timestamp).toLocaleString('ro-RO')
+            : '—';
+
+        var gpsHtml = (proof.gpsLat && proof.gpsLng)
+            ? '<div class="proof-gps">📍 ' + proof.gpsLat.toFixed(5) + ', ' + proof.gpsLng.toFixed(5) + '</div>'
+            : '<div class="proof-gps" style="color:rgba(255,59,48,0.6);">⚠️ GPS LIPSĂ</div>';
+
+        var badgeHtml = proof.flagged
+            ? '<span class="flag-badge">🚨 ALERTAT</span>'
+            : proof.approved
+                ? '<span class="valid-badge">✅ APROBAT</span>'
+                : '<span style="font-size:10px; color:rgba(255,255,255,0.3);">⏳ PENDING</span>';
+
+        var actionsDisabled = proof.approved ? 'disabled' : '';
+
+        card.innerHTML =
+            (proof.url ? '<img src="' + proof.url + '" class="proof-img" />' : '') +
+            '<div class="proof-info">' +
+                '<div class="proof-header">' +
+                    '<div class="proof-alias">' + (proof.alias || 'INSIDER') + '</div>' +
+                    badgeHtml +
+                '</div>' +
+                '<div class="proof-meta">' +
+                    '<span>🕐 ' + date + '</span>' +
+                    '<span style="font-family:monospace; font-size:10px; color:rgba(255,255,255,0.2);">UID: ' + (proof.agentId || '—').substring(0, 12) + '...</span>' +
+                    (proof.message ? '<span>💬 ' + proof.message + '</span>' : '') +
+                '</div>' +
+                gpsHtml +
+                '<div class="proof-actions">' +
+                    '<button class="btn-approve" ' + actionsDisabled + ' onclick="approveProof(\'' + proof._id + '\')">✓ APPROVE</button>' +
+                    '<button class="btn-reject" ' + actionsDisabled + ' onclick="rejectProof(\'' + proof._id + '\', \'' + (proof.agentId || '') + '\')">✕ REJECT & BAN</button>' +
+                '</div>' +
+            '</div>';
+
+        grid.appendChild(card);
+    });
+}
+
+// ===== APPROVE =====
+function approveProof(photoId) {
+    db.collection('photos').doc(photoId).update({
+        approved: true,
+        flagged: false,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function() {
+        showAlert('✅ Dovadă aprobată!', 'green');
+    }).catch(function(err) {
+        showAlert('Eroare: ' + err.message, 'red');
+    });
+}
+
+// ===== REJECT & BAN =====
+function rejectProof(photoId, agentId) {
+    if (!confirm('Respingi dovada și banezi Insider-ul?')) return;
+
+    var batch = db.batch();
+
+    // Marcam poza ca frauda
+    batch.update(db.collection('photos').doc(photoId), {
+        flagged: true,
+        approved: false,
+        rejected: true,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Banam userul daca avem UID
+    if (agentId) {
+        batch.update(db.collection('users').doc(agentId), {
+            banned: true,
+            balance: 0,
+            bannedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            bannedReason: 'Fraudă VVeye'
+        });
+    }
+
+    batch.commit().then(function() {
+        showAlert('🚨 Dovadă respinsă și Insider banat!', 'red');
+    }).catch(function(err) {
+        showAlert('Eroare: ' + err.message, 'red');
+    });
+}
+
+// ===== ALERT TOAST =====
+function showAlert(msg, type) {
+    var toast = document.createElement('div');
+    toast.style.cssText =
+        'position:fixed; bottom:30px; left:50%; transform:translateX(-50%);' +
+        'background:' + (type === 'green' ? 'rgba(52,199,89,0.9)' : 'rgba(255,59,48,0.9)') + ';' +
+        'color:#fff; padding:12px 24px; border-radius:20px;' +
+        'font-size:13px; font-weight:700; z-index:99999;' +
+        'backdrop-filter:blur(10px);';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 3000);
+}
+</script>
+
 </body>
 </html>
