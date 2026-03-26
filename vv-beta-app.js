@@ -1512,95 +1512,116 @@ async function uploadPhotoToCEO() {
     if (!capturedImageBlob) { showToast('Nu ai capturat nicio poză!'); return; }
     if (!currentUser) { showToast('Nu ești conectat!'); return; }
 
-    const msg = document.getElementById('photo-msg').value.trim();
-    const sendBtn = document.getElementById('send-btn');
+    var msg = document.getElementById('photo-msg').value.trim();
+    var sendBtn = document.getElementById('send-btn');
+
+    function resetBtn() {
+        sendBtn.textContent = 'TRIMITE RAPORT';
+        sendBtn.style.opacity = '1';
+        sendBtn.style.pointerEvents = 'auto';
+    }
+
     sendBtn.textContent = 'SE TRIMITE...';
     sendBtn.style.opacity = '0.6';
+    sendBtn.style.pointerEvents = 'none';
 
-    const fileName = 'proofs/' + currentUser.uid + '_' + Date.now() + '.jpg';
-    const ref = storage.ref(fileName);
+    alert('PAS 1: Start upload. User: ' + currentUser.uid.substring(0,8));
+
+    var timeoutTimer = setTimeout(function() {
+        resetBtn();
+        showToast('⏱ Conexiune slabă. Încearcă din nou.');
+        alert('TIMEOUT: Upload blocat după 20s');
+    }, 20000);
+
+    var fileName = 'proofs/' + currentUser.uid + '_' + Date.now() + '.jpg';
+    var ref = storage.ref(fileName);
 
     try {
-        const snapshot = await ref.put(capturedImageBlob);
-        const url = await ref.getDownloadURL();
-        const alias = localStorage.getItem('vv_alias') || 'INSIDER';
-        const now = firebase.firestore.FieldValue.serverTimestamp();
+        alert('PAS 2: Trimit poza spre Storage...');
+        await ref.put(capturedImageBlob);
+        alert('PAS 3: Poza uploadată! Iau URL-ul...');
+        var url = await ref.getDownloadURL();
+        alert('PAS 4: URL ok! Scriu in Firestore...');
 
-        // Scriem in toate colectiile necesare
-        const batch = db.batch();
+        // Valori sigure — niciodata undefined
+        var alias = localStorage.getItem('vv_alias') || 'INSIDER';
+        var uid = currentUser.uid || '';
+        var gpsLat = (capturedGPS && capturedGPS.lat) ? capturedGPS.lat : null;
+        var gpsLng = (capturedGPS && capturedGPS.lng) ? capturedGPS.lng : null;
+        var missionId = currentMissionId || null;
+        var now = firebase.firestore.FieldValue.serverTimestamp();
 
-        // 1. inbox CEO — pentru panoul de control
-        const inboxCEORef = db.collection('inbox').doc();
+        var batch = db.batch();
+
+        // 1. inbox CEO
+        var inboxCEORef = db.collection('inbox').doc();
         batch.set(inboxCEORef, {
             to: 'CEO',
-            from: currentUser.uid,
+            from: uid,
             alias: alias,
             message: msg || 'Captură trimisă',
             photoUrl: url,
-            missionId: currentMissionId || null,
-            reward: selectedReward,
+            missionId: missionId,
+            reward: selectedReward || 0,
             read: false,
             createdAt: now
         });
 
-        // 2. photos — pentru Global Feed CEO
-        const photoRef = db.collection('photos').doc();
+        // 2. photos — VVeye feed
+        var photoRef = db.collection('photos').doc();
         batch.set(photoRef, {
             url: url,
             message: msg || 'Captură VV',
-            agentId: currentUser.uid,
+            agentId: uid,
             alias: alias,
-            missionId: currentMissionId || null,
-            gpsLat: capturedGPS ? capturedGPS.lat : null,
-            gpsLng: capturedGPS ? capturedGPS.lng : null,
+            missionId: missionId,
+            gpsLat: gpsLat,
+            gpsLng: gpsLng,
             timestamp: Date.now(),
             createdAt: now,
-            flagged: false
+            flagged: false,
+            approved: false
         });
 
-        // 3. Notificare catre CREATORUL misiunii — vede poza pentru care a platit
-        if (currentMissionId) {
+        // 3. Notificare creator misiune
+        if (missionId) {
             try {
-                const missionDoc = await db.collection('missions').doc(currentMissionId).get();
+                var missionDoc = await db.collection('missions').doc(missionId).get();
                 if (missionDoc.exists) {
-                    const missionData = missionDoc.data();
-                    const creatorId = missionData.createdBy;
-
-                    if (creatorId && creatorId !== currentUser.uid) {
-                        // Trimitem notificare creatorului
-                        const inboxCreatorRef = db.collection('inbox').doc();
+                    var missionData = missionDoc.data();
+                    var creatorId = missionData.createdBy || '';
+                    if (creatorId && creatorId !== uid) {
+                        var inboxCreatorRef = db.collection('inbox').doc();
                         batch.set(inboxCreatorRef, {
                             to: creatorId,
-                            from: currentUser.uid,
+                            from: uid,
                             alias: alias,
-                            message: msg || `Insider a completat: "${missionData.description}"`,
+                            message: msg || 'Insider a completat misiunea ta!',
                             photoUrl: url,
-                            missionId: currentMissionId,
-                            reward: missionData.reward || selectedReward,
+                            missionId: missionId,
+                            reward: missionData.reward || 0,
                             read: false,
                             type: 'mission_result',
                             createdAt: now
                         });
-
-                        // Actualizam statusul misiunii la completed
-                        batch.update(db.collection('missions').doc(currentMissionId), {
+                        batch.update(db.collection('missions').doc(missionId), {
                             status: 'completed',
                             photoUrl: url,
-                            solverId: currentUser.uid,
+                            solverId: uid,
                             solvedAt: now
                         });
                     }
                 }
             } catch(e) {
-                console.log('[VV] Eroare update misiune:', e);
+                console.log('[VV] Eroare update misiune:', e.message);
             }
         }
 
         await batch.commit();
 
-        showToast('Raport trimis cu succes! ✅');
-        sendBtn.textContent = 'TRIMITE RAPORT';
-        sendBtn.style.opacity = '1';
+        clearTimeout(timeoutTimer);
+        resetBtn();
+        showToast('Raport trimis! ✅');
         document.getElementById('photo-msg').value = '';
         currentMissionId = null;
         capturedImageBlob = null;
@@ -1609,10 +1630,11 @@ async function uploadPhotoToCEO() {
         setTimeout(function() { switchTab('map'); }, 1500);
 
     } catch(err) {
-        console.log('Upload err:', err);
-        showToast('Eroare upload. Încearcă din nou.');
-        sendBtn.textContent = 'TRIMITE RAPORT';
-        sendBtn.style.opacity = '1';
+        clearTimeout(timeoutTimer);
+        resetBtn();
+        console.error('[VV] Upload error:', err.code, err.message);
+        // Alert vizibil pe telefon cu eroarea exacta
+        alert('Eroare Firebase: ' + (err.code || '') + ' — ' + (err.message || 'necunoscuta'));
     }
 }
 
