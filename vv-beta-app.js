@@ -1512,24 +1512,6 @@ async function uploadPhotoToCEO() {
     if (!capturedImageBlob) { showToast('Nu ai capturat nicio poză!'); return; }
     if (!currentUser) { showToast('Nu ești conectat!'); return; }
 
-    // VVeye — validare antifraudă dacă modulul e disponibil
-    if (typeof VVeye !== 'undefined' && VVeye.validateProof) {
-        try {
-            const validation = await VVeye.validateProof(
-                capturedImageBlob,
-                { lat: missionLat, lng: missionLng },
-                capturedGPS
-            );
-            if (!validation.valid) {
-                showToast('❌ ' + (validation.reason || 'Dovadă invalidă VVeye'));
-                return;
-            }
-        } catch(e) {
-            console.log('[VVeye] Eroare validare:', e.message);
-            // Continuam fara validare daca modulul da eroare
-        }
-    }
-
     const msg = document.getElementById('photo-msg').value.trim();
     const sendBtn = document.getElementById('send-btn');
     sendBtn.textContent = 'SE TRIMITE...';
