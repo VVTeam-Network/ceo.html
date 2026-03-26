@@ -25,7 +25,7 @@ let selectedTip = 0;
 let capturedImageBlob = null;
 
 // ================= BOOT =================
-window.onload = () => {
+window.onload = function() {
     // FIX iOS swipe back
     document.addEventListener('touchstart', function(e) {
         if (e.touches[0].clientX < 20 || e.touches[0].clientX > window.innerWidth - 20) {
@@ -39,31 +39,31 @@ window.onload = () => {
         }
     }, { passive: false });
 
-    // PRIMUL PAS: logam anonim imediat ca sa avem token pentru Firestore
-    auth.signInAnonymously().catch(function(err) {
-        console.log('[VV] signInAnonymously err:', err.code);
-    });
+    // PRIMUL PAS: logam anonim imediat
+    try {
+        auth.signInAnonymously().catch(function(err) {
+            console.log('[VV] signInAnonymously err:', err.code);
+        });
+    } catch(e) { console.log('[VV] auth err:', e); }
 
-    // AUTH STATE LISTENER — sursa de adevar
-    auth.onAuthStateChanged(function(user) {
-        if (user) {
-            currentUser = user;
-
-            const tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
-            const accessKey = localStorage.getItem('vv_access_key');
-
-            if (tutorialDone === 'DA' && accessKey) {
-                // User cunoscut — direct in app
-                document.getElementById('splash-screen').style.display = 'none';
-                document.getElementById('tutorial-screen').style.display = 'none';
-                showApp();
-                loadUserData();
-            } else {
-                // User nou — aratam splash
-                document.getElementById('splash-screen').style.display = 'flex';
+    // AUTH STATE LISTENER
+    try {
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                currentUser = user;
+                var tutorialDone = localStorage.getItem('vv_premium_tutorial_done');
+                var accessKey = localStorage.getItem('vv_access_key');
+                if (tutorialDone === 'DA' && accessKey) {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    document.getElementById('tutorial-screen').style.display = 'none';
+                    showApp();
+                    loadUserData();
+                } else {
+                    document.getElementById('splash-screen').style.display = 'flex';
+                }
             }
-        }
-    });
+        });
+    } catch(e) { console.log('[VV] auth listener err:', e); }
 };
 
 // ================= TOGGLE ACCEPT BUTTON =================
