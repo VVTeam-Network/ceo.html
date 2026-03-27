@@ -1187,33 +1187,38 @@ function openMissionsList() {
         });
 }
 
-// ================= ANULEAZĂ PROPRIA MISIUNE (cu refund) =================
+// ================= ANULEAZĂ PROPRIA MISIUNE (cu refund + lock anti-spam) =================
+var isCancelling = false;
+
 async function cancelMyMission(missionId, reward) {
     if (!currentUser) return;
-    if (!confirm(`Anulezi misiunea și recuperezi ${reward} VV?`)) return;
+    if (isCancelling) return; // Blocam dublu-click
+    if (!confirm('Anulezi misiunea și recuperezi ' + reward + ' VV?')) return;
+
+    isCancelling = true;
 
     try {
-        const batch = db.batch();
+        var batch = db.batch();
 
-        // Stergem misiunea
         batch.delete(db.collection('missions').doc(missionId));
-
-        // Refund VV Coins
         batch.update(db.collection('users').doc(currentUser.uid), {
             balance: firebase.firestore.FieldValue.increment(reward)
         });
 
         await batch.commit();
 
-        // Scoatem markerul de pe harta
+        // Scoatem markerul DOAR dupa succes
         if (missionMarkers[missionId]) {
-            map.removeLayer(missionMarkers[missionId]);
+            try { map.removeLayer(missionMarkers[missionId]); } catch(e) {}
             delete missionMarkers[missionId];
         }
 
-        showToast(`✅ Misiune anulată! +${reward} VV recuperați.`);
+        showToast('✅ Misiune anulată! +' + reward + ' VV recuperați.');
+
     } catch(e) {
-        showToast('Eroare la anulare: ' + e.message);
+        alert('Eroare anulare: ' + e.message);
+    } finally {
+        isCancelling = false; // Eliberam lock-ul indiferent de rezultat
     }
 }
 
@@ -1346,7 +1351,7 @@ function listenInbox() {
                     margin-bottom: 12px;
                 `;
                 div.innerHTML = `
-                    <div style="font-size:11px; color:rgba(255,255,255,0.3); margin-bottom:6px; letter-spacing:1px;">INTEL PRIMIT</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.3); margin-bottom:6px; letter-spacing:1px;">DOVADĂ MISIUNE</div>
                     <div style="font-size:13px; color:#fff; margin-bottom:8px;">${msg.message || ''}</div>
                     ${msg.photoUrl ? `<img src="${msg.photoUrl}" style="width:100%; border-radius:10px; margin-bottom:8px;" />` : ''}
                     ${msg.reward ? `
@@ -1630,11 +1635,12 @@ async function uploadPhotoToCEO() {
         setTimeout(function() { switchTab('map'); }, 1500);
 
     } catch(err) {
+        console.error('[VV] Upload error:', err.code, err.message);
+        alert('Eroare Firebase: ' + (err.code || '') + ' — ' + (err.message || 'necunoscuta'));
+    } finally {
+        // Resetam butonul MEREU — indiferent de succes sau eroare
         clearTimeout(timeoutTimer);
         resetBtn();
-        console.error('[VV] Upload error:', err.code, err.message);
-        // Alert vizibil pe telefon cu eroarea exacta
-        alert('Eroare Firebase: ' + (err.code || '') + ' — ' + (err.message || 'necunoscuta'));
     }
 }
 
