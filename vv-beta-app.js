@@ -938,8 +938,17 @@ function loadMissionsOnMap() {
                 const doc = change.doc;
                 const m = doc.data();
 
-                if (change.type === 'removed' || change.type === 'modified') {
-                    // Stergem marker-ul vechi intotdeauna
+                if (change.type === 'removed') {
+                    // Misiune stearsa — scoatem markerul instant
+                    if (missionMarkers[doc.id]) {
+                        try { map.removeLayer(missionMarkers[doc.id]); } catch(e) {}
+                        delete missionMarkers[doc.id];
+                    }
+                    return;
+                }
+
+                if (change.type === 'modified') {
+                    // Scoatem marker-ul vechi
                     if (missionMarkers[doc.id]) {
                         try { map.removeLayer(missionMarkers[doc.id]); } catch(e) {}
                         delete missionMarkers[doc.id];
