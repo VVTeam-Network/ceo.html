@@ -1201,10 +1201,18 @@ async function cancelMyMission(missionId, reward) {
 
         await batch.commit();
 
-        // Scoatem markerul DOAR dupa succes
+        // Scoatem markerul INSTANT din toate sursele posibile
         if (missionMarkers[missionId]) {
             try { map.removeLayer(missionMarkers[missionId]); } catch(e) {}
             delete missionMarkers[missionId];
+        }
+        // Cautam si scoatem orice layer cu acel ID ramas pe harta
+        if (map) {
+            map.eachLayer(function(layer) {
+                if (layer._missionId === missionId) {
+                    try { map.removeLayer(layer); } catch(e) {}
+                }
+            });
         }
 
         showToast('✅ Misiune anulată! +' + reward + ' VV recuperați.');
