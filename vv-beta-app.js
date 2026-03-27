@@ -958,8 +958,9 @@ function loadMissionsOnMap() {
                     }
                 }
 
-                // Daca misiunea nu mai e open — nu o mai afisam
-                if (m.status !== 'open') return;
+                // Daca misiunea nu mai e open — o ascundem DOAR daca nu e a noastra completed
+                const isMyMission = (currentUser && m.createdBy === currentUser.uid);
+                if (m.status !== 'open' && !(isMyMission && m.status === 'completed')) return;
 
                 if (change.type === 'added' || change.type === 'modified') {
                     if (!m.lat || !m.lng) return;
@@ -1336,7 +1337,7 @@ function listenInbox() {
     if (!currentUser) return;
 
     db.collection('inbox').where('to', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc').limit(20)
+        .limit(20)
         .onSnapshot(snap => {
             const badge = document.getElementById('inbox-badge');
             let unread = 0;
