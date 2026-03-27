@@ -1075,21 +1075,6 @@ async function submitPinpointMission() {
     launchBtn.textContent = 'SE VERIFICĂ...';
     launchBtn.style.opacity = '0.6';
 
-    // COOLDOWN: verificam daca are deja o misiune activa
-    try {
-        const existing = await db.collection('missions')
-            .where('createdBy', '==', currentUser.uid)
-            .where('status', '==', 'open')
-            .limit(1).get();
-        
-        if (!existing.empty) {
-            showToast('⚠️ Ai deja un contract activ!');
-            launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
-            launchBtn.style.opacity = '1';
-            return;
-        }
-    } catch(e) { console.log('Cooldown check err:', e); }
-
     launchBtn.textContent = 'SE LANSEAZĂ...';
 
     // Calculam expiry: (reward * 1.5) + 5 minute
@@ -1298,6 +1283,12 @@ async function openMissionResult(missionId) {
 async function acceptMission(missionId) {
     if (!currentUser) { showToast('Nu ești conectat!'); return; }
 
+    // Blocat daca are deja o misiune in lucru
+    if (currentMissionId) {
+        showToast('⚠️ Termină misiunea activă înainte să accepți alta!');
+        return;
+    }
+
     // Verificam ca nu e propria misiune
     try {
         const missionDoc = await db.collection('missions').doc(missionId).get();
@@ -1423,7 +1414,14 @@ function openCamera() {
     cam.style.display = 'flex';
     document.getElementById('post-photo-menu').style.display = 'none';
     document.getElementById('shutter-container').style.display = 'flex';
+
+    // Curatam poza anterioara din cache
     capturedImageBlob = null;
+    capturedGPS = null;
+    var oldPreview = document.getElementById('preview-img');
+    if (oldPreview) oldPreview.remove();
+    var video = document.getElementById('real-camera-video');
+    if (video) video.style.display = 'block';
 
     // Capturam GPS pentru watermark
     if (navigator.geolocation) {
@@ -1542,11 +1540,8 @@ async function uploadPhotoToCEO() {
     var ref = storage.ref(fileName);
 
     try {
-        alert('PAS 2: Trimit poza spre Storage...');
         await ref.put(capturedImageBlob);
-        alert('PAS 3: Poza uploadată! Iau URL-ul...');
         var url = await ref.getDownloadURL();
-        alert('PAS 4: URL ok! Scriu in Firestore...');
 
         // Valori sigure — niciodata undefined
         var alias = localStorage.getItem('vv_alias') || 'INSIDER';
