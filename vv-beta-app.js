@@ -923,10 +923,13 @@ function filterVenues(category) {
 // Radar Onyx eliminat — hartă curată
 
 // ================= MISIUNI PE HARTĂ — REAL-TIME PENTRU TOȚI =================
-let missionMarkers = {}; // Tinem evidenta markerelor active
+let missionMarkers = {};
+let missionsListenerActive = false; // Tinem evidenta markerelor active
 
 function loadMissionsOnMap() {
     if (!map) return;
+    if (missionsListenerActive) return; // O SINGURA TEAVA!
+    missionsListenerActive = true;
 
     const now = new Date();
 
@@ -1127,7 +1130,6 @@ async function submitPinpointMission() {
         launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
         launchBtn.style.opacity = '1';
         // NU mai afisam toast — overlayul e suficient
-        loadMissionsOnMap();
         showInsiderSearch(selectedReward);
     }).catch(err => {
         console.log('Eroare misiune:', err);
