@@ -1882,11 +1882,44 @@ async function showInsiderSearch(reward) {
 }
 
 // Anulare misiune direct din overlay-ul de cautare
-function cancelFromSearchOverlay() {
+async function cancelFromSearchOverlay() {
     hideInsiderSearch();
-    if (lastCreatedMissionId) {
-        cancelMyMission(lastCreatedMissionId, selectedReward);
-        lastCreatedMissionId = null;
+    
+    if (!lastCreatedMissionId) {
+        showToast('Nicio misiune activă de anulat.');
+        return;
+    }
+
+    var missionIdToCancel = lastCreatedMissionId;
+    lastCreatedMissionId = null;
+
+    try {
+        // Citim misiunea din Firebase sa luam recompensa corecta
+        var missionDoc = await db.collection('missions').doc(missionIdToCancel).get();
+        var reward = selectedReward; // fallback
+        
+        if (missionDoc.exists) {
+            reward = missionDoc.data().reward || selectedReward;
+        }
+
+        // Stergem din Firebase si dam refund
+        var batch = db.batch();
+        batch.delete(db.collection('missions').doc(missionIdToCancel));
+        batch.update(db.collection('users').doc(currentUser.uid), {
+            balance: firebase.firestore.FieldValue.increment(reward)
+        });
+        await batch.commit();
+
+        // Scoatem markerul INSTANT de pe harta
+        if (missionMarkers[missionIdToCancel]) {
+            try { map.removeLayer(missionMarkers[missionIdToCancel]); } catch(e) {}
+            delete missionMarkers[missionIdToCancel];
+        }
+
+        showToast('✅ Contract anulat! +' + reward + ' VV recuperați.');
+    } catch(e) {
+        console.error('[VV] Eroare anulare overlay:', e.message);
+        showToast('Eroare la anulare: ' + e.message);
     }
 }
 
