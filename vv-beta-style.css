@@ -430,7 +430,7 @@ body {
     margin-right: 6px;
 }
 
-/* ACTION SIDEBAR — fix la milimetru deasupra dock-ului */
+/* ACTION SIDEBAR */
 .action-hub { display: none; }
 
 .action-sidebar {
@@ -937,57 +937,167 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 
 /* ============================================
-   QUICK FILTER BAR
+   PILON 1 — SEARCH BAR GLASSMORPHISM
    ============================================ */
-.quick-filter-bar {
+.vv-search-container {
     position: absolute;
-    top: 110px;
-    left: 0;
-    right: 0;
+    top: 108px;
+    left: 16px;
+    right: 16px;
     z-index: 1000;
-    display: flex;
-    gap: 8px;
-    padding: 0 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
     pointer-events: all;
 }
 
-.quick-filter-bar::-webkit-scrollbar {
-    display: none;
+.vv-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    padding: 12px 18px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
 }
 
-.filter-pill {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 30px;
-    padding: 8px 16px;
+.vv-search-bar:focus-within {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+
+.vv-search-icon {
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+    flex-shrink: 0;
+}
+
+.vv-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    letter-spacing: 0.2px;
+}
+
+.vv-search-input::placeholder {
+    color: rgba(255,255,255,0.28);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.vv-search-clear {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: rgba(255,255,255,0.5);
     font-size: 12px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.6);
-    white-space: nowrap;
     cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     transition: all 0.2s;
-    letter-spacing: 0.3px;
-    user-select: none;
 }
 
-.filter-pill:active {
-    transform: scale(0.95);
+.vv-search-clear:active {
+    transform: scale(0.9);
+    background: rgba(255,255,255,0.2);
 }
 
-.filter-pill.active {
-    background: rgba(255,255,255,0.92);
-    color: #000;
-    border-color: transparent;
-    box-shadow: 0 2px 12px rgba(255,255,255,0.15);
+/* AUTOCOMPLETE RESULTS */
+.vv-search-results {
+    display: none;
+    margin-top: 8px;
+    background: rgba(10, 10, 14, 0.96);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+    animation: searchResultsFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes searchResultsFade {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.vv-search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.vv-search-result-item:last-child {
+    border-bottom: none;
+}
+
+.vv-search-result-item:active {
+    background: rgba(255,255,255,0.08);
+}
+
+.vv-search-result-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    flex-shrink: 0;
+}
+
+.vv-search-result-text {
+    flex: 1;
+    overflow: hidden;
+}
+
+.vv-search-result-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vv-search-result-address {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.vv-search-loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+    font-weight: 600;
 }
 
 /* ============================================
-   SHIMMER ANIMATION — Bara Insider style Uber
+   SHIMMER ANIMATION
    ============================================ */
 @keyframes shimmer {
     0% { background-position: -200% 0; }
@@ -1003,7 +1113,6 @@ body {
     touch-action: pan-x pan-y;
 }
 
-/* Doar profil si modals pot face scroll intern */
 #profile-screen {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -1016,7 +1125,6 @@ html, body {
     background: #050507 !important;
 }
 
-/* Elimina bara alba de jos Safari */
 #map-view, #app-container {
     background: #050507;
 }
@@ -1026,14 +1134,14 @@ html, body {
 }
 
 /* ============================================
-   GPU ACCELERATION — Native Feel
+   GPU ACCELERATION
    ============================================ */
 * {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
 
-.fab-btn, .filter-pill, .btn-main, .btn-launch, .dock-icon {
+.fab-btn, .btn-main, .btn-launch, .dock-icon {
     will-change: transform;
     transform: translate3d(0,0,0);
     -webkit-transform: translate3d(0,0,0);
@@ -1045,7 +1153,6 @@ html, body {
     -webkit-transform: translate3d(0,0,0);
 }
 
-/* Animatii folosesc transform nu top/bottom */
 @keyframes slideUp {
     from { transform: translate3d(0, 100%, 0); opacity: 0.5; }
     to { transform: translate3d(0, 0, 0); opacity: 1; }
@@ -1057,7 +1164,7 @@ html, body {
 }
 
 /* ============================================
-   RADAR ANIMATIONS — Insider Search Overlay
+   RADAR ANIMATIONS
    ============================================ */
 @keyframes radarPulse1 {
     0%, 100% { transform: scale(1); opacity: 0.4; }
@@ -1072,7 +1179,6 @@ html, body {
     50% { transform: scale(1.25); opacity: 0.2; }
 }
 
-/* Overlay display flex cand e vizibil */
 #insider-search-bar[style*="flex"] {
     display: flex !important;
 }
@@ -1080,14 +1186,11 @@ html, body {
 /* ============================================
    FIX BARE ALBE + OVERLAY CENTRAT
    ============================================ */
-
-/* Elimina bara alba de jos si dreapta Safari */
 html, body {
     background-color: #050507 !important;
     overscroll-behavior: none !important;
 }
 
-/* Umple toata zona vizibila inclusiv safe areas */
 #app-container {
     background: #050507;
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -1100,7 +1203,6 @@ html, body {
     bottom: 0;
 }
 
-/* OVERLAY INSIDER — fix centrat pe ecran */
 #insider-search-bar {
     position: fixed !important;
     inset: 0 !important;
@@ -1116,7 +1218,6 @@ html, body {
     z-index: 20000 !important;
 }
 
-/* GPU smooth pe animatiile radarului */
 #insider-search-bar > div:first-child {
     will-change: opacity;
     transform: translate3d(0,0,0);
@@ -1142,7 +1243,7 @@ html, body {
 }
 
 /* ============================================
-   SHEET MODAL SCROLL — Apple Premium Feel
+   SHEET MODAL SCROLL
    ============================================ */
 .sheet-scroll-container {
     max-height: 58vh;
@@ -1160,4 +1261,34 @@ html, body {
 .sheet-scroll-container::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.1);
     border-radius: 4px;
+}
+
+/* ============================================
+   PILON 3 — BUTON RAPORTEAZĂ FAKE
+   ============================================ */
+.btn-report-fake {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255, 59, 48, 0.08);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+
+.btn-report-fake:active {
+    transform: scale(0.97);
+    background: rgba(255, 59, 48, 0.15);
+}
+
+/* Inbox item reported state */
+.inbox-item-reported {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.5);
 }
