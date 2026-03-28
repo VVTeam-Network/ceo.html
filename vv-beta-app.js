@@ -401,8 +401,8 @@ function loadLeaderboard() {
                                 ${u.alias || 'INSIDER'} ${isMe ? '· Tu' : ''}
                             </div>
                         </div>
-                        <div style="font-size:14px; font-weight:900; color:${isMe ? '#D4AF37' : 'rgba(255,255,255,0.7)'};">
-                            ${(u.balance || 0).toLocaleString()} VV
+                        <div style="font-size:11px; font-weight:700; color:${rank === 1 ? '#D4AF37' : rank <= 3 ? '#0A84FF' : 'rgba(255,255,255,0.35)'};">
+                            ${rank === 1 ? '👑 Elite' : rank <= 3 ? '⭐ Expert' : 'Insider'}
                         </div>
                     </div>
                 `;
