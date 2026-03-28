@@ -516,8 +516,9 @@ function initMap() {
     map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true, watch: true });
 
     let userMarker = null;
+    let firstLocationDone = false;
+
     map.on('locationfound', e => {
-        // PILON 2: Actualizăm GPS-ul userului
         userCurrentLat = e.latlng.lat;
         userCurrentLng = e.latlng.lng;
 
@@ -532,6 +533,12 @@ function initMap() {
             }).addTo(map);
         } else {
             userMarker.setLatLng(e.latlng);
+        }
+
+        // Centram harta DOAR la prima localizare
+        if (!firstLocationDone) {
+            firstLocationDone = true;
+            map.setView(e.latlng, 16);
         }
     });
 
@@ -948,7 +955,8 @@ async function submitPinpointMission() {
         const distanceToTarget = haversineDistance(freshPos.lat, freshPos.lng, targetLat, targetLng);
 
         if (distanceToTarget < 1000) {
-            showToast('⚠️ Contractul trebuie lansat la minim 1 km distanță de tine.');
+            var distLeft = Math.round(1000 - distanceToTarget);
+            showToast('⚠️ Ești la ' + Math.round(distanceToTarget) + 'm. Mai ai nevoie de ' + distLeft + 'm.');
             launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
             launchBtn.style.opacity = '1';
             return;
@@ -1253,15 +1261,22 @@ function listenInbox() {
         });
 }
 
-function approveIntel(inboxId, reward, fromUid) {
+async function approveIntel(inboxId, reward, fromUid) {
     if (!currentUser) return;
-
-    db.collection('users').doc(fromUid).update({
-        balance: firebase.firestore.FieldValue.increment(reward)
-    }).then(() => {
-        db.collection('inbox').doc(inboxId).update({ reward: 0 });
-        showToast(`+${reward} VV trimis agentului!`);
-    });
+    try {
+        await db.collection('users').doc(fromUid).update({
+            balance: firebase.firestore.FieldValue.increment(reward)
+        });
+        const inboxDoc = await db.collection('inbox').doc(inboxId).get();
+        await db.collection('inbox').doc(inboxId).update({ reward: 0, status: 'approved' });
+        // Stergem poza din photos pentru a economisi storage Beta
+        if (inboxDoc.exists && inboxDoc.data().missionId) {
+            const snap = await db.collection('photos')
+                .where('missionId', '==', inboxDoc.data().missionId).limit(1).get();
+            snap.forEach(doc => { if (!doc.data().flagged) doc.ref.delete().catch(() => {}); });
+        }
+        showToast('+' + reward + ' VV trimis Insider-ului! ✅');
+    } catch(e) { showToast('Eroare: ' + e.message); }
 }
 
 // ================= PILON 3: RAPORTEAZĂ FAKE — refund + marcare =================
