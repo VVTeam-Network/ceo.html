@@ -368,44 +368,71 @@ function loadUserData() {
     loadLeaderboard();
 }
 
-// ================= LEADERBOARD =================
+// ================= LEADERBOARD — sortat după stele, max 5 =================
 function loadLeaderboard() {
     db.collection('users')
-        .orderBy('balance', 'desc')
-        .limit(10)
-        .onSnapshot(snap => {
+        .orderBy('ratingSum', 'desc')
+        .limit(5)
+        .onSnapshot(function(snap) {
             const container = document.getElementById('leaderboard-container');
             if (!container) return;
 
+            // Calculăm media stele și sortăm
+            var users = [];
+            snap.forEach(function(doc) {
+                var u = doc.data();
+                var totalRatings = u.totalRatings || 0;
+                var ratingSum = u.ratingSum || 0;
+                var avgStars = totalRatings > 0 ? (ratingSum / totalRatings) : 0;
+                users.push({
+                    id: doc.id,
+                    alias: u.alias || 'INSIDER',
+                    avgStars: avgStars,
+                    totalRatings: totalRatings,
+                    balance: u.balance || 0
+                });
+            });
+
+            // Sortare după medie stele desc
+            users.sort(function(a, b) { return b.avgStars - a.avgStars; });
+            users = users.slice(0, 5);
+
             container.innerHTML = '';
-            let rank = 1;
 
-            snap.forEach(doc => {
-                const u = doc.data();
-                const isMe = doc.id === (currentUser ? currentUser.uid : null);
-                const medals = ['🥇', '🥈', '🥉'];
-                const medal = rank <= 3 ? medals[rank-1] : `#${rank}`;
+            if (users.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:24px; font-size:13px; color:rgba(255,255,255,0.25);">Niciun Insider evaluat încă.</div>';
+                return;
+            }
 
-                container.innerHTML += `
-                    <div style="
-                        display:flex; align-items:center; gap:12px;
-                        padding:12px 16px;
-                        background:${isMe ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)'};
-                        border:1px solid ${isMe ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)'};
-                        border-radius:12px; margin-bottom:8px;
-                    ">
-                        <span style="font-size:18px; width:28px; text-align:center;">${medal}</span>
-                        <div style="flex:1;">
-                            <div style="font-size:13px; font-weight:700; color:${isMe ? '#D4AF37' : '#fff'};">
-                                ${u.alias || 'INSIDER'} ${isMe ? '· Tu' : ''}
-                            </div>
-                        </div>
-                        <div style="font-size:11px; font-weight:700; color:${rank === 1 ? '#D4AF37' : rank <= 3 ? '#0A84FF' : 'rgba(255,255,255,0.35)'};">
-                            ${rank === 1 ? '👑 Elite' : rank <= 3 ? '⭐ Expert' : 'Insider'}
-                        </div>
-                    </div>
-                `;
-                rank++;
+            var medals = ['👑', '🥈', '🥉', '⭐', '⭐'];
+            users.forEach(function(u, i) {
+                var isMe = u.id === (currentUser ? currentUser.uid : null);
+                var starsDisplay = '';
+                var fullStars = Math.round(u.avgStars);
+                for (var s = 1; s <= 5; s++) {
+                    starsDisplay += '<span style="color:' + (s <= fullStars ? '#D4AF37' : 'rgba(255,255,255,0.12)') + '; font-size:12px;">★</span>';
+                }
+
+                container.innerHTML += '<div style="' +
+                    'display:flex; align-items:center; gap:12px;' +
+                    'padding:13px 16px;' +
+                    'background:' + (isMe ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)') + ';' +
+                    'border:1px solid ' + (isMe ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.06)') + ';' +
+                    'border-radius:14px; margin-bottom:8px;' +
+                    '">' +
+                        '<span style="font-size:20px; width:28px; text-align:center;">' + medals[i] + '</span>' +
+                        '<div style="flex:1;">' +
+                            '<div style="font-size:13px; font-weight:700; color:' + (isMe ? '#D4AF37' : '#fff') + ';">' +
+                                u.alias + (isMe ? ' · Tu' : '') +
+                            '</div>' +
+                            '<div style="margin-top:3px;">' + starsDisplay +
+                                (u.totalRatings > 0 ? '<span style="font-size:10px; color:rgba(255,255,255,0.25); margin-left:5px;">(' + u.totalRatings + ')</span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<div style="font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.3);">' +
+                            (u.avgStars > 0 ? u.avgStars.toFixed(1) : '—') +
+                        '</div>' +
+                    '</div>';
             });
         });
 }
@@ -1037,6 +1064,8 @@ function openMissionsList() {
             snap.forEach(doc => {
                 const m = doc.data();
                 if (m.expiresAt && m.expiresAt.toDate() < now) return;
+                // BUG FIX: Nu afișa misiunile proprii în lista de acceptat
+                if (currentUser && m.createdBy === currentUser.uid) return;
                 const div = document.createElement('div');
                 div.style.cssText = `
                     background: rgba(255,255,255,0.05);
@@ -1341,11 +1370,13 @@ function sendFeedback() {
         uid: (currentUser ? currentUser.uid : null) || 'anonim',
         alias: localStorage.getItem('vv_alias') || 'INSIDER',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
+    }).then(function() {
         showToast('Mesaj trimis! Mulțumim. ✅');
-        document.getElementById('feedback-msg-input').value = '';
-        closeModal('feedback-modal');
-    }).catch(() => showToast('Eroare trimitere.'));
+        // BUG FIX 8: Reset corect textarea
+        var ta = document.getElementById('feedback-msg-input');
+        if (ta) { ta.value = ''; ta.blur(); }
+        closeModal('modal-support-career');
+    }).catch(function() { showToast('Eroare trimitere.'); });
 }
 
 // ================= CAMERA — PILON 2: verificare distanță max 50m la dovadă =================
