@@ -1243,3 +1243,155 @@ html, body {
 .rules-container::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.25);
 }
+
+/* ================================================================
+   SEARCH BAR — BUG FIX 1: Stiluri lipsă readăugate
+   ================================================================ */
+.vv-search-container {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 420px;
+    z-index: 1000;
+}
+
+.vv-search-bar {
+    display: flex;
+    align-items: center;
+    background: rgba(10, 10, 18, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 0 16px;
+    height: 48px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.2s;
+}
+
+.vv-search-bar:focus-within {
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+}
+
+.vv-search-icon {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 14px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.vv-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+    caret-color: #fff;
+}
+
+.vv-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+}
+
+.vv-search-clear {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    padding: 4px 6px;
+    display: none;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.vv-search-clear:hover { color: rgba(255, 255, 255, 0.7); }
+.vv-search-clear.visible { display: block; }
+
+.vv-search-results {
+    background: rgba(10, 10, 18, 0.96);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: none;
+}
+
+.vv-search-results.visible { display: block; }
+
+.vv-search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s;
+}
+
+.vv-search-result-item:last-child { border-bottom: none; }
+.vv-search-result-item:active { background: rgba(255, 255, 255, 0.06); }
+
+.vv-search-result-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.vv-search-result-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.vv-search-result-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vv-search-result-sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.vv-search-loading {
+    padding: 14px 16px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 700;
+    display: none;
+    background: rgba(10, 10, 18, 0.96);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+}
+
+.vv-search-loading.visible { display: block; }
