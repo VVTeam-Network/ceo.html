@@ -113,7 +113,7 @@
         </div>
 
         <!-- PILON 1: SEARCH BAR PREMIUM — înlocuiește quick-filter-bar -->
-        <div class="vv-search-container" id="vv-search-container">
+        <div class="vv-search-container" id="vv-search-container" style="display:block;">
             <div class="vv-search-bar">
                 <i class="fas fa-search vv-search-icon"></i>
                 <input type="text" class="vv-search-input" id="vv-search-input" placeholder="Caută o adresă sau locație..." autocomplete="off" autocorrect="off" spellcheck="false">
@@ -364,7 +364,7 @@
                 <i class="fas fa-chevron-right" style="color:rgba(255,255,255,0.15); font-size:12px;"></i>
             </div>
 
-            <div onclick="openModal('modal-support-career')" style="
+            <div onclick="openModal('modal-support-career'); setTimeout(function(){ var ta=document.getElementById('feedback-msg-input'); if(ta) ta.value=''; }, 50);" style="
                 display:flex; align-items:center; gap:14px;
                 padding:16px 20px;
                 cursor:pointer;
@@ -458,19 +458,23 @@
     </div>
 </div>
 
-<!-- REGULAMENT MODAL -->
+<!-- REGULAMENT MODAL — BUG FIX 9: T&C actualizat -->
 <div class="sheet-modal" id="regulament-modal">
-    <div class="sheet-content" style="max-height:80vh; overflow-y:auto;">
-        <h2>Regulament VV Beta</h2>
-        <div style="font-size:12px; color:rgba(255,255,255,0.6); line-height:1.8;">
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">1. PURĂ REALITATE:</strong> Interzisă folosirea filtrelor sau pozelor vechi. Totul se face live, la fața locului.</p>
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">2. INTIMITATE 100%:</strong> Zero fețe filmate fără acord. Orice invadare a spațiului privat este pedepsită.</p>
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">3. TOLERANȚĂ ZERO:</strong> Orice fraudă duce la ban permanent pe dispozitiv și blocarea fondurilor.</p>
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">4. RESPONSABILITATE:</strong> Ești 100% responsabil legal pentru conținutul transmis.</p>
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">5. GDPR:</strong> Datele tale sunt procesate conform Regulamentului UE 679/2016.</p>
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">6. VV COINS:</strong> Sistem intern beta. Conversia în LEI la lansarea VV 1.0.</p>
-            <p style="margin-bottom:12px;"><strong style="color:#fff;">7. CONȚINUT ILEGAL:</strong> Strict interzis. VVTeam colaborează cu autoritățile.</p>
-            <p style="margin-bottom:20px;"><strong style="color:#fff;">8. VÂRSTA MINIMĂ:</strong> 18 ani. Jurisdicție: România.</p>
+    <div class="sheet-content" style="max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+        <div class="sheet-handle"></div>
+        <h2 style="text-align:center; margin-bottom:4px;">Acordul de Utilizare</h2>
+        <div style="font-size:9px; color:rgba(212,175,55,0.7); letter-spacing:2px; text-align:center; margin-bottom:18px; font-weight:700;">VV BETA · ADEVĂRUL ÎN TIMP REAL</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.55); line-height:1.8;">
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">1. PURĂ REALITATE — LIVE ONLY:</strong> Interzisă folosirea filtrelor, materialelor preînregistrate sau a conținutului din galerie. Totul se face live, la fața locului, în timp real.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">2. RESPECTUL PENTRU INTIMITATE:</strong> Ești 100% responsabil pentru ceea ce captezi. Interzisă fotografierea persoanelor fără consimțământ și filmarea prin ferestrele locuințelor sau în proprietăți private restrictive.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">3. SIGURANȚA TA — PRIORITATEA ZERO:</strong> Nicio misiune nu merită un risc. Interzisă pătrunderea ilegală (trespassing), săritul gardurilor sau accesarea zonelor periculoase. VV nu răspunde pentru accidentări sau amenzi.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">4. TOLERANȚĂ ZERO — FRAUDĂ:</strong> Orice fraudă, manipulare de dovezi sau abuz al sistemului duce la ban permanent pe dispozitiv și anularea balanței.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">5. GDPR — TRANSPARENȚĂ TOTALĂ:</strong> VV funcționează pe principiul „Aici și Acum". Conținutul vizual se autodistruge după validare. Datele tale sunt procesate strict conform Regulamentului UE 679/2016 și nu sunt vândute terților.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">6. INDEPENDENȚĂ & DREPTURI DE AUTOR:</strong> Ești un utilizator independent. Îți păstrezi drepturile de autor asupra dovezilor, dar oferi VV dreptul de afișare. Câștigurile intră în responsabilitatea ta fiscală.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">7. VV COINS — ECONOMIA BETA:</strong> Sistem de recompensă intern, exclusiv pentru Beta. Nu constituie monedă electronică. Conversia în valută fiat — exclusiv la VV 1.0.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">8. CONȚINUT ILEGAL — INTERZIS:</strong> Strict interzis. VVTeam colaborează cu autoritățile și furnizează log-uri la solicitare legală. Responsabilitatea revine exclusiv utilizatorului.</p>
+            <p style="margin-bottom:12px;"><strong style="color:#fff;">9. VÂRSTA MINIMĂ — 18 ANI:</strong> Platforma este permisă exclusiv persoanelor cu vârsta de minimum 18 ani.</p>
+            <p style="margin-bottom:20px;"><strong style="color:#fff;">10. JURISDICȚIE & DSA:</strong> Guvernat de legislația română și Actul privind Serviciile Digitale (DSA) al UE. VVTeam acționează exclusiv ca intermediar tehnic (Safe Harbor).</p>
         </div>
         <button class="btn-launch" style="background:transparent; color:rgba(255,255,255,0.4); border:1px solid rgba(255,255,255,0.08);" onclick="closeModal('regulament-modal')">ÎNCHIDE</button>
     </div>
@@ -649,6 +653,7 @@
                     <div style="font-size:12px; color:rgba(255,255,255,0.2); text-align:center; padding:10px;">Se încarcă cheile...</div>
                 </div>
             </div>
+            <button onclick="closeModal('modal-invites')" style="width:100%; padding:16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:14px; color:#fff; font-weight:800; font-size:14px; margin-top:20px; cursor:pointer; letter-spacing:1px; font-family:inherit;">ÎNCHIDE</button>
         </div>
     </div>
 
@@ -707,6 +712,17 @@
                     <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(10,132,255,0.04); border:1px solid rgba(10,132,255,0.12); border-radius:12px;"><span style="font-size:18px;">🏔️</span><div><div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.5);">Cluj-Napoca</div><div style="font-size:10px; color:rgba(10,132,255,0.6);">VV 1.0 — SOON</div></div><i class="fas fa-lock" style="color:rgba(255,255,255,0.1); margin-left:auto;"></i></div>
                     <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(10,132,255,0.04); border:1px solid rgba(10,132,255,0.12); border-radius:12px;"><span style="font-size:18px;">🏰</span><div><div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.5);">Brașov</div><div style="font-size:10px; color:rgba(10,132,255,0.6);">VV 1.0 — SOON</div></div><i class="fas fa-lock" style="color:rgba(255,255,255,0.1); margin-left:auto;"></i></div>
                     <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(10,132,255,0.04); border:1px solid rgba(10,132,255,0.12); border-radius:12px;"><span style="font-size:18px;">🌆</span><div><div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.5);">Timișoara</div><div style="font-size:10px; color:rgba(10,132,255,0.6);">VV 1.0 — SOON</div></div><i class="fas fa-lock" style="color:rgba(255,255,255,0.1); margin-left:auto;"></i></div>
+                    <!-- BUG 7: Secțiunea + Altele -->
+                    <div style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:linear-gradient(135deg,rgba(212,175,55,0.06),rgba(212,175,55,0.02)); border:1px solid rgba(212,175,55,0.2); border-radius:12px; margin-top:4px;">
+                        <span style="font-size:18px;">✨</span>
+                        <div style="flex:1;">
+                            <div style="font-size:13px; font-weight:700; color:rgba(212,175,55,0.7);">+ Altele</div>
+                            <div style="font-size:10px; color:rgba(212,175,55,0.4); margin-top:2px;">PREMIUM · Mai multe orașe în curând</div>
+                        </div>
+                        <div style="background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.2); border-radius:6px; padding:3px 8px;">
+                            <span style="font-size:9px; color:#D4AF37; font-weight:800; letter-spacing:1px;">PREMIUM</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button onclick="closeModal('modal-future')" style="width:100%; padding:16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:14px; color:#fff; font-weight:800; font-size:14px; margin-top:20px; cursor:pointer; letter-spacing:1px;">ÎNCHIDE</button>
