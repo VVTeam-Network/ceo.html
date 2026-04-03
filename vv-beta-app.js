@@ -429,7 +429,7 @@ function loadLeaderboard() {
                                 (u.totalRatings > 0 ? '<span style="font-size:10px; color:rgba(255,255,255,0.25); margin-left:5px;">(' + u.totalRatings + ')</span>' : '') +
                             '</div>' +
                         '</div>' +
-                        '<div style="font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.3);">' +
+                        '<div style="font-size:11px; font-weight:700; font-family:monospace; color:rgba(255,255,255,0.3);">' +
                             (u.avgStars > 0 ? u.avgStars.toFixed(1) : '—') +
                         '</div>' +
                     '</div>';
