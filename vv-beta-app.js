@@ -1230,66 +1230,140 @@ async function acceptMission(missionId) {
     openCamera();
 }
 
-// ================= PILON 3: INBOX CU BUTON RAPORTEAZĂ =================
+// ================= PILON 3: INTELLIGENCE INBOX =================
 function openInbox() {
     openModal('inbox-modal');
+    updateIntelligenceInboxCard();
+}
+
+// Returnează config vizual pentru fiecare tip de mesaj
+function getInboxTypeConfig(msg) {
+    var type = msg.type || '';
+    var configs = {
+        rejection_dsa:    { icon:'❌', label:'DOVADĂ RESPINSĂ',   color:'#ff3b30', bg:'rgba(255,59,48,0.08)',   border:'rgba(255,59,48,0.2)' },
+        official_warning: { icon:'⚠️', label:'AVERTISMENT OFICIAL', color:'#ff9500', bg:'rgba(255,149,0,0.08)',  border:'rgba(255,149,0,0.2)' },
+        ban_notice:       { icon:'🚫', label:'CONT SUSPENDAT',    color:'#ff3b30', bg:'rgba(255,59,48,0.08)',   border:'rgba(255,59,48,0.2)' },
+        unban_notice:     { icon:'✅', label:'ACCES RESTAURAT',   color:'#34c759', bg:'rgba(52,199,89,0.08)',   border:'rgba(52,199,89,0.2)' },
+        reward_notification: { icon:'⭐', label:'RECOMPENSĂ PRIMITĂ', color:'#D4AF37', bg:'rgba(212,175,55,0.08)', border:'rgba(212,175,55,0.2)' },
+        support_resolved: { icon:'💬', label:'SUPORT REZOLVAT',  color:'#0A84FF', bg:'rgba(10,132,255,0.08)',  border:'rgba(10,132,255,0.2)' }
+    };
+    if (configs[type]) return configs[type];
+    // Tip implicit — dovadă misiune
+    if (msg.reward) return { icon:'📦', label:'MISIUNE PRIMITĂ', color:'rgba(255,255,255,0.6)', bg:'rgba(255,255,255,0.05)', border:'rgba(255,255,255,0.1)' };
+    return { icon:'📩', label:'MESAJ VV', color:'rgba(255,255,255,0.4)', bg:'rgba(255,255,255,0.04)', border:'rgba(255,255,255,0.08)' };
 }
 
 function listenInbox() {
     if (!currentUser) return;
 
     db.collection('inbox').where('to', '==', currentUser.uid)
-        .limit(20)
-        .onSnapshot(snap => {
-            const badge = document.getElementById('inbox-badge');
-            let unread = 0;
-            const container = document.getElementById('inbox-container');
+        .orderBy('createdAt', 'desc')
+        .limit(30)
+        .onSnapshot(function(snap) {
+            var badge = document.getElementById('inbox-badge');
+            var intelBadge = document.getElementById('intel-inbox-badge');
+            var unread = 0;
+            var container = document.getElementById('inbox-container');
             container.innerHTML = '';
 
             if (snap.empty) {
                 container.innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:30px; font-size:13px;">Niciun mesaj primit.</div>';
-                badge.textContent = '0';
-                badge.style.display = 'none';
+                if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
+                if (intelBadge) intelBadge.style.display = 'none';
                 return;
             }
 
-            snap.forEach(doc => {
-                const msg = doc.data();
-
-                // PILON 3: Ascundem mesajele raportate
+            snap.forEach(function(doc) {
+                var msg = doc.data();
                 if (msg.status === 'reported') return;
-
                 if (!msg.read) unread++;
 
-                const div = document.createElement('div');
-                div.style.cssText = `
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 14px;
-                    padding: 16px;
-                    margin-bottom: 12px;
-                `;
-                div.innerHTML = `
-                    <div style="font-size:11px; color:rgba(255,255,255,0.3); margin-bottom:6px; letter-spacing:1px;">DOVADĂ MISIUNE</div>
-                    <div style="font-size:13px; color:#fff; margin-bottom:8px;">${msg.message || ''}</div>
-                    ${msg.photoUrl ? `<img src="${msg.photoUrl}" style="width:100%; border-radius:10px; margin-bottom:8px;" />` : ''}
-                    ${msg.reward ? `
-                        <button onclick="openPremiumFeedback('${doc.id}', ${msg.reward}, '${msg.from}');"
-                            style="background:rgba(255,255,255,0.9); color:#000; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%;">
-                            APROBĂ +${msg.reward} VV
-                        </button>
-                        <button class="btn-report-fake" onclick="reportIntel('${doc.id}', ${msg.reward});">
-                            🚩 RAPORTEAZĂ FAKE
-                        </button>` : ''}
-                `;
-                container.appendChild(div);
+                var cfg = getInboxTypeConfig(msg);
+                var timeStr = msg.createdAt?.toDate().toLocaleString('ro-RO', {
+                    day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'
+                }) || '';
 
-                // Marchează ca citit
+                var div = document.createElement('div');
+                div.style.cssText = 'background:' + cfg.bg + ';border:1px solid ' + cfg.border + ';border-radius:14px;padding:16px;margin-bottom:10px;' + (!msg.read ? 'box-shadow:0 0 0 1px ' + cfg.border + ';' : '');
+
+                var inner = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+                    + '<div style="display:flex;align-items:center;gap:6px;">'
+                    + '<span style="font-size:14px;">' + cfg.icon + '</span>'
+                    + '<span style="font-size:9px;color:' + cfg.color + ';letter-spacing:2px;font-weight:800;">' + cfg.label + '</span>'
+                    + (!msg.read ? '<span style="width:6px;height:6px;background:' + cfg.color + ';border-radius:50%;box-shadow:0 0 4px ' + cfg.color + ';display:inline-block;"></span>' : '')
+                    + '</div>'
+                    + '<span style="font-size:10px;color:rgba(255,255,255,0.2);">' + timeStr + '</span>'
+                    + '</div>'
+                    + '<div style="font-size:13px;color:rgba(255,255,255,0.82);line-height:1.6;margin-bottom:' + (msg.reward || msg.photoUrl ? '12px' : '0') + ';">' + (msg.message || '') + '</div>';
+
+                // Poza atașată
+                if (msg.photoUrl) {
+                    inner += '<img src="' + msg.photoUrl + '" style="width:100%;border-radius:10px;margin-bottom:10px;" />';
+                }
+
+                // Butoane doar pentru dovezi misiune (nu pentru notificări sistem)
+                div.innerHTML = inner + '</div>';
+                if (msg.reward && !msg.type) {
+                    var btnApprove = document.createElement('button');
+                    btnApprove.style.cssText = 'background:rgba(255,255,255,0.9);color:#000;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;width:100%;margin-bottom:6px;min-height:44px;';
+                    btnApprove.textContent = 'APROBĂ +' + msg.reward + ' VV';
+                    (function(id, reward, from) {
+                        btnApprove.onclick = function() { openPremiumFeedback(id, reward, from); };
+                    })(doc.id, msg.reward, msg.from);
+                    div.appendChild(btnApprove);
+
+                    var btnReport = document.createElement('button');
+                    btnReport.className = 'btn-report-fake';
+                    btnReport.textContent = '🚩 RAPORTEAZĂ FAKE';
+                    (function(id, reward) {
+                        btnReport.onclick = function() { reportIntel(id, reward); };
+                    })(doc.id, msg.reward);
+                    div.appendChild(btnReport);
+                }
+                container.appendChild(div);
                 doc.ref.update({ read: true });
             });
 
-            badge.textContent = unread;
-            badge.style.display = unread > 0 ? 'flex' : 'none';
+            if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
+            // Update badge pe cardul din profil
+            if (intelBadge) {
+                intelBadge.textContent = unread > 0 ? unread : '';
+                intelBadge.style.display = unread > 0 ? 'flex' : 'none';
+            }
+            // Update preview în cardul profil
+            updateIntelligenceInboxCard();
+        });
+}
+
+// Actualizează cardul Intelligence Inbox din profil cu ultimele 3 mesaje
+function updateIntelligenceInboxCard() {
+    if (!currentUser) return;
+    var previewEl = document.getElementById('intel-inbox-preview');
+    if (!previewEl) return;
+
+    db.collection('inbox').where('to', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(3)
+        .get().then(function(snap) {
+            if (snap.empty) {
+                previewEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:12px;text-align:center;padding:10px;">Niciun mesaj primit încă.</div>';
+                return;
+            }
+            previewEl.innerHTML = '';
+            snap.forEach(function(doc) {
+                var msg = doc.data();
+                if (msg.status === 'reported') return;
+                var cfg = getInboxTypeConfig(msg);
+                var preview = (msg.message || '').substring(0, 60) + ((msg.message||'').length > 60 ? '...' : '');
+                previewEl.innerHTML += '<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
+                    + '<span style="font-size:16px;flex-shrink:0;">' + cfg.icon + '</span>'
+                    + '<div style="flex:1;min-width:0;">'
+                    + '<div style="font-size:10px;color:' + cfg.color + ';letter-spacing:1.5px;font-weight:700;margin-bottom:2px;">' + cfg.label + '</div>'
+                    + '<div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + preview + '</div>'
+                    + '</div>'
+                    + (!msg.read ? '<div style="width:6px;height:6px;background:' + cfg.color + ';border-radius:50%;flex-shrink:0;margin-top:4px;"></div>' : '')
+                    + '</div>';
+            });
         });
 }
 
