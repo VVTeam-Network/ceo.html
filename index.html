@@ -257,6 +257,54 @@
             <span id="profile-lei-val" style="display:none;">—</span>
         </div>
 
+        <!-- INTELLIGENCE INBOX CARD — VV System -->
+        <div style="
+            background: rgba(10,132,255,0.05);
+            border: 1px solid rgba(10,132,255,0.15);
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        " onclick="openInbox()">
+            <!-- Linie albastră top -->
+            <div style="position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,#0A84FF,transparent);"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:32px;height:32px;background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-satellite-dish" style="color:#0A84FF;font-size:13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:13px;font-weight:800;color:#fff;letter-spacing:0.5px;">INTELLIGENCE INBOX</div>
+                        <div style="font-size:10px;color:rgba(10,132,255,0.6);letter-spacing:1px;">MESAJE VV SISTEM</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div id="intel-inbox-badge" style="
+                        display:none;
+                        background:#ff3b30;
+                        color:#fff;
+                        font-size:10px;
+                        font-weight:800;
+                        min-width:20px;
+                        height:20px;
+                        border-radius:10px;
+                        align-items:center;
+                        justify-content:center;
+                        padding:0 6px;
+                    "></div>
+                    <i class="fas fa-chevron-right" style="color:rgba(10,132,255,0.4);font-size:12px;"></i>
+                </div>
+            </div>
+
+            <!-- Preview ultimele mesaje -->
+            <div id="intel-inbox-preview">
+                <div style="color:rgba(255,255,255,0.25);font-size:12px;text-align:center;padding:10px;">Niciun mesaj primit încă.</div>
+            </div>
+        </div>
+
         <!-- VV ONYX PROGRESS -->
         <div id="onyx-progress-card" style="
             background: linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(212,175,55,0.02) 100%);
@@ -305,54 +353,6 @@
                     Sunt folosiți exclusiv pentru recompense în platformă. 
                     La VV 1.0 pot fi folosiți pentru abonamente gratuite ONYX.
                 </p>
-            </div>
-        </div>
-
-        <!-- INTELLIGENCE INBOX CARD — VV System -->
-        <div style="
-            background: rgba(10,132,255,0.05);
-            border: 1px solid rgba(10,132,255,0.15);
-            border-radius: 20px;
-            padding: 18px 20px;
-            margin-bottom: 16px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        " onclick="openInbox()">
-            <!-- Linie albastră top -->
-            <div style="position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,#0A84FF,transparent);"></div>
-
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:32px;height:32px;background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fas fa-satellite-dish" style="color:#0A84FF;font-size:13px;"></i>
-                    </div>
-                    <div>
-                        <div style="font-size:13px;font-weight:800;color:#fff;letter-spacing:0.5px;">INTELLIGENCE INBOX</div>
-                        <div style="font-size:10px;color:rgba(10,132,255,0.6);letter-spacing:1px;">MESAJE VV SISTEM</div>
-                    </div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div id="intel-inbox-badge" style="
-                        display:none;
-                        background:#ff3b30;
-                        color:#fff;
-                        font-size:10px;
-                        font-weight:800;
-                        min-width:20px;
-                        height:20px;
-                        border-radius:10px;
-                        align-items:center;
-                        justify-content:center;
-                        padding:0 6px;
-                    "></div>
-                    <i class="fas fa-chevron-right" style="color:rgba(10,132,255,0.4);font-size:12px;"></i>
-                </div>
-            </div>
-
-            <!-- Preview ultimele mesaje -->
-            <div id="intel-inbox-preview">
-                <div style="color:rgba(255,255,255,0.25);font-size:12px;text-align:center;padding:10px;">Niciun mesaj primit încă.</div>
             </div>
         </div>
 
@@ -412,7 +412,7 @@
                 <i class="fas fa-chevron-right" style="color:rgba(255,255,255,0.15); font-size:12px;"></i>
             </div>
 
-            <div onclick="openModal('modal-support-career'); setTimeout(function(){ var ta=document.getElementById('feedback-msg-input'); if(ta) ta.value=''; }, 50);" style="
+            <div onclick="openModal('modal-support-career'); setTimeout(function(){ var ta=document.getElementById('support-msg-input'); if(ta) ta.value=''; }, 50);" style="
                 display:flex; align-items:center; gap:14px;
                 padding:16px 20px;
                 cursor:pointer;
@@ -786,8 +786,8 @@
             </div>
             <div class="sheet-scroll-container">
                 <div style="font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:2px; margin-bottom:12px;">TRIMITE UN MESAJ</div>
-                <textarea id="feedback-msg-input" placeholder="Ai o problemă sau o idee? Scrie-ne..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; resize:none; height:120px; margin-bottom:10px;"></textarea>
-                <button onclick="sendFeedback()" style="width:100%; padding:14px; background:rgba(255,255,255,0.9); color:#000; border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer;">TRIMITE MESAJ</button>
+                <textarea id="support-msg-input" placeholder="Ai o problemă sau o idee? Scrie-ne..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; resize:none; height:120px; margin-bottom:10px;"></textarea>
+                <button onclick="sendSupport()" style="width:100%; padding:14px; background:rgba(255,255,255,0.9); color:#000; border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; min-height:44px;">TRIMITE MESAJ</button>
             </div>
             <button onclick="closeModal('modal-support-career')" style="width:100%; padding:16px; background:rgba(255,255,255,0.08); border:none; border-radius:14px; color:#fff; font-weight:800; font-size:14px; margin-top:10px; cursor:pointer; letter-spacing:1px;">ÎNCHIDE</button>
         </div>
