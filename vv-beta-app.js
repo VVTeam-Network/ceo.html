@@ -261,6 +261,8 @@ function showApp() {
     setTimeout(() => { app.style.opacity = '1'; }, 50);
     initMap();
     setTimeout(function() { maybeStartProximity(); }, 3000);
+    // Remote Config — ascultă versiunea și maintenance mode
+    setTimeout(function() { startRemoteConfigListener(); }, 1500);
 }
 
 // ================= SILENT LOGIN =================
@@ -2363,4 +2365,211 @@ function maybeStartProximity() {
     if (_proximityStarted) return;
     _proximityStarted = true;
     startProximityCheck();
+}
+
+
+// ================================================================
+// REMOTE CONFIG — Sistem de actualizare live
+// Ascultă versiunea și maintenance mode din Firestore
+// ================================================================
+var _localVersion = '1.0.0';
+var _remoteConfigActive = false;
+var _updateToastShown = false;
+
+function startRemoteConfigListener() {
+    if (_remoteConfigActive) return;
+    _remoteConfigActive = true;
+
+    db.collection('system').doc('app_config').onSnapshot(function(doc) {
+        if (!doc.exists) return;
+        var cfg = doc.data();
+
+        // ── MAINTENANCE MODE ──────────────────────────────────────
+        if (cfg.maintenanceMode) {
+            showMaintenanceScreen(cfg.updateMessage || 'Revenim imediat. Mulțumim pentru răbdare.');
+            return;
+        } else {
+            hideMaintenanceScreen();
+        }
+
+        // ── VERSION CHECK ─────────────────────────────────────────
+        var serverVersion = cfg.version || '1.0.0';
+        if (!_updateToastShown && isNewerVersion(serverVersion, _localVersion)) {
+            _updateToastShown = true;
+
+            if (cfg.silentUpdate) {
+                // Silent: reload automat după 3 secunde fără a deranja
+                setTimeout(function() { window.location.reload(); }, 3000);
+                return;
+            }
+
+            if (cfg.forceUpdate) {
+                showForceUpdateScreen(serverVersion, cfg.updateMessage);
+            } else {
+                showUpdateToast(serverVersion, cfg.updateMessage || 'Experiența VV a fost îmbunătățită.');
+            }
+        }
+    });
+}
+
+function isNewerVersion(server, local) {
+    try {
+        var s = server.split('.').map(Number);
+        var l = local.split('.').map(Number);
+        for (var i = 0; i < 3; i++) {
+            if ((s[i]||0) > (l[i]||0)) return true;
+            if ((s[i]||0) < (l[i]||0)) return false;
+        }
+    } catch(e) {}
+    return false;
+}
+
+// ── TOAST PREMIUM (Soft Update) ───────────────────────────────
+function showUpdateToast(version, message) {
+    var old = document.getElementById('vv-update-toast');
+    if (old) old.remove();
+
+    var el = document.createElement('div');
+    el.id = 'vv-update-toast';
+    el.style.cssText = [
+        'position:fixed',
+        'bottom:calc(88px + env(safe-area-inset-bottom, 0px))',
+        'left:50%',
+        'transform:translateX(-50%)',
+        'z-index:999998',
+        'width:calc(100% - 32px)',
+        'max-width:380px',
+        'background:rgba(10,10,18,0.96)',
+        'backdrop-filter:blur(30px)',
+        '-webkit-backdrop-filter:blur(30px)',
+        'border:1px solid rgba(10,132,255,0.3)',
+        'border-radius:22px',
+        'padding:18px 20px',
+        'box-shadow:0 8px 40px rgba(10,132,255,0.15)',
+    ].join(';');
+
+    el.innerHTML = [
+        '<div style="position:absolute;top:-1px;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,#0A84FF,transparent);border-radius:1px;"></div>',
+        '<div style="display:flex;align-items:flex-start;gap:12px;">',
+            '<div style="width:40px;height:40px;background:rgba(10,132,255,0.12);border:1px solid rgba(10,132,255,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">',
+                '<i class="fas fa-satellite-dish" style="color:#0A84FF;font-size:16px;"></i>',
+            '</div>',
+            '<div style="flex:1;min-width:0;">',
+                '<div style="font-size:10px;color:rgba(10,132,255,0.7);letter-spacing:3px;font-weight:700;margin-bottom:3px;">SISTEM ACTUALIZAT · v' + version + '</div>',
+                '<div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.5;margin-bottom:12px;">' + message + '</div>',
+                '<div style="display:flex;gap:8px;">',
+                    '<button onclick="doAppRefresh()" style="',
+                        'flex:1;padding:11px 16px;border:none;border-radius:12px;',
+                        'background:rgba(10,132,255,0.9);color:#fff;',
+                        'font-weight:800;font-size:13px;cursor:pointer;',
+                        'min-height:44px;font-family:-apple-system,sans-serif;',
+                    '">ACTUALIZEAZĂ ACUM</button>',
+                    '<button onclick="var el=document.getElementById(\'vv-update-toast\');if(el)el.remove();" style="',
+                        'padding:11px 14px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;',
+                        'background:transparent;color:rgba(255,255,255,0.35);',
+                        'font-size:12px;cursor:pointer;min-height:44px;',
+                        'font-family:-apple-system,sans-serif;',
+                    '">Mai târziu</button>',
+                '</div>',
+            '</div>',
+        '</div>'
+    ].join('');
+
+    document.body.appendChild(el);
+}
+
+function doAppRefresh() {
+    // Golim cache Service Worker dacă există, apoi reload
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            names.forEach(function(name) { caches.delete(name); });
+        }).finally(function() { window.location.reload(true); });
+    } else {
+        window.location.reload(true);
+    }
+}
+
+// ── FORCE UPDATE SCREEN ────────────────────────────────────────
+function showForceUpdateScreen(version, message) {
+    var old = document.getElementById('vv-force-update');
+    if (old) old.remove();
+
+    var el = document.createElement('div');
+    el.id = 'vv-force-update';
+    el.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:9999999',
+        'background:#050507',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'justify-content:center',
+        'padding:40px 28px',
+        'text-align:center'
+    ].join(';');
+
+    el.innerHTML = [
+        '<div style="font-size:64px;font-weight:900;color:#fff;letter-spacing:-4px;margin-bottom:6px;">VV</div>',
+        '<div style="font-size:10px;color:rgba(10,132,255,0.6);letter-spacing:4px;font-weight:700;margin-bottom:48px;">HYBRID UNIVERS</div>',
+        '<div style="width:64px;height:64px;background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.3);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">',
+            '<i class="fas fa-arrow-rotate-right" style="color:#0A84FF;font-size:26px;"></i>',
+        '</div>',
+        '<div style="font-size:11px;color:rgba(10,132,255,0.6);letter-spacing:3px;font-weight:700;margin-bottom:8px;">ACTUALIZARE NECESARĂ · v' + version + '</div>',
+        '<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:10px;">VV se îmbunătățește.</div>',
+        '<div style="font-size:14px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:300px;margin-bottom:36px;">' + (message || 'O nouă versiune este disponibilă. Actualizează pentru a continua.') + '</div>',
+        '<button onclick="doAppRefresh()" style="',
+            'padding:18px 48px;border:none;border-radius:18px;',
+            'background:rgba(255,255,255,0.95);color:#000;',
+            'font-weight:900;font-size:15px;cursor:pointer;',
+            'letter-spacing:0.5px;min-height:56px;',
+            'font-family:-apple-system,sans-serif;',
+        '">ACTUALIZEAZĂ ACUM</button>',
+        '<div style="font-size:11px;color:rgba(255,255,255,0.15);margin-top:20px;">VV Beta · v' + _localVersion + ' → v' + version + '</div>'
+    ].join('');
+
+    document.body.appendChild(el);
+}
+
+// ── MAINTENANCE SCREEN ─────────────────────────────────────────
+function showMaintenanceScreen(message) {
+    if (document.getElementById('vv-maintenance')) return;
+
+    var el = document.createElement('div');
+    el.id = 'vv-maintenance';
+    el.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:9999999',
+        'background:#050507',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'justify-content:center',
+        'padding:40px 28px',
+        'text-align:center'
+    ].join(';');
+
+    el.innerHTML = [
+        '<div style="font-size:64px;font-weight:900;color:#fff;letter-spacing:-4px;margin-bottom:6px;">VV</div>',
+        '<div style="font-size:10px;color:rgba(255,149,0,0.6);letter-spacing:4px;font-weight:700;margin-bottom:48px;">HYBRID UNIVERS</div>',
+        '<div style="width:64px;height:64px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">',
+            '<i class="fas fa-wrench" style="color:#ff9500;font-size:26px;"></i>',
+        '</div>',
+        '<div style="font-size:11px;color:rgba(255,149,0,0.6);letter-spacing:3px;font-weight:700;margin-bottom:8px;">ÎN MENTENANȚĂ</div>',
+        '<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:10px;">Revenim imediat.</div>',
+        '<div style="font-size:14px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:300px;">' + message + '</div>',
+        '<div style="margin-top:32px;font-size:10px;color:rgba(255,255,255,0.15);letter-spacing:2px;">VV Technologies · București</div>'
+    ].join('');
+
+    document.body.appendChild(el);
+}
+
+function hideMaintenanceScreen() {
+    var el = document.getElementById('vv-maintenance');
+    if (el) {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.5s';
+        setTimeout(function() { el.remove(); }, 500);
+    }
 }
