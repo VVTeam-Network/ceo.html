@@ -308,6 +308,54 @@
             </div>
         </div>
 
+        <!-- INTELLIGENCE INBOX CARD — VV System -->
+        <div style="
+            background: rgba(10,132,255,0.05);
+            border: 1px solid rgba(10,132,255,0.15);
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        " onclick="openInbox()">
+            <!-- Linie albastră top -->
+            <div style="position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,#0A84FF,transparent);"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:32px;height:32px;background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-satellite-dish" style="color:#0A84FF;font-size:13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:13px;font-weight:800;color:#fff;letter-spacing:0.5px;">INTELLIGENCE INBOX</div>
+                        <div style="font-size:10px;color:rgba(10,132,255,0.6);letter-spacing:1px;">MESAJE VV SISTEM</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div id="intel-inbox-badge" style="
+                        display:none;
+                        background:#ff3b30;
+                        color:#fff;
+                        font-size:10px;
+                        font-weight:800;
+                        min-width:20px;
+                        height:20px;
+                        border-radius:10px;
+                        align-items:center;
+                        justify-content:center;
+                        padding:0 6px;
+                    "></div>
+                    <i class="fas fa-chevron-right" style="color:rgba(10,132,255,0.4);font-size:12px;"></i>
+                </div>
+            </div>
+
+            <!-- Preview ultimele mesaje -->
+            <div id="intel-inbox-preview">
+                <div style="color:rgba(255,255,255,0.25);font-size:12px;text-align:center;padding:10px;">Niciun mesaj primit încă.</div>
+            </div>
+        </div>
+
         <!-- 4 BUTOANE PREMIUM -->
         <div style="
             background: rgba(255,255,255,0.04);
