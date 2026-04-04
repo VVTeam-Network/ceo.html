@@ -1257,8 +1257,7 @@ function listenInbox() {
     if (!currentUser) return;
 
     db.collection('inbox').where('to', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .limit(30)
+        .limit(50)
         .onSnapshot(function(snap) {
             var badge = document.getElementById('inbox-badge');
             var intelBadge = document.getElementById('intel-inbox-badge');
@@ -1266,14 +1265,23 @@ function listenInbox() {
             var container = document.getElementById('inbox-container');
             container.innerHTML = '';
 
-            if (snap.empty) {
+            // Sortare client-side (evită index compus Firestore)
+            var docs = [];
+            snap.forEach(function(doc) { docs.push(doc); });
+            docs.sort(function(a, b) {
+                var ta = a.data().createdAt ? a.data().createdAt.toMillis() : 0;
+                var tb = b.data().createdAt ? b.data().createdAt.toMillis() : 0;
+                return tb - ta;
+            });
+
+            if (docs.length === 0) {
                 container.innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:30px; font-size:13px;">Niciun mesaj primit.</div>';
                 if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
                 if (intelBadge) intelBadge.style.display = 'none';
                 return;
             }
 
-            snap.forEach(function(doc) {
+            docs.forEach(function(doc) {
                 var msg = doc.data();
                 if (msg.status === 'reported') return;
                 if (!msg.read) unread++;
@@ -1342,8 +1350,7 @@ function updateIntelligenceInboxCard() {
     if (!previewEl) return;
 
     db.collection('inbox').where('to', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .limit(3)
+        .limit(10)
         .get().then(function(snap) {
             if (snap.empty) {
                 previewEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:12px;text-align:center;padding:10px;">Niciun mesaj primit încă.</div>';
@@ -1436,7 +1443,11 @@ function openFeedbackModal() {
 }
 
 function sendFeedback() {
-    const msg = document.getElementById('feedback-msg-input').value.trim();
+    // Compatibilitate - citim din ambele ids posibile
+    var taOld = document.getElementById('feedback-msg-input');
+    var taNew = document.getElementById('support-msg-input');
+    var ta = taNew || taOld;
+    var msg = ta ? ta.value.trim() : '';
     if (!msg) { showToast('Scrie un mesaj!'); return; }
 
     db.collection('feedback').add({
@@ -1446,11 +1457,27 @@ function sendFeedback() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(function() {
         showToast('Mesaj trimis! Mulțumim. ✅');
-        // BUG FIX 8: Reset corect textarea
-        var ta = document.getElementById('feedback-msg-input');
         if (ta) { ta.value = ''; ta.blur(); }
         closeModal('modal-support-career');
     }).catch(function() { showToast('Eroare trimitere.'); });
+}
+
+// Funcție dedicată pentru butonul din modal-support-career
+function sendSupport() {
+    var ta = document.getElementById('support-msg-input');
+    if (!ta || !ta.value.trim()) { showToast('Scrie un mesaj!'); return; }
+    var msg = ta.value.trim();
+
+    db.collection('feedback').add({
+        message: msg,
+        uid: (currentUser ? currentUser.uid : null) || 'anonim',
+        alias: localStorage.getItem('vv_alias') || 'INSIDER',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function() {
+        showToast('Mesaj trimis! Mulțumim. ✅');
+        ta.value = ''; ta.blur();
+        closeModal('modal-support-career');
+    }).catch(function() { showToast('Eroare la trimitere. Verifică conexiunea.'); });
 }
 
 // ================= CAMERA — PILON 2: verificare distanță max 50m la dovadă =================
