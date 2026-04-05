@@ -1825,35 +1825,89 @@ function closeModal(id) {
 }
 
 // ================= RECRUTARE VV TEAM =================
+// Funcție veche — păstrată pentru compatibilitate
 async function submitApplication() {
-    const skill = (document.getElementById('recruit-skill') ? document.getElementById('recruit-skill').value.trim() : '');
-    const portfolio = (document.getElementById('recruit-portfolio') ? document.getElementById('recruit-portfolio').value.trim() : '');
+    await submitCareerApplication(event);
+}
 
-    if (!skill) { showToast('Spune-ne ce știi să construiești!'); return; }
+// ── Tab switcher Suport / Carieră ──────────────────────────────
+function switchCareerTab(tab) {
+    var tabSuport   = document.getElementById('tab-suport');
+    var tabCariera  = document.getElementById('tab-cariera');
+    var btnSuport   = document.getElementById('tab-suport-btn');
+    var btnCariera  = document.getElementById('tab-cariera-btn');
 
-    const btn = event.target;
-    btn.textContent = 'SE TRIMITE...';
-    btn.style.opacity = '0.6';
+    if (tab === 'suport') {
+        if (tabSuport)  tabSuport.style.display  = 'block';
+        if (tabCariera) tabCariera.style.display  = 'none';
+        if (btnSuport)  {
+            btnSuport.style.background = '#fff';
+            btnSuport.style.color      = '#000';
+        }
+        if (btnCariera) {
+            btnCariera.style.background = 'transparent';
+            btnCariera.style.color      = 'rgba(255,255,255,0.4)';
+        }
+    } else {
+        if (tabSuport)  tabSuport.style.display  = 'none';
+        if (tabCariera) tabCariera.style.display  = 'block';
+        if (btnCariera) {
+            btnCariera.style.background = '#fff';
+            btnCariera.style.color      = '#000';
+        }
+        if (btnSuport) {
+            btnSuport.style.background  = 'transparent';
+            btnSuport.style.color       = 'rgba(255,255,255,0.4)';
+        }
+    }
+}
+
+// ── Formular Carieră VV — Detaliat ────────────────────────────
+async function submitCareerApplication(e) {
+    var btn = e && e.target ? e.target : document.querySelector('[onclick*="submitCareerApplication"]');
+
+    var skill      = (document.getElementById('career-skill')      || {}).value || '';
+    var portfolio  = (document.getElementById('career-portfolio')  || {}).value || '';
+    var motivation = (document.getElementById('career-motivation') || {}).value || '';
+    var contact    = (document.getElementById('career-contact')    || {}).value || '';
+
+    skill      = skill.trim();
+    motivation = motivation.trim();
+    contact    = contact.trim();
+
+    if (!skill)      { showToast('Spune-ne ce știi să faci — câmpul Skill e obligatoriu.'); return; }
+    if (!motivation) { showToast('Spune-ne de ce vrei să construiești VV.'); return; }
+    if (!contact)    { showToast('Lasă-ne un contact ca să te putem găsi.'); return; }
+
+    if (btn) { btn.textContent = 'SE TRIMITE...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
 
     try {
         await db.collection('talent_pool').add({
-            skill: skill,
-            portfolio: portfolio || 'N/A',
-            alias: localStorage.getItem('vv_alias') || 'INSIDER',
-            uid: (currentUser ? currentUser.uid : null) || 'anonim',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'pending'
+            alias:      localStorage.getItem('vv_alias') || 'INSIDER',
+            uid:        (currentUser ? currentUser.uid : null) || 'anonim',
+            skill:      skill,
+            portfolio:  portfolio || 'N/A',
+            motivation: motivation,
+            contact:    contact,
+            source:     'vvbeta_app',
+            status:     'new',
+            createdAt:  firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        document.getElementById('recruit-skill').value = '';
-        document.getElementById('recruit-portfolio').value = '';
-        btn.textContent = 'APLICĂ LA VV TEAM';
-        btn.style.opacity = '1';
-        showToast('✅ Aplicație trimisă! Te vom contacta.');
+        // Reset câmpuri
+        ['career-skill','career-portfolio','career-motivation','career-contact'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+
+        if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+
+        showToast('✅ Aplicație trimisă! Răspundem în 48h.');
+        setTimeout(function() { closeModal('modal-support-career'); }, 1800);
+
     } catch(e) {
-        btn.textContent = 'APLICĂ LA VV TEAM';
-        btn.style.opacity = '1';
-        showToast('Eroare. Încearcă din nou.');
+        if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+        showToast('Eroare la trimitere. Verifică conexiunea.');
     }
 }
 
