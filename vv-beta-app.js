@@ -2372,7 +2372,8 @@ function maybeStartProximity() {
 // REMOTE CONFIG — Sistem de actualizare live
 // Ascultă versiunea și maintenance mode din Firestore
 // ================================================================
-var _localVersion = '1.0.0';
+// Versiunea locală — citim din localStorage după fiecare actualizare
+var _localVersion = localStorage.getItem('vv_app_version') || '1.0.0';
 var _remoteConfigActive = false;
 var _updateToastShown = false;
 
@@ -2394,6 +2395,9 @@ function startRemoteConfigListener() {
 
         // ── VERSION CHECK ─────────────────────────────────────────
         var serverVersion = cfg.version || '1.0.0';
+        // Re-citim versiunea locală (poate fi actualizată de doAppRefresh)
+        _localVersion = localStorage.getItem('vv_app_version') || '1.0.0';
+
         if (!_updateToastShown && isNewerVersion(serverVersion, _localVersion)) {
             _updateToastShown = true;
 
@@ -2479,14 +2483,22 @@ function showUpdateToast(version, message) {
 }
 
 function doAppRefresh() {
-    // Golim cache Service Worker dacă există, apoi reload
-    if ('caches' in window) {
-        caches.keys().then(function(names) {
-            names.forEach(function(name) { caches.delete(name); });
-        }).finally(function() { window.location.reload(true); });
-    } else {
-        window.location.reload(true);
-    }
+    // Salvăm versiunea curentă a serverului în localStorage ÎNAINTE de reload
+    // Astfel după refresh, _localVersion == serverVersion și toast-ul nu mai apare
+    db.collection('system').doc('app_config').get().then(function(doc) {
+        if (doc.exists && doc.data().version) {
+            localStorage.setItem('vv_app_version', doc.data().version);
+        }
+    }).finally(function() {
+        // Golim cache Service Worker dacă există, apoi reload
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                names.forEach(function(name) { caches.delete(name); });
+            }).finally(function() { window.location.reload(true); });
+        } else {
+            window.location.reload(true);
+        }
+    });
 }
 
 // ── FORCE UPDATE SCREEN ────────────────────────────────────────
