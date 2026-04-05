@@ -1862,50 +1862,59 @@ function switchCareerTab(tab) {
     }
 }
 
-// ── Formular Carieră VV — Detaliat ────────────────────────────
+// ── Formular Carieră VV — Manifest (câmpuri noi) ──────────────
 async function submitCareerApplication(e) {
     var btn = e && e.target ? e.target : document.querySelector('[onclick*="submitCareerApplication"]');
 
-    var skill      = (document.getElementById('career-skill')      || {}).value || '';
-    var portfolio  = (document.getElementById('career-portfolio')  || {}).value || '';
-    var motivation = (document.getElementById('career-motivation') || {}).value || '';
-    var contact    = (document.getElementById('career-contact')    || {}).value || '';
+    var alias     = ((document.getElementById('career-alias')     || {}).value || '').trim();
+    var spec      = ((document.getElementById('career-spec')      || {}).value || '').trim();
+    var portfolio = ((document.getElementById('career-portfolio') || {}).value || '').trim();
+    var vision    = ((document.getElementById('career-vision')    || {}).value || '').trim();
+    var gdpr      = document.getElementById('career-gdpr') && document.getElementById('career-gdpr').checked;
 
-    skill      = skill.trim();
-    motivation = motivation.trim();
-    contact    = contact.trim();
+    // Validări cu error inline
+    function showFieldError(msg) {
+        var errEl = document.getElementById('career-error-msg');
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block';
+            setTimeout(function() { errEl.style.display = 'none'; }, 4000); }
+        else showToast(msg);
+    }
 
-    if (!skill)      { showToast('Spune-ne ce știi să faci — câmpul Skill e obligatoriu.'); return; }
-    if (!motivation) { showToast('Spune-ne de ce vrei să construiești VV.'); return; }
-    if (!contact)    { showToast('Lasă-ne un contact ca să te putem găsi.'); return; }
+    if (!alias)   { showFieldError('Spune-ne cum să te știm — completează numele sau alias-ul.'); return; }
+    if (!spec)    { showFieldError('Completează specializarea ta.'); return; }
+    if (!vision)  { showFieldError('Câmpul viziune e esențial — fii specific.'); return; }
+    if (!gdpr)    { showFieldError('Bifează acordul GDPR pentru a putea trimite aplicația.'); return; }
 
     if (btn) { btn.textContent = 'SE TRIMITE...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
 
     try {
         await db.collection('talent_pool').add({
-            alias:      localStorage.getItem('vv_alias') || 'INSIDER',
-            uid:        (currentUser ? currentUser.uid : null) || 'anonim',
-            skill:      skill,
-            portfolio:  portfolio || 'N/A',
-            motivation: motivation,
-            contact:    contact,
-            source:     'vvbeta_app',
-            status:     'new',
-            createdAt:  firebase.firestore.FieldValue.serverTimestamp()
+            alias:       alias,
+            uid:         (currentUser ? currentUser.uid : null) || 'anonim',
+            skill:       spec,
+            portfolio:   portfolio || 'N/A',
+            motivation:  vision,
+            contact:     alias,
+            gdprConsent: true,
+            gdprExpiry:  new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+            source:      'vvbeta_manifest',
+            status:      'new',
+            createdAt:   firebase.firestore.FieldValue.serverTimestamp()
         });
 
         // Reset câmpuri
-        ['career-skill','career-portfolio','career-motivation','career-contact'].forEach(function(id) {
+        ['career-alias','career-spec','career-portfolio','career-vision'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.value = '';
         });
+        var gdprEl = document.getElementById('career-gdpr');
+        if (gdprEl) gdprEl.checked = false;
 
         if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
-
         showToast('✅ Aplicație trimisă! Răspundem în 48h.');
         setTimeout(function() { closeModal('modal-support-career'); }, 1800);
 
-    } catch(e) {
+    } catch(err) {
         if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
         showToast('Eroare la trimitere. Verifică conexiunea.');
     }
@@ -2637,5 +2646,63 @@ function hideMaintenanceScreen() {
         el.style.opacity = '0';
         el.style.transition = 'opacity 0.5s';
         setTimeout(function() { el.remove(); }, 500);
+    }
+}
+
+
+// ── Formular Carieră VV — Manifest · câmpuri noi ─────────────
+async function submitCareerApplication(e) {
+    var btn = e && e.target ? e.target : document.querySelector('[onclick*="submitCareerApplication"]');
+
+    // Citim noile câmpuri (cu fallback pentru compatibilitate)
+    var alias      = ((document.getElementById('career-alias')    ||{value:''}).value||'').trim()
+                  || localStorage.getItem('vv_alias') || 'INSIDER';
+    var skill      = ((document.getElementById('career-spec')     ||document.getElementById('career-skill')||{value:''}).value||'').trim();
+    var portfolio  = ((document.getElementById('career-portfolio')||{value:''}).value||'').trim();
+    var vision     = ((document.getElementById('career-vision')   ||document.getElementById('career-motivation')||{value:''}).value||'').trim();
+    var gdprEl     = document.getElementById('career-gdpr');
+    var errEl      = document.getElementById('career-error-msg');
+
+    function showErr(msg) {
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+        else showToast(msg);
+    }
+    if (errEl) errEl.style.display = 'none';
+
+    if (!skill)  { showErr('Completează specializarea ta.'); return; }
+    if (!vision) { showErr('Spune-ne cum poți ajuta — e câmpul cel mai important.'); return; }
+    if (gdprEl && !gdprEl.checked) { showErr('Bifează acordul GDPR pentru a continua.'); return; }
+
+    if (btn) { btn.textContent = 'SE TRIMITE...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
+
+    try {
+        await db.collection('talent_pool').add({
+            alias:       alias,
+            uid:         (currentUser ? currentUser.uid : null) || 'anonim',
+            skill:       skill,
+            portfolio:   portfolio || 'N/A',
+            motivation:  vision,
+            source:      'vvbeta_app',
+            status:      'new',
+            gdprConsent: gdprEl ? gdprEl.checked : false,
+            gdprExpiry:  new Date(Date.now() + 180*24*60*60*1000).toISOString(),
+            createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Reset
+        ['career-alias','career-spec','career-skill','career-portfolio',
+         'career-vision','career-motivation'].forEach(function(id) {
+            var el = document.getElementById(id); if (el) el.value = '';
+        });
+        if (gdprEl) gdprEl.checked = false;
+
+        if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+
+        showToast('🔥 Aplicație trimisă! Te contactăm dacă viziunile rezonează.');
+        setTimeout(function() { closeModal('modal-support-career'); }, 2000);
+
+    } catch(err) {
+        if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+        showToast('Eroare la trimitere. Verifică conexiunea.');
     }
 }
