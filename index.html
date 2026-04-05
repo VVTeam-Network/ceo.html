@@ -777,19 +777,94 @@
         </div>
     </div>
 
-    <!-- MODAL: Suport & Carieră -->
+    <!-- MODAL: Suport & Carieră — cu taburi -->
     <div class="sheet-modal" id="modal-support-career" style="display:none;">
         <div class="sheet-content">
             <div class="sheet-handle"></div>
-            <div class="sheet-header" style="justify-content:center;">
-                <span style="font-size:18px; font-weight:900; color:#fff; text-align:center; width:100%;">Suport</span>
+
+            <!-- Tab switcher -->
+            <div style="display:flex; gap:8px; margin:0 0 20px 0; background:rgba(255,255,255,0.05); border-radius:14px; padding:4px;">
+                <button id="tab-suport-btn" onclick="switchCareerTab('suport')"
+                    style="flex:1; padding:10px; border:none; border-radius:10px; background:#fff; color:#000; font-weight:800; font-size:12px; cursor:pointer; letter-spacing:1px; transition:all 0.2s; min-height:40px;">
+                    SUPORT
+                </button>
+                <button id="tab-cariera-btn" onclick="switchCareerTab('cariera')"
+                    style="flex:1; padding:10px; border:none; border-radius:10px; background:transparent; color:rgba(255,255,255,0.4); font-weight:800; font-size:12px; cursor:pointer; letter-spacing:1px; transition:all 0.2s; min-height:40px;">
+                    CARIERĂ VV
+                </button>
             </div>
-            <div class="sheet-scroll-container">
+
+            <!-- TAB SUPORT -->
+            <div id="tab-suport" class="sheet-scroll-container">
                 <div style="font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:2px; margin-bottom:12px;">TRIMITE UN MESAJ</div>
-                <textarea id="support-msg-input" placeholder="Ai o problemă sau o idee? Scrie-ne..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; resize:none; height:120px; margin-bottom:10px;"></textarea>
-                <button onclick="sendSupport()" style="width:100%; padding:14px; background:rgba(255,255,255,0.9); color:#000; border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; min-height:44px;">TRIMITE MESAJ</button>
+                <textarea id="support-msg-input" placeholder="Ai o problemă sau o idee? Scrie-ne..."
+                    style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; resize:none; height:120px; margin-bottom:10px;"></textarea>
+                <button onclick="sendSupport()"
+                    style="width:100%; padding:14px; background:rgba(255,255,255,0.9); color:#000; border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; min-height:44px;">
+                    TRIMITE MESAJ
+                </button>
             </div>
-            <button onclick="closeModal('modal-support-career')" style="width:100%; padding:16px; background:rgba(255,255,255,0.08); border:none; border-radius:14px; color:#fff; font-weight:800; font-size:14px; margin-top:10px; cursor:pointer; letter-spacing:1px;">ÎNCHIDE</button>
+
+            <!-- TAB CARIERĂ -->
+            <div id="tab-cariera" style="display:none;" class="sheet-scroll-container">
+
+                <!-- Hero text misterios -->
+                <div style="text-align:center; margin-bottom:24px; padding:20px 4px 0;">
+                    <div style="font-size:11px; color:rgba(212,175,55,0.6); letter-spacing:4px; font-weight:700; margin-bottom:10px;">VV HYBRID UNIVERS</div>
+                    <div style="font-size:20px; font-weight:900; color:#fff; line-height:1.3; margin-bottom:10px;">
+                        Construim ceva ce<br>nu a mai existat.
+                    </div>
+                    <div style="font-size:13px; color:rgba(255,255,255,0.45); line-height:1.7;">
+                        Nu căutăm CV-uri. Căutăm oameni care înțeleg că realitatea urbană poate fi documentată, monetizată și transformată într-o rețea vie.
+                    </div>
+                    <div style="margin-top:14px; padding:12px 16px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.15); border-radius:12px;">
+                        <div style="font-size:11px; color:rgba(212,175,55,0.7); font-weight:700; letter-spacing:1px;">APLICĂ DACĂ CREZI CĂ BUCUREȘTIUL MERITĂ MAI MULT.</div>
+                    </div>
+                </div>
+
+                <!-- Formular detaliat -->
+                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+
+                    <div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:2px; margin-bottom:6px;">SKILL PRINCIPAL *</div>
+                        <input id="career-skill" type="text" placeholder="Ex: React, Design, Data, Community..."
+                            style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; min-height:44px; -webkit-appearance:none;">
+                    </div>
+
+                    <div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:2px; margin-bottom:6px;">PORTFOLIO / LINK (opțional)</div>
+                        <input id="career-portfolio" type="url" placeholder="GitHub, Behance, Instagram, site..."
+                            style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; min-height:44px; -webkit-appearance:none;">
+                    </div>
+
+                    <div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:2px; margin-bottom:6px;">DE CE VV? *</div>
+                        <textarea id="career-motivation" placeholder="Ce te-a convins să aplici? Ce ai construi tu în VV?"
+                            style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; resize:none; height:100px;"></textarea>
+                    </div>
+
+                    <div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:2px; margin-bottom:6px;">CONTACT (Instagram, email sau telefon) *</div>
+                        <input id="career-contact" type="text" placeholder="@username sau email..."
+                            style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px; color:#fff; font-size:13px; font-family:inherit; outline:none; min-height:44px; -webkit-appearance:none;">
+                    </div>
+                </div>
+
+                <!-- Clauza GDPR legală -->
+                <div style="font-size:10px; color:rgba(255,255,255,0.2); line-height:1.6; margin-bottom:14px; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                    Prin trimiterea acestui formular îți exprimi acordul ca datele furnizate (skill, portfolio, motivație, contact) să fie stocate și procesate de VV Technologies în scopul evaluării aplicației tale. Datele nu vor fi partajate cu terți. Le poți solicita ștergerea oricând la vv.ep.team@gmail.com — conform GDPR Art. 17.
+                </div>
+
+                <button onclick="submitCareerApplication(event)"
+                    style="width:100%; padding:16px; background:rgba(255,255,255,0.95); color:#000; border:none; border-radius:14px; font-weight:900; font-size:14px; cursor:pointer; min-height:52px; letter-spacing:0.5px;">
+                    APLICĂ LA VV
+                </button>
+            </div>
+
+            <button onclick="closeModal('modal-support-career')"
+                style="width:100%; padding:16px; background:rgba(255,255,255,0.06); border:none; border-radius:14px; color:rgba(255,255,255,0.4); font-weight:700; font-size:13px; margin-top:10px; cursor:pointer; letter-spacing:1px; min-height:44px;">
+                ÎNCHIDE
+            </button>
         </div>
     </div>
 
