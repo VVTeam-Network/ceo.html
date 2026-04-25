@@ -2712,25 +2712,6 @@ async function submitCareerApplication(e) {
 // si adauga: getRewardConfig, checkBetaUsage, logBetaUsage
 // ================================================================
 
-// ── CONFIG NIVELURI ──────────────────────────────────────────────
-const REWARD_CONFIG = {
-  5:  { expiryMin: 25, radiusM: 100, label: 'STANDARD',  color: 'rgba(255,255,255,0.7)', prioritySec: 0 },
-  15: { expiryMin: 15, radiusM: 150, label: 'RAPID',     color: '#0A84FF',               prioritySec: 0 },
-  25: { expiryMin: 5,  radiusM: 250, label: 'PRIORITY',  color: '#D4AF37',               prioritySec: 10 }
-};
-
-function getRewardConfig(reward) {
-  return REWARD_CONFIG[reward] || REWARD_CONFIG[15];
-}
-
-// ── BETA USAGE — 5 testări gratuite pentru nivelul 25 ────────────
-const BETA_25_KEY = 'vv_beta_25_uses';
-const BETA_25_MAX = 5;
-
-function getBeta25Uses() {
-  return parseInt(localStorage.getItem(BETA_25_KEY) || '0');
-}
-
 function incrementBeta25Uses() {
   const current = getBeta25Uses();
   localStorage.setItem(BETA_25_KEY, String(current + 1));
@@ -3002,8 +2983,6 @@ async function checkExpiredMissionsForFallback() {
   } catch(e) { console.warn('[VV] checkExpiredMissions:', e); }
 }
 
-// Verifică la fiecare 2 minute
-setInterval(checkExpiredMissionsForFallback, 2 * 60 * 1000);
 // ================================================================
 // VV FIX-URI CRITICE — adaugă DOAR ASTEA la finalul vv-beta-app.js original
 // NU înlocui tot fișierul — adaugă după ultima linie existentă
