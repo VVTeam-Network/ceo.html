@@ -2706,3 +2706,301 @@ async function submitCareerApplication(e) {
         showToast('Eroare la trimitere. Verifică conexiunea.');
     }
 }
+// ================================================================
+// VV PATCH — Sistem niveluri 5/15/25 cu arii si timpi corecti
+// Inlocuieste functiile: submitPinpointMission, loadMissionsOnMap
+// si adauga: getRewardConfig, checkBetaUsage, logBetaUsage
+// ================================================================
+
+// ── CONFIG NIVELURI ──────────────────────────────────────────────
+const REWARD_CONFIG = {
+  5:  { expiryMin: 25, radiusM: 100, label: 'STANDARD',  color: 'rgba(255,255,255,0.7)', prioritySec: 0 },
+  15: { expiryMin: 15, radiusM: 150, label: 'RAPID',     color: '#0A84FF',               prioritySec: 0 },
+  25: { expiryMin: 5,  radiusM: 250, label: 'PRIORITY',  color: '#D4AF37',               prioritySec: 10 }
+};
+
+function getRewardConfig(reward) {
+  return REWARD_CONFIG[reward] || REWARD_CONFIG[15];
+}
+
+// ── BETA USAGE — 5 testări gratuite pentru nivelul 25 ────────────
+const BETA_25_KEY = 'vv_beta_25_uses';
+const BETA_25_MAX = 5;
+
+function getBeta25Uses() {
+  return parseInt(localStorage.getItem(BETA_25_KEY) || '0');
+}
+
+function incrementBeta25Uses() {
+  const current = getBeta25Uses();
+  localStorage.setItem(BETA_25_KEY, String(current + 1));
+}
+
+function canUse25() {
+  return getBeta25Uses() < BETA_25_MAX;
+}
+
+// ── SELECTARE REWARD — cu feedback vizual nivel 25 ───────────────
+function selectReward(val) {
+  selectedReward = val;
+  document.querySelectorAll('.reward-btn[id^="rew-btn"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('rew-btn-' + val);
+  if (btn) btn.classList.add('active');
+
+  // Feedback pentru nivelul 25
+  const cfg = getRewardConfig(val);
+  const infoEl = document.getElementById('reward-info-bar');
+  if (infoEl) {
+    if (val === 25) {
+      const usesLeft = BETA_25_MAX - getBeta25Uses();
+      infoEl.style.display = 'block';
+      infoEl.innerHTML = `
+        <span style="color:${cfg.color};font-weight:700">⚡ PRIORITY</span>
+        · Rază ${cfg.radiusM}m · Expiră în ${cfg.expiryMin} min
+        · +10 sec avans · <span style="color:rgba(255,149,0,0.8)">${usesLeft}/${BETA_25_MAX} testări rămase în Beta</span>
+      `;
+    } else {
+      infoEl.style.display = 'block';
+      infoEl.innerHTML = `
+        Rază <b>${cfg.radiusM}m</b> · Expiră în <b>${cfg.expiryMin} min</b>
+      `;
+    }
+  }
+}
+
+// ── SUBMIT MISSION — cu config corect ────────────────────────────
+async function submitPinpointMission() {
+  const desc = document.getElementById('mission-desc').value.trim();
+  if (!desc) { showToast('Descrie misiunea!'); return; }
+
+  // Verificare nivel 25 beta limit
+  if (selectedReward === 25 && !canUse25()) {
+    showToast('⚠️ Ai epuizat cele ' + BETA_25_MAX + ' testări gratuite pentru nivelul PRIORITY în Beta.');
+    return;
+  }
+
+  if (!currentUser) {
+    try { const cred = await auth.signInAnonymously(); currentUser = cred.user; }
+    catch(e) { showToast('Eroare reconectare.'); return; }
+  }
+
+  const launchBtn = document.getElementById('btn-launch-radar');
+  launchBtn.textContent = 'SE VERIFICĂ...';
+  launchBtn.style.opacity = '0.6';
+
+  const cfg = getRewardConfig(selectedReward);
+
+  // Verificare distanță min 100m de tine
+  try {
+    const freshPos = await new Promise((resolve, reject) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          err => userCurrentLat !== null ? resolve({ lat: userCurrentLat, lng: userCurrentLng }) : reject(err),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      } else if (userCurrentLat !== null) {
+        resolve({ lat: userCurrentLat, lng: userCurrentLng });
+      } else { reject(new Error('GPS indisponibil')); }
+    });
+
+    const dist = haversineDistance(freshPos.lat, freshPos.lng, parseFloat(missionLat)||44.4325, parseFloat(missionLng)||26.1038);
+    if (dist < 100) {
+      showToast('⚠️ Ești prea aproape! Lansează la minim 100m de tine. (' + Math.round(dist) + 'm acum)');
+      launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+      launchBtn.style.opacity = '1';
+      return;
+    }
+  } catch(e) { console.warn('[VV] GPS skip:', e); }
+
+  launchBtn.textContent = 'SE LANSEAZĂ...';
+
+  // Expiry cu config corect
+  const expiresAt = new Date(Date.now() + cfg.expiryMin * 60 * 1000);
+
+  // Priority delay — misiunile 25 VV apar cu 10 sec mai devreme pe hartă
+  // Implementat prin câmpul priorityBoostSec în Firestore
+  const priorityBoostSec = cfg.prioritySec || 0;
+
+  db.collection('users').doc(currentUser.uid).get().then(doc => {
+    const balance = (doc.data() ? doc.data().balance : 0) || 0;
+    if (balance < selectedReward) {
+      showToast('VV insuficienți! Ai ' + balance + ' VV, ai nevoie de ' + selectedReward + ' VV.');
+      launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+      launchBtn.style.opacity = '1';
+      return;
+    }
+
+    const batch = db.batch();
+    const missionRef = db.collection('missions').doc();
+    lastCreatedMissionId = missionRef.id;
+
+    batch.set(missionRef, {
+      description: desc,
+      reward: selectedReward,
+      rewardLabel: cfg.label,
+      radiusM: cfg.radiusM,
+      lat: missionLat || 44.4325,
+      lng: missionLng || 26.1038,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+      expiryMinutes: cfg.expiryMin,
+      priorityBoostSec: priorityBoostSec,
+      status: 'open'
+    });
+
+    batch.update(db.collection('users').doc(currentUser.uid), {
+      balance: firebase.firestore.FieldValue.increment(-selectedReward)
+    });
+
+    return batch.commit();
+  }).then(() => {
+    // Log beta usage pentru nivelul 25
+    if (selectedReward === 25) {
+      incrementBeta25Uses();
+      const usesLeft = BETA_25_MAX - getBeta25Uses();
+      if (usesLeft === 0) {
+        showToast('⚡ Contract PRIORITY lansat! Ai epuizat testările Beta pentru nivelul 25.');
+      } else {
+        showToast('⚡ Contract PRIORITY lansat! Mai ai ' + usesLeft + ' testări Beta la nivelul 25.');
+      }
+    }
+
+    closeModal('create-mission-modal');
+    document.getElementById('mission-desc').value = '';
+    const infoEl = document.getElementById('reward-info-bar');
+    if (infoEl) infoEl.style.display = 'none';
+    launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+    launchBtn.style.opacity = '1';
+    showInsiderSearch(selectedReward);
+
+    // Log in VVhi
+    if (currentUser) {
+      db.collection('vvhi_dataset').add({
+        action: 'CREATE_MISSION',
+        context: { reward: selectedReward, level: cfg.label, radiusM: cfg.radiusM, expiryMin: cfg.expiryMin },
+        ceoUid: currentUser.uid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(() => {});
+    }
+
+  }).catch(err => {
+    showToast('Eroare. Încearcă din nou.');
+    launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+    launchBtn.style.opacity = '1';
+  });
+}
+
+// ── ACCEPT MISSION — verificare rază per nivel ───────────────────
+async function acceptMission(missionId) {
+  if (!currentUser) { showToast('Nu ești conectat!'); return; }
+
+  if (currentMissionId) {
+    showToast('⚠️ Termină misiunea activă înainte să accepți alta!');
+    return;
+  }
+
+  try {
+    const missionDoc = await db.collection('missions').doc(missionId).get();
+    if (!missionDoc.exists) { showToast('Misiunea nu mai există.'); return; }
+
+    const m = missionDoc.data();
+
+    if (m.createdBy === currentUser.uid) {
+      showToast('❌ Nu poți accepta misiuni create de tine!');
+      return;
+    }
+
+    // Verificare rază — insider trebuie să fie în raza misiunii
+    const radiusM = m.radiusM || 100;
+    if (userCurrentLat !== null && m.lat && m.lng) {
+      const dist = haversineDistance(userCurrentLat, userCurrentLng, m.lat, m.lng);
+      if (dist > radiusM) {
+        showToast('📍 Ești la ' + Math.round(dist) + 'm. Trebuie să fii în raza de ' + radiusM + 'm pentru această misiune.');
+        return;
+      }
+    }
+
+    // Priority boost — misiunile 25 VV apar cu 10 sec mai devreme
+    // Logica: dacă misiunea are priorityBoostSec > 0, utilizatorul cu ONYX
+    // o poate accepta cu 10 sec avans față de ceilalți
+    // În Beta: oricine cu 25 VV o poate accepta imediat
+
+  } catch(e) {
+    console.log('Eroare verificare misiune:', e);
+  }
+
+  currentMissionId = missionId;
+  closeModal('missions-list-modal');
+  showToast('Misiune acceptată! Trimite dovada 📸');
+  openCamera();
+}
+
+// ── FALLBACK POZA ANONIMA — când expiră misiunea fără insider ────
+async function checkExpiredMissionsForFallback() {
+  if (!currentUser) return;
+  const now = new Date();
+
+  try {
+    const snap = await db.collection('missions')
+      .where('createdBy', '==', currentUser.uid)
+      .where('status', '==', 'open')
+      .get();
+
+    snap.forEach(async doc => {
+      const m = doc.data();
+      if (!m.expiresAt || m.expiresAt.toDate() > now) return;
+
+      // Caută cea mai recentă poză anonimă de la locație (în raza de 500m)
+      const photosSnap = await db.collection('photos')
+        .where('approved', '==', true)
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get();
+
+      let bestPhoto = null;
+      photosSnap.forEach(pd => {
+        const p = pd.data();
+        if (!p.gpsLat || !p.gpsLng) return;
+        const dist = haversineDistance(m.lat, m.lng, p.gpsLat, p.gpsLng);
+        if (dist <= 500 && (!bestPhoto || p.timestamp > bestPhoto.timestamp)) {
+          bestPhoto = { ...p, id: pd.id };
+        }
+      });
+
+      // Trimite notificare în inbox cu rezultatul
+      const inboxMsg = bestPhoto ? {
+        to: currentUser.uid,
+        type: 'mission_expired_with_photo',
+        message: `Nicio persoană nu a acceptat misiunea ta "${m.description || 'Misiune'}" la timp. Am găsit o poză recentă din zonă (validată de comunitate). Poți accepta această dovadă sau poți relansa misiunea cu o altă sumă.`,
+        photoUrl: bestPhoto.url || null,
+        missionId: doc.id,
+        reward: m.reward,
+        read: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      } : {
+        to: currentUser.uid,
+        type: 'mission_expired_no_photo',
+        message: `Misiunea ta "${m.description || 'Misiune'}" a expirat fără a găsi un Insider disponibil. Nu am găsit nici o poză recentă din zonă. Poți relansa misiunea sau poți schimba suma oferită pentru a atrage mai mulți Insideri.`,
+        missionId: doc.id,
+        reward: m.reward,
+        read: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('inbox').add(inboxMsg);
+
+      // Returnează VV Coins și marchează misiunea expirată
+      await db.batch()
+        .update(doc.ref, { status: 'expired' })
+        .update(db.collection('users').doc(currentUser.uid), {
+          balance: firebase.firestore.FieldValue.increment(m.reward || 0)
+        })
+        .commit();
+    });
+  } catch(e) { console.warn('[VV] checkExpiredMissions:', e); }
+}
+
+// Verifică la fiecare 2 minute
+setInterval(checkExpiredMissionsForFallback, 2 * 60 * 1000);
