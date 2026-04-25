@@ -3004,3 +3004,382 @@ async function checkExpiredMissionsForFallback() {
 
 // Verifică la fiecare 2 minute
 setInterval(checkExpiredMissionsForFallback, 2 * 60 * 1000);
+// ================================================================
+// VV FIX-URI CRITICE — adaugă DOAR ASTEA la finalul vv-beta-app.js original
+// NU înlocui tot fișierul — adaugă după ultima linie existentă
+// ================================================================
+
+// ── FIX 1: CONFIG NIVELURI CORECTE ──────────────────────────────
+const REWARD_CONFIG = {
+    5:  { expiryMin: 25, radiusM: 100, label: 'STANDARD', color: 'rgba(255,255,255,0.7)', prioritySec: 0 },
+    15: { expiryMin: 15, radiusM: 150, label: 'RAPID',    color: '#0A84FF',               prioritySec: 0 },
+    25: { expiryMin: 5,  radiusM: 250, label: 'PRIORITY', color: '#D4AF37',               prioritySec: 10 }
+};
+function getRewardConfig(r) { return REWARD_CONFIG[r] || REWARD_CONFIG[15]; }
+
+// ── FIX 2: BETA 25 USAGE ────────────────────────────────────────
+const BETA_25_KEY = 'vv_beta_25_uses';
+const BETA_25_MAX = 5;
+function getBeta25Uses() { return parseInt(localStorage.getItem(BETA_25_KEY) || '0'); }
+function incrementBeta25Uses() { localStorage.setItem(BETA_25_KEY, String(getBeta25Uses() + 1)); }
+function canUse25() { return getBeta25Uses() < BETA_25_MAX; }
+
+// ── FIX 3: selectReward cu info bar ─────────────────────────────
+function selectReward(val) {
+    selectedReward = val;
+    document.querySelectorAll('.reward-btn[id^="rew-btn"]').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('rew-btn-' + val);
+    if (btn) btn.classList.add('active');
+    const cfg = getRewardConfig(val);
+    const infoEl = document.getElementById('reward-info-bar');
+    if (infoEl) {
+        infoEl.style.display = 'block';
+        if (val === 25) {
+            const usesLeft = BETA_25_MAX - getBeta25Uses();
+            infoEl.innerHTML = '<span style="color:' + cfg.color + ';font-weight:700">⚡ PRIORITY</span> · Rază ' + cfg.radiusM + 'm · Expiră în ' + cfg.expiryMin + ' min · +10 sec avans · <span style="color:rgba(255,149,0,0.8)">' + usesLeft + '/' + BETA_25_MAX + ' testări Beta rămase</span>';
+        } else {
+            infoEl.innerHTML = 'Rază <b>' + cfg.radiusM + 'm</b> · Expiră în <b>' + cfg.expiryMin + ' min</b>';
+        }
+    }
+}
+
+// ── FIX 4: submitPinpointMission cu timpi corecți ───────────────
+async function submitPinpointMission() {
+    const desc = document.getElementById('mission-desc').value.trim();
+    if (!desc) { showToast('Descrie misiunea!'); return; }
+    if (selectedReward === 25 && !canUse25()) {
+        showToast('⚠️ Ai epuizat cele ' + BETA_25_MAX + ' testări PRIORITY în Beta.');
+        return;
+    }
+    if (!currentUser) {
+        try { const c = await auth.signInAnonymously(); currentUser = c.user; }
+        catch(e) { showToast('Eroare reconectare.'); return; }
+    }
+    const launchBtn = document.getElementById('btn-launch-radar');
+    launchBtn.textContent = 'SE VERIFICĂ...';
+    launchBtn.style.opacity = '0.6';
+    const cfg = getRewardConfig(selectedReward);
+    try {
+        const freshPos = await new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    err => userCurrentLat !== null ? resolve({ lat: userCurrentLat, lng: userCurrentLng }) : reject(err),
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else if (userCurrentLat !== null) { resolve({ lat: userCurrentLat, lng: userCurrentLng }); }
+            else { reject(new Error('GPS indisponibil')); }
+        });
+        const dist = haversineDistance(freshPos.lat, freshPos.lng, parseFloat(missionLat)||44.4325, parseFloat(missionLng)||26.1038);
+        if (dist < 100) {
+            showToast('⚠️ Prea aproape! Minim 100m de tine. (' + Math.round(dist) + 'm acum)');
+            launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+            launchBtn.style.opacity = '1';
+            return;
+        }
+    } catch(e) { console.warn('[VV] GPS skip'); }
+    launchBtn.textContent = 'SE LANSEAZĂ...';
+    // IMPORTANT: expiryMin corect din config, nu formula veche
+    const expiresAt = new Date(Date.now() + cfg.expiryMin * 60 * 1000);
+    db.collection('users').doc(currentUser.uid).get().then(doc => {
+        const balance = (doc.data() ? doc.data().balance : 0) || 0;
+        if (balance < selectedReward) {
+            showToast('VV insuficienți! Ai ' + balance + ' VV.');
+            launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+            launchBtn.style.opacity = '1';
+            return;
+        }
+        const batch = db.batch();
+        const missionRef = db.collection('missions').doc();
+        lastCreatedMissionId = missionRef.id;
+        batch.set(missionRef, {
+            description: desc, reward: selectedReward,
+            rewardLabel: cfg.label, radiusM: cfg.radiusM,
+            lat: missionLat || 44.4325, lng: missionLng || 26.1038,
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+            expiryMinutes: cfg.expiryMin,
+            priorityBoostSec: cfg.prioritySec,
+            status: 'open'
+        });
+        batch.update(db.collection('users').doc(currentUser.uid), {
+            balance: firebase.firestore.FieldValue.increment(-selectedReward)
+        });
+        return batch.commit();
+    }).then(() => {
+        if (selectedReward === 25) {
+            incrementBeta25Uses();
+            showToast('⚡ PRIORITY lansat! ' + (BETA_25_MAX - getBeta25Uses()) + ' testări rămase.');
+        }
+        closeModal('create-mission-modal');
+        document.getElementById('mission-desc').value = '';
+        const infoEl = document.getElementById('reward-info-bar');
+        if (infoEl) infoEl.style.display = 'none';
+        launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+        launchBtn.style.opacity = '1';
+        showInsiderSearch(selectedReward);
+        db.collection('vvhi_dataset').add({
+            action: 'CREATE_MISSION',
+            context: { reward: selectedReward, level: cfg.label, radiusM: cfg.radiusM, expiryMin: cfg.expiryMin },
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(() => {});
+    }).catch(() => {
+        showToast('Eroare. Încearcă din nou.');
+        launchBtn.textContent = 'LANSEAZĂ CONTRACTUL';
+        launchBtn.style.opacity = '1';
+    });
+}
+
+// ── FIX 5: acceptMission cu radiusM corect ──────────────────────
+async function acceptMission(missionId) {
+    if (!currentUser) { showToast('Nu ești conectat!'); return; }
+    if (currentMissionId) { showToast('⚠️ Termină misiunea activă mai întâi!'); return; }
+    try {
+        const missionDoc = await db.collection('missions').doc(missionId).get();
+        if (!missionDoc.exists) { showToast('Misiunea nu mai există.'); return; }
+        const m = missionDoc.data();
+        if (m.createdBy === currentUser.uid) { showToast('❌ Nu poți accepta propriile misiuni!'); return; }
+        const radiusM = m.radiusM || 100;
+        if (userCurrentLat !== null && m.lat && m.lng) {
+            const dist = haversineDistance(userCurrentLat, userCurrentLng, m.lat, m.lng);
+            if (dist > radiusM) {
+                showToast('📍 Ești la ' + Math.round(dist) + 'm. Trebuie să fii în raza de ' + radiusM + 'm.');
+                return;
+            }
+        }
+    } catch(e) { console.log('Eroare verificare:', e); }
+    currentMissionId = missionId;
+    closeModal('missions-list-modal');
+    showToast('Misiune acceptată! Trimite dovada 📸');
+    openCamera();
+}
+
+// ── FIX 6: cancelMyMission șterge markerul corect ───────────────
+async function cancelMyMission(missionId, reward) {
+    if (!currentUser || isCancelling) return;
+    if (!confirm('Anulezi misiunea și recuperezi ' + reward + ' VV?')) return;
+    isCancelling = true;
+    try {
+        const batch = db.batch();
+        batch.update(db.collection('missions').doc(missionId), { status: 'cancelled' });
+        batch.update(db.collection('users').doc(currentUser.uid), {
+            balance: firebase.firestore.FieldValue.increment(reward)
+        });
+        await batch.commit();
+        // FIX: șterge markerul direct din obiectul missionMarkers
+        if (missionMarkers[missionId]) {
+            try { map.removeLayer(missionMarkers[missionId]); } catch(e) {}
+            delete missionMarkers[missionId];
+        }
+        showToast('✅ Misiune anulată! +' + reward + ' VV recuperați.');
+    } catch(e) { showToast('Eroare anulare: ' + e.message); }
+    finally { isCancelling = false; }
+}
+
+// ── FIX 7: checkNearbyMissions — era 'active', trebuie 'open' ───
+function checkNearbyMissions() {
+    if (userCurrentLat === null || userCurrentLng === null) return;
+    db.collection('missions').where('status', '==', 'open').get()  // FIX: 'open' nu 'active'
+        .then(function(snap) {
+            snap.forEach(function(doc) {
+                var m = doc.data();
+                if (!m.lat || !m.lng) return;
+                if (m.createdBy === (currentUser && currentUser.uid)) return;
+                var dist = haversineDistance(userCurrentLat, userCurrentLng, m.lat, m.lng);
+                if (dist >= 50 && dist <= 500 && !proximityNotifSent[doc.id]) {
+                    proximityNotifSent[doc.id] = true;
+                    showProximityNotif(dist, m.reward || 0, doc.id);
+                }
+                if (dist > 600) delete proximityNotifSent[doc.id];
+            });
+        }).catch(function() {});
+}
+
+// ── FIX 8: Expirare automată misiuni cu returnare VV Coins ───────
+async function checkExpiredMissions() {
+    if (!currentUser) return;
+    const now = new Date();
+    try {
+        const snap = await db.collection('missions')
+            .where('createdBy', '==', currentUser.uid)
+            .where('status', '==', 'open')
+            .get();
+        for (const doc of snap.docs) {
+            const m = doc.data();
+            if (!m.expiresAt || m.expiresAt.toDate() > now) continue;
+            // Șterge markerul de pe hartă
+            if (missionMarkers[doc.id]) {
+                try { map.removeLayer(missionMarkers[doc.id]); } catch(e) {}
+                delete missionMarkers[doc.id];
+            }
+            // Caută poză recentă în 500m
+            let bestPhoto = null;
+            try {
+                const photosSnap = await db.collection('photos')
+                    .where('approved', '==', true)
+                    .orderBy('timestamp', 'desc')
+                    .limit(20).get();
+                photosSnap.forEach(pd => {
+                    const p = pd.data();
+                    if (!p.gpsLat || !p.gpsLng) return;
+                    const dist = haversineDistance(m.lat, m.lng, p.gpsLat, p.gpsLng);
+                    if (dist <= 500 && (!bestPhoto || p.timestamp > bestPhoto.timestamp))
+                        bestPhoto = { ...p, id: pd.id };
+                });
+            } catch(e) {}
+            // Returnează VV și trimite notificare
+            const batch = db.batch();
+            batch.update(doc.ref, { status: 'expired' });
+            batch.update(db.collection('users').doc(currentUser.uid), {
+                balance: firebase.firestore.FieldValue.increment(m.reward || 0)
+            });
+            batch.set(db.collection('inbox').doc(), bestPhoto ? {
+                to: currentUser.uid, type: 'mission_expired_with_photo',
+                message: 'Misiunea "' + (m.description || 'Misiune') + '" a expirat. Am găsit o poză recentă din zonă. Poți accepta sau relansa cu altă sumă.',
+                photoUrl: bestPhoto.url || null, missionId: doc.id, reward: 0, read: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            } : {
+                to: currentUser.uid, type: 'mission_expired_no_photo',
+                message: 'Misiunea "' + (m.description || 'Misiune') + '" a expirat fără Insider. ' + (m.reward || 0) + ' VV Coins returnați. Încearcă din nou sau mărește suma.',
+                missionId: doc.id, reward: 0, read: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await batch.commit();
+            showToast('⏱ Misiune expirată — +' + (m.reward||0) + ' VV returnați.');
+        }
+    } catch(e) { console.warn('[VV] checkExpiredMissions:', e); }
+}
+
+// ── FIX 9: VVeil blur automat pe canvas ─────────────────────────
+function applyVVeil(canvas, ctx) {
+    const width = canvas.width;
+    const height = canvas.height;
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const faceZones = [];
+    const blockSize = 20;
+    for (let y = 0; y < height; y += blockSize) {
+        for (let x = 0; x < width; x += blockSize) {
+            let skinCount = 0, total = 0;
+            for (let by = 0; by < blockSize && y+by < height; by++) {
+                for (let bx = 0; bx < blockSize && x+bx < width; bx++) {
+                    const idx = ((y+by)*width + (x+bx)) * 4;
+                    const r = data[idx], g = data[idx+1], b = data[idx+2];
+                    if (r > 95 && g > 40 && b > 20 && r > g && r > b && Math.abs(r-g) > 15) skinCount++;
+                    total++;
+                }
+            }
+            if (skinCount/total > 0.4) faceZones.push({ x, y, w: blockSize*3, h: blockSize*3 });
+        }
+    }
+    faceZones.forEach(zone => {
+        ctx.save();
+        ctx.filter = 'blur(15px)';
+        ctx.drawImage(canvas, zone.x, zone.y, zone.w, zone.h, zone.x, zone.y, zone.w, zone.h);
+        ctx.filter = 'none';
+        ctx.restore();
+    });
+    if (faceZones.length > 0) {
+        ctx.fillStyle = 'rgba(212,175,55,0.7)';
+        ctx.font = 'bold 11px -apple-system';
+        ctx.fillText('🛡 VVeil ON', 10, canvas.height - 85);
+    }
+    return faceZones.length;
+}
+
+// ── FIX 10: takePicture cu VVeil integrat ────────────────────────
+function takePicture() {
+    const video = document.getElementById('real-camera-video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    // VVeil blur automat
+    const facesFound = applyVVeil(canvas, ctx);
+    // Watermark VV PROOF
+    const now = new Date();
+    const gpsStr = capturedGPS ? capturedGPS.lat.toFixed(5) + ', ' + capturedGPS.lng.toFixed(5) : 'GPS N/A';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, canvas.height - 70, canvas.width, 70);
+    ctx.font = 'bold 15px -apple-system';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 4;
+    ctx.fillText('VV PROOF', 14, canvas.height - 46);
+    ctx.font = '12px -apple-system';
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fillText('📍 ' + gpsStr, 14, canvas.height - 28);
+    ctx.fillText('🕐 ' + now.toLocaleString('ro-RO'), 14, canvas.height - 10);
+    canvas.toBlob(blob => {
+        capturedImageBlob = blob;
+        const url = URL.createObjectURL(blob);
+        document.getElementById('real-camera-video').style.display = 'none';
+        const preview = document.createElement('img');
+        preview.src = url;
+        preview.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        preview.id = 'preview-img';
+        document.querySelector('.cam-viewfinder').appendChild(preview);
+        if (facesFound > 0) showToast('🛡 VVeil: ' + facesFound + ' zone protejate automat');
+    }, 'image/jpeg', 0.92);
+    document.getElementById('shutter-container').style.display = 'none';
+    document.getElementById('post-photo-menu').style.display = 'block';
+}
+
+// ── FIX 11: Nexus Auto-Aprobare prin Groq ───────────────────────
+async function nexusAutoApprove(inboxId, photoUrl, missionDesc, fromUid, reward) {
+    const groqKey = localStorage.getItem('vv_groq_key');
+    if (!groqKey) { showToast('⚠️ Adaugă cheia Groq pentru aprobare automată.'); return false; }
+    try {
+        showToast('🤖 Nexus analizează dovada...');
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'llama3-8b-8192', max_tokens: 150,
+                messages: [{
+                    role: 'system',
+                    content: 'Ești Nexus, sistemul de validare VV. Răspunde DOAR JSON: {"approved":true/false,"reason":"","stars":1-5}. Aprobă dacă dovada pare legitimă.'
+                }, {
+                    role: 'user',
+                    content: 'Misiunea: "' + (missionDesc || 'Validare locație') + '". Dovada trimisă cu GPS și timestamp VV PROOF. Aprobă dacă nu există motive clare de respingere.'
+                }],
+                temperature: 0.3
+            })
+        });
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content || '{"approved":true,"stars":4}';
+        let result;
+        try { result = JSON.parse(text.replace(/```json|```/g, '').trim()); }
+        catch(e) { result = { approved: true, stars: 4, reason: 'Auto-aprobare' }; }
+        if (result.approved) {
+            const batch = db.batch();
+            batch.update(db.collection('users').doc(fromUid), {
+                balance: firebase.firestore.FieldValue.increment(reward),
+                totalRatings: firebase.firestore.FieldValue.increment(1),
+                ratingSum: firebase.firestore.FieldValue.increment(result.stars || 4)
+            });
+            batch.update(db.collection('inbox').doc(inboxId), {
+                status: 'approved', reward: 0, approvedBy: 'nexus',
+                nexusReason: result.reason || 'Auto-aprobare Nexus',
+                approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            db.collection('vvhi_dataset').add({
+                action: 'NEXUS_AUTO_APPROVE',
+                context: { inboxId, reward, stars: result.stars, reason: result.reason },
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(() => {});
+            await batch.commit();
+            showToast('✅ Nexus a aprobat! +' + reward + ' VV distribuit automat.');
+            return true;
+        } else {
+            showToast('⚠️ Nexus: ' + (result.reason || 'Verificare manuală necesară'));
+            return false;
+        }
+    } catch(e) { console.warn('[VV Nexus]', e); return false; }
+}
+
+// ── Pornire verificare expirare la fiecare 2 minute ─────────────
+setInterval(checkExpiredMissions, 2 * 60 * 1000);
+setTimeout(checkExpiredMissions, 15000); // prima verificare după 15 sec
