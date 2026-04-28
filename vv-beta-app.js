@@ -266,6 +266,8 @@ function loadUserData() {
             if (leiEl) leiEl.textContent = lei;
             if (nameEl2) nameEl2.textContent = data.alias || alias;
             updateOnyxProgress(balance);
+            // Incarca founder data daca exista
+            if (data.isFounder && !_founderData) loadFounderData(data);
         }, function(err) {
             if (err.code === 'permission-denied') setTimeout(loadUserData, 3000);
         });
@@ -278,7 +280,7 @@ function loadUserData() {
 
 // ================= LEADERBOARD =================
 function loadLeaderboard() {
-    db.collection('users').orderBy('ratingSum', 'desc').limit(5).onSnapshot(function(snap) {
+    db.collection('users').limit(20).onSnapshot(function(snap) {
         const container = document.getElementById('leaderboard-container');
         if (!container) return;
         var users = [];
@@ -780,6 +782,7 @@ function sendSupport() {
 }
 
 // ================= CAMERA =================
+// openCamera e apelata direct — VVeil e in Setari
 function openCamera() {
     const cam = document.getElementById('camera-screen');
     cam.style.display = 'flex';
@@ -932,7 +935,16 @@ async function uploadPhotoToCEO() {
 }
 
 // ================= SETTINGS =================
-function openSettings() { openModal('settings-modal'); }
+function openSettings() {
+    openModal('settings-modal');
+    // Actualizeaza label VVeil
+    var label = document.getElementById('vveil-status-label');
+    if (label) {
+        var v = localStorage.getItem('vv_vveil_consent') || 'auto';
+        var names = { auto: 'Blur automat · Activ', watermark: 'Vizibil cu watermark VV', none: 'Fără protecție' };
+        label.textContent = names[v] || 'Blur automat · Activ';
+    }
+}
 
 function logoutAgent() {
     localStorage.removeItem('vv_premium_tutorial_done');
@@ -961,46 +973,162 @@ function switchTab(tab) {
 function openModal(id) { const modal = document.getElementById(id); if (modal) modal.style.display = 'flex'; }
 function closeModal(id) { const modal = document.getElementById(id); if (modal) modal.style.display = 'none'; }
 
-// ================= CAREER =================
-function switchCareerTab(tab) {
-    var tabSuport = document.getElementById('tab-suport'), tabCariera = document.getElementById('tab-cariera');
-    var btnSuport = document.getElementById('tab-suport-btn'), btnCariera = document.getElementById('tab-cariera-btn');
-    if (tab === 'suport') {
-        if (tabSuport) tabSuport.style.display = 'block'; if (tabCariera) tabCariera.style.display = 'none';
-        if (btnSuport) { btnSuport.style.background = '#fff'; btnSuport.style.color = '#000'; }
-        if (btnCariera) { btnCariera.style.background = 'transparent'; btnCariera.style.color = 'rgba(255,255,255,0.4)'; }
-    } else {
-        if (tabSuport) tabSuport.style.display = 'none'; if (tabCariera) tabCariera.style.display = 'block';
-        if (btnCariera) { btnCariera.style.background = '#fff'; btnCariera.style.color = '#000'; }
-        if (btnSuport) { btnSuport.style.background = 'transparent'; btnSuport.style.color = 'rgba(255,255,255,0.4)'; }
-    }
+// ================= VVEIL SETARI =================
+function openVVeilSettings() {
+    var old = document.getElementById('vveil-settings-modal');
+    if (old) old.remove();
+    var current = localStorage.getItem('vv_vveil_consent') || 'auto';
+    var modal = document.createElement('div');
+    modal.id = 'vveil-settings-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:flex-end;justify-content:center;';
+    var options = [
+        { id: 'auto',      icon: '🛡', title: 'Blur automat', desc: 'Fețele detectate sunt estompate. Maxim anonim.' },
+        { id: 'watermark', icon: '⬡', title: 'Vizibil cu watermark VV', desc: 'Fața ta apare cu marca VV·PROOF.' },
+        { id: 'none',      icon: '✕', title: 'Fără protecție', desc: 'Ești responsabil pentru ce apare în imagini.' }
+    ];
+    var optionsHtml = options.map(function(o) {
+        var isActive = current === o.id;
+        return '<div onclick="setVVeilFromSettings(\'' + o.id + '\')" style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:' + (isActive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)') + ';border:1px solid ' + (isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)') + ';border-radius:14px;margin-bottom:8px;cursor:pointer;"><div style="width:36px;height:36px;background:rgba(255,255,255,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">' + o.icon + '</div><div style="flex:1;"><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;">' + o.title + (isActive ? ' ✓' : '') + '</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">' + o.desc + '</div></div></div>';
+    }).join('');
+    modal.innerHTML = '<div style="width:100%;max-width:430px;background:rgba(14,14,18,0.98);border:1px solid rgba(255,255,255,0.09);border-radius:26px 26px 0 0;padding:28px 22px calc(28px + env(safe-area-inset-bottom,0px));"><div style="width:32px;height:3px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 22px;"></div><div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:3px;font-weight:700;margin-bottom:8px;">VVeil · PROTECȚIE IDENTITATE</div><div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:8px;">Cum apari în VV?</div><div style="font-size:12px;color:rgba(255,255,255,0.35);line-height:1.6;margin-bottom:18px;">Alege cum camera VV gestionează fețele din imagini.</div>' + optionsHtml + '<div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:14px;line-height:1.6;text-align:center;">Conform GDPR · UE 679/2016 · Poți schimba oricând</div><button onclick="document.getElementById(\'vveil-settings-modal\').remove();" style="width:100%;padding:14px;background:rgba(255,255,255,0.06);border:none;border-radius:14px;color:rgba(255,255,255,0.4);font-weight:700;font-size:13px;margin-top:14px;cursor:pointer;font-family:inherit;">ÎNCHIDE</button></div>';
+    document.body.appendChild(modal);
 }
 
-async function submitCareerApplication(e) {
-    var btn = e && e.target ? e.target : document.querySelector('[onclick*="submitCareerApplication"]');
-    var alias = ((document.getElementById('career-alias')||{value:''}).value||'').trim() || localStorage.getItem('vv_alias') || 'INSIDER';
-    var skill = ((document.getElementById('career-spec')||{value:''}).value||'').trim();
-    var portfolio = ((document.getElementById('career-portfolio')||{value:''}).value||'').trim();
-    var vision = ((document.getElementById('career-vision')||{value:''}).value||'').trim();
-    var gdprEl = document.getElementById('career-gdpr');
-    var errEl = document.getElementById('career-error-msg');
-    function showErr(msg) { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } else showToast(msg); }
-    if (errEl) errEl.style.display = 'none';
-    if (!skill) { showErr('Completează specializarea ta.'); return; }
-    if (!vision) { showErr('Spune-ne cum poți ajuta.'); return; }
-    if (gdprEl && !gdprEl.checked) { showErr('Bifează acordul GDPR.'); return; }
-    if (btn) { btn.textContent = 'SE TRIMITE...'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
-    try {
-        await db.collection('talent_pool').add({ alias, uid: (currentUser ? currentUser.uid : null) || 'anonim', skill, portfolio: portfolio||'N/A', motivation: vision, source: 'vvbeta_app', status: 'new', gdprConsent: gdprEl ? gdprEl.checked : false, gdprExpiry: new Date(Date.now() + 180*24*60*60*1000).toISOString(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        ['career-alias','career-spec','career-portfolio','career-vision'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
-        if (gdprEl) gdprEl.checked = false;
-        if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
-        showToast('🔥 Aplicație trimisă!');
-        setTimeout(function() { closeModal('modal-support-career'); }, 2000);
-    } catch(err) {
-        if (btn) { btn.textContent = 'APLICĂ LA VV'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
-        showToast('Eroare la trimitere.');
+function setVVeilFromSettings(choice) {
+    localStorage.setItem('vv_vveil_consent', choice);
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        db.collection('users').doc(currentUser.uid).update({ vveilConsent: choice, vveilConsentAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(function(){});
     }
+    var modal = document.getElementById('vveil-settings-modal');
+    if (modal) modal.remove();
+    showToast('VVeil actualizat ✓');
+    // Redeschide setarile actualizate
+    setTimeout(openVVeilSettings, 100);
+}
+
+// ================= FOUNDER DATA =================
+var _founderData = null;
+
+function loadFounderData(userData) {
+    if (!userData || !userData.isFounder) return;
+    _founderData = {
+        isFounder: true,
+        founderNum: userData.founderNum || null,
+        vvCoreId:   userData.vvCoreId   || null,
+        vvId:       userData.vvId       || null,
+        alias:      userData.alias      || localStorage.getItem('vv_alias') || 'INSIDER'
+    };
+    injectFounderSection();
+}
+
+function injectFounderSection() {
+    if (!_founderData) return;
+    if (document.getElementById('vv-founder-section')) return;
+
+    // Badge lângă nume
+    var nameEl = document.getElementById('profile-main-name');
+    if (nameEl && !nameEl.querySelector('.founder-dot')) {
+        var dot = document.createElement('span');
+        dot.className = 'founder-dot';
+        dot.style.cssText = 'display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;border:1px solid rgba(255,255,255,0.4);box-shadow:0 0 0 2px rgba(255,255,255,0.08);margin-left:7px;vertical-align:middle;flex-shrink:0;';
+        dot.title = 'Fondator #' + (_founderData.founderNum || '—');
+        nameEl.appendChild(dot);
+    }
+
+    // Founder card
+    var section = document.createElement('div');
+    section.id = 'vv-founder-section';
+    section.style.cssText = 'background:rgba(255,255,255,0.04);backdrop-filter:blur(30px) saturate(1.2);-webkit-backdrop-filter:blur(30px) saturate(1.2);border:1px solid rgba(255,255,255,0.09);border-radius:22px;padding:24px 22px;margin-bottom:16px;position:relative;overflow:hidden;';
+    section.innerHTML = [
+        '<div style="position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);"></div>',
+        // Header
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">',
+            '<div>',
+                '<div style="font-size:9px;color:rgba(255,255,255,0.22);letter-spacing:2.5px;font-weight:700;margin-bottom:4px;">PIONEER · INNER CIRCLE</div>',
+                '<div style="font-size:16px;font-weight:800;color:rgba(255,255,255,0.85);">' + _founderData.alias + '</div>',
+            '</div>',
+            '<div style="text-align:right;">',
+                '<div style="font-size:9px;color:rgba(255,255,255,0.22);letter-spacing:2px;font-weight:700;margin-bottom:2px;">FONDATOR</div>',
+                '<div style="font-size:22px;font-weight:900;color:rgba(255,255,255,0.7);">#' + (_founderData.founderNum||'—') + '</div>',
+            '</div>',
+        '</div>',
+        '<div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:16px;"></div>',
+        // VV CORE ID
+        '<div style="font-size:9px;color:rgba(255,255,255,0.22);letter-spacing:2.5px;font-weight:700;margin-bottom:4px;">VV·CORE·ID</div>',
+        '<div style="font-family:Courier New,monospace;font-size:15px;font-weight:700;color:rgba(255,255,255,0.75);letter-spacing:1px;margin-bottom:14px;">' + (_founderData.vvCoreId||'VV·CORE·----') + '</div>',
+        // VV ID
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">',
+            '<div>',
+                '<div style="font-size:9px;color:rgba(255,255,255,0.22);letter-spacing:2.5px;font-weight:700;margin-bottom:4px;">VV·ID</div>',
+                '<div style="font-family:Courier New,monospace;font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:1px;">' + (_founderData.vvId||'VV·ID·------') + '</div>',
+            '</div>',
+            // Buton salvare card ↓
+            '<div onclick="openFounderCardSave()" style="width:36px;height:36px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.45);font-size:14px;-webkit-tap-highlight-color:transparent;">↓</div>',
+        '</div>',
+        '<div style="font-size:10px;color:rgba(255,255,255,0.18);line-height:1.5;">Identitatea se formează din activitate în ecosistemul VV.</div>',
+    ].join('');
+
+    var ref = document.getElementById('onyx-progress-card');
+    var profile = document.getElementById('profile-screen');
+    if (ref && profile) profile.insertBefore(section, ref);
+}
+
+// Salvare card fondator
+function openFounderCardSave() {
+    if (!_founderData) return;
+    var overlay = document.getElementById('vv-founder-save-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'vv-founder-save-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:999999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:16px;';
+        overlay.innerHTML = '<div id="founder-spinner" style="width:36px;height:36px;border:1.5px solid rgba(255,255,255,0.1);border-top-color:rgba(255,255,255,0.6);border-radius:50%;animation:spin .7s linear infinite;"></div><img id="founder-save-img" src="" style="display:none;width:100%;max-width:320px;border-radius:20px;-webkit-user-select:none;user-select:none;"><div id="founder-save-msg" style="font-size:13px;color:rgba(255,255,255,0.4);text-align:center;line-height:1.7;max-width:260px;">Se generează cardul...</div><button onclick="this.parentElement.style.display=\'none\';" style="padding:11px 32px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;font-family:inherit;display:none;min-height:44px;">✕ Închide</button>';
+        document.body.appendChild(overlay);
+    }
+    var img = overlay.querySelector('#founder-save-img');
+    var spinner = overlay.querySelector('#founder-spinner');
+    var msg = overlay.querySelector('#founder-save-msg');
+    var closeBtn = overlay.querySelector('button');
+    img.style.display='none'; img.src=''; spinner.style.display='block';
+    msg.textContent='Se generează cardul...'; closeBtn.style.display='none';
+    overlay.style.display='flex';
+    setTimeout(function() { generateFounderCardCanvas(img, spinner, msg, closeBtn); }, 100);
+}
+
+function generateFounderCardCanvas(imgEl, spinnerEl, msgEl, closeBtn) {
+    var W=1080,H=1920; var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    var cx=cv.getContext('2d');
+    var bg=cx.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#03030a'); bg.addColorStop(.5,'#07070f'); bg.addColorStop(1,'#03030a');
+    cx.fillStyle=bg; cx.fillRect(0,0,W,H);
+    var CX=80,CY=500,CW=W-160,CH=920,CR=48;
+    function rr(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.lineTo(x+w-r,y);cx.quadraticCurveTo(x+w,y,x+w,y+r);cx.lineTo(x+w,y+h-r);cx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);cx.lineTo(x+r,y+h);cx.quadraticCurveTo(x,y+h,x,y+h-r);cx.lineTo(x,y+r);cx.quadraticCurveTo(x,y,x+r,y);cx.closePath();}
+    var cbg=cx.createLinearGradient(CX,CY,CX+CW,CY+CH); cbg.addColorStop(0,'rgba(255,255,255,0.07)'); cbg.addColorStop(1,'rgba(255,255,255,0.03)');
+    rr(CX,CY,CW,CH,CR); cx.fillStyle=cbg; cx.fill();
+    rr(CX,CY,CW,CH,CR); cx.strokeStyle='rgba(255,255,255,0.1)'; cx.lineWidth=1.5; cx.stroke();
+    var PL=CX+64,y=CY+90;
+    cx.font='900 110px -apple-system,sans-serif'; cx.fillStyle='#fff'; cx.letterSpacing='16px'; cx.fillText('VV',PL,y); y+=28;
+    cx.font='700 22px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.35)'; cx.letterSpacing='5px'; cx.fillText('HYBRID UNIVERS  ·  INNER CIRCLE',PL,y); y+=64;
+    cx.font='700 20px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.25)'; cx.letterSpacing='5px'; cx.fillText('IDENTITATE FONDATOR',PL,y); y+=54;
+    cx.font='700 52px Courier New,monospace'; cx.fillStyle='rgba(255,255,255,0.85)'; cx.letterSpacing='3px'; cx.fillText(_founderData.vvCoreId||'VV·CORE·----',PL,y); y+=36;
+    cx.font='600 22px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.35)'; cx.letterSpacing='3px'; cx.fillText('FONDATOR #'+(_founderData.founderNum||'—')+' DIN 100',PL,y); y+=44;
+    cx.font='700 38px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.8)'; cx.letterSpacing='1px'; cx.fillText(_founderData.alias||'INSIDER',PL,y); y+=52;
+    cx.font='400 22px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.3)'; cx.letterSpacing='0'; cx.fillText(_founderData.vvId||'VV·ID·------',PL,y);
+    cx.strokeStyle='rgba(255,255,255,0.06)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(CX+40,CY+CH-50); cx.lineTo(CX+CW-40,CY+CH-50); cx.stroke();
+    cx.font='400 18px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.1)'; cx.fillText('vv-technologies.github.io',PL,CY+CH-18);
+    var dataUrl=cv.toDataURL('image/png');
+    imgEl.src=dataUrl; imgEl.style.display='block'; spinnerEl.style.display='none';
+    var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(isIOS){ msgEl.innerHTML='<strong style="color:rgba(255,255,255,0.75);display:block;font-size:15px;margin-bottom:5px;">Ține apăsat pe imagine ↑</strong>apoi „Adaugă în Poze"'; }
+    else { var a=document.createElement('a'); a.download='VV-CORE-'+(_founderData.vvCoreId||'card')+'.png'; a.href=dataUrl; document.body.appendChild(a); a.click(); document.body.removeChild(a); msgEl.textContent='✓ Salvat în galerie!'; }
+    closeBtn.style.display='block';
+}
+
+// ================= CAREER — SCOASA =================
+function switchCareerTab(tab) {
+    // Carieră scoasă — doar Suport rămâne
+    showToast('Folosește secțiunea Suport pentru mesaje.');
+}
+async function submitCareerApplication(e) {
+    showToast('Această secțiune nu mai este disponibilă.');
 }
 
 // ================= TOAST =================
@@ -1262,8 +1390,115 @@ function injectVVNodButton() {
     var btn = document.createElement('div');
     btn.id = 'fab-vv-nod'; btn.className = 'fab-btn'; btn.title = 'VV NOD Scan';
     btn.innerHTML = '<span style="font-size:18px;color:rgba(255,255,255,0.8);line-height:1;">⬡</span>';
-    btn.onclick = function() { startVVNodScan(); };
+    btn.onclick = function() { showVVNodModeSelector(); };
     sidebar.insertBefore(btn, sidebar.firstChild);
+}
+
+// ── SELECTOR MOD: EMITE sau SCANEAZĂ ────────────────────────
+function showVVNodModeSelector() {
+    var old = document.getElementById('vv-nod-mode-modal');
+    if (old) old.remove();
+    var modal = document.createElement('div');
+    modal.id = 'vv-nod-mode-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:flex-end;justify-content:center;';
+    modal.innerHTML = '<div style="width:100%;max-width:430px;background:rgba(14,14,18,0.98);border:1px solid rgba(255,255,255,0.09);border-radius:26px 26px 0 0;padding:28px 22px calc(28px + env(safe-area-inset-bottom,0px));">' +
+        '<div style="width:32px;height:3px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 22px;"></div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:4px;font-weight:700;margin-bottom:8px;text-align:center;">VV NOD · BETA</div>' +
+        '<div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:6px;text-align:center;">Cum vrei să scanezi?</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:24px;line-height:1.6;">Unul emite, celălalt scanează.<br>Nu simultan.</div>' +
+        '<div onclick="startVVNodMode(\'emit\')" style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' +
+            '<div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📡</div>' +
+            '<div><div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;">EMITE semnal</div><div style="font-size:11px;color:rgba(255,255,255,0.35);">Telefonul tău fluieră 10 secunde · Alt Insider scanează</div></div>' +
+        '</div>' +
+        '<div onclick="startVVNodMode(\'scan\')" style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;margin-bottom:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' +
+            '<div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🔍</div>' +
+            '<div><div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;">SCANEAZĂ zonă</div><div style="font-size:11px;color:rgba(255,255,255,0.35);">Asculți 10 secunde · Alt Insider emite</div></div>' +
+        '</div>' +
+        '<button onclick="document.getElementById(\'vv-nod-mode-modal\').remove();" style="width:100%;padding:14px;background:rgba(255,255,255,0.06);border:none;border-radius:14px;color:rgba(255,255,255,0.4);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">ANULEAZĂ</button>' +
+    '</div>';
+    document.body.appendChild(modal);
+}
+
+async function startVVNodMode(mode) {
+    var modeModal = document.getElementById('vv-nod-mode-modal');
+    if (modeModal) modeModal.remove();
+    if (_vvNodActive) return;
+    _vvNodActive = true; _vvNodDetected = false;
+    showVVNodOverlay('init');
+
+    // Microfon necesar pentru ambele moduri
+    try {
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        _vvNodMicStream = stream;
+    } catch(e) { _vvNodActive = false; showVVNodOverlay('remove'); showToast('🎙 Microfonul e necesar pentru VV NOD.'); return; }
+
+    try { _vvNodAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { _vvNodActive = false; stopVVNodScan(); showToast('Audio indisponibil.'); return; }
+
+    if (mode === 'emit') {
+        // EMITE 10 secunde, nu ascultă
+        updateVVNodOverlay('emit');
+        _vvNodOscillator = _vvNodAudioCtx.createOscillator();
+        var gainNode = _vvNodAudioCtx.createGain();
+        _vvNodOscillator.type = 'sine';
+        _vvNodOscillator.frequency.setValueAtTime(VV_NOD_FREQ, _vvNodAudioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.4, _vvNodAudioCtx.currentTime);
+        _vvNodOscillator.connect(gainNode); gainNode.connect(_vvNodAudioCtx.destination);
+        _vvNodOscillator.start();
+        // Progress bar
+        var pct = 0;
+        var progInterval = setInterval(function() {
+            pct += 1;
+            var p = document.getElementById('vv-nod-progress');
+            if (p) p.style.width = pct + '%';
+            if (pct >= 100) clearInterval(progInterval);
+        }, 100);
+        _vvNodTimer = setTimeout(function() {
+            clearInterval(progInterval);
+            if (_vvNodOscillator) { try { _vvNodOscillator.stop(); } catch(e) {} _vvNodOscillator = null; }
+            var s = document.getElementById('vv-nod-status');
+            var sub = document.getElementById('vv-nod-sub');
+            if (s) s.textContent = 'Semnal emis ✓';
+            if (sub) sub.textContent = 'Cere celuilalt să scaneze acum';
+            logVVNodEvent('emit_complete');
+            setTimeout(function() { stopVVNodScan(); }, 1800);
+        }, 10000);
+
+    } else {
+        // SCANEAZĂ 10 secunde
+        updateVVNodOverlay('listen');
+        var source = _vvNodAudioCtx.createMediaStreamSource(_vvNodMicStream);
+        _vvNodAnalyser = _vvNodAudioCtx.createAnalyser();
+        _vvNodAnalyser.fftSize = 8192; _vvNodAnalyser.smoothingTimeConstant = 0.8;
+        source.connect(_vvNodAnalyser);
+        var dataArray = new Float32Array(_vvNodAnalyser.frequencyBinCount);
+        var pct2 = 0;
+        var progInterval2 = setInterval(function() {
+            pct2 += 1;
+            var p = document.getElementById('vv-nod-progress');
+            if (p) p.style.width = pct2 + '%';
+            if (pct2 >= 100) clearInterval(progInterval2);
+        }, 100);
+        var checkInterval = setInterval(function() {
+            if (!_vvNodActive || !_vvNodAnalyser) { clearInterval(checkInterval); return; }
+            _vvNodAnalyser.getFloatFrequencyData(dataArray);
+            var binIndex = Math.round(VV_NOD_FREQ / (_vvNodAudioCtx.sampleRate / _vvNodAnalyser.fftSize));
+            var maxVal = -Infinity;
+            for (var i = binIndex-3; i <= binIndex+3; i++) {
+                if (i >= 0 && i < dataArray.length) { var linear = Math.pow(10, dataArray[i]/20); if (linear > maxVal) maxVal = linear; }
+            }
+            if (maxVal > VV_NOD_THRESHOLD && !_vvNodDetected) {
+                _vvNodDetected = true; clearInterval(checkInterval); clearInterval(progInterval2);
+                updateVVNodOverlay('found'); logVVNodEvent('detected');
+                setTimeout(function() { stopVVNodScan(); showToast('⬡ Insider VV detectat în proximitate!'); }, 2000);
+            }
+        }, 200);
+        _vvNodTimer = setTimeout(function() {
+            clearInterval(checkInterval); clearInterval(progInterval2);
+            if (!_vvNodDetected) { updateVVNodOverlay('notfound'); logVVNodEvent('scan_empty'); }
+            setTimeout(function() { stopVVNodScan(); }, 1800);
+        }, 10000);
+    }
 }
 
 function showVVNodOverlay(phase) {
@@ -1293,54 +1528,8 @@ function addNodDot() {
     dotsEl.appendChild(dot);
 }
 
-async function startVVNodScan() {
-    if (_vvNodActive) return;
-    _vvNodActive = true; _vvNodDetected = false;
-    showVVNodOverlay('init');
-    try { var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); _vvNodMicStream = stream; }
-    catch(e) { _vvNodActive = false; showVVNodOverlay('remove'); showToast('🎙 Microfonul e necesar pentru VV NOD Scan.'); return; }
-    try { _vvNodAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch(e) { _vvNodActive = false; stopVVNodScan(); showToast('Audio indisponibil pe acest dispozitiv.'); return; }
-    updateVVNodOverlay('emit');
-    _vvNodOscillator = _vvNodAudioCtx.createOscillator();
-    var gainNode = _vvNodAudioCtx.createGain();
-    _vvNodOscillator.type = 'sine';
-    _vvNodOscillator.frequency.setValueAtTime(VV_NOD_FREQ, _vvNodAudioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0.3, _vvNodAudioCtx.currentTime);
-    _vvNodOscillator.connect(gainNode); gainNode.connect(_vvNodAudioCtx.destination);
-    _vvNodOscillator.start();
-    _vvNodTimer = setTimeout(function() {
-        if (_vvNodOscillator) { try { _vvNodOscillator.stop(); } catch(e) {} _vvNodOscillator = null; }
-        updateVVNodOverlay('listen');
-        startVVNodListening();
-    }, VV_NOD_EMIT);
-}
-
-function startVVNodListening() {
-    if (!_vvNodAudioCtx || !_vvNodMicStream) return;
-    var source = _vvNodAudioCtx.createMediaStreamSource(_vvNodMicStream);
-    _vvNodAnalyser = _vvNodAudioCtx.createAnalyser();
-    _vvNodAnalyser.fftSize = 8192; _vvNodAnalyser.smoothingTimeConstant = 0.8;
-    source.connect(_vvNodAnalyser);
-    var dataArray = new Float32Array(_vvNodAnalyser.frequencyBinCount);
-    var checkInterval = setInterval(function() {
-        if (!_vvNodActive || !_vvNodAnalyser) { clearInterval(checkInterval); return; }
-        _vvNodAnalyser.getFloatFrequencyData(dataArray);
-        var binIndex = Math.round(VV_NOD_FREQ / (_vvNodAudioCtx.sampleRate / _vvNodAnalyser.fftSize));
-        var maxVal = -Infinity;
-        for (var i = binIndex-3; i <= binIndex+3; i++) { if (i >= 0 && i < dataArray.length) { var linear = Math.pow(10, dataArray[i]/20); if (linear > maxVal) maxVal = linear; } }
-        if (maxVal > VV_NOD_THRESHOLD && !_vvNodDetected) {
-            _vvNodDetected = true; clearInterval(checkInterval);
-            updateVVNodOverlay('found'); logVVNodEvent(true);
-            setTimeout(function() { stopVVNodScan(); showToast('⬡ Insider VV detectat în proximitate!'); }, 2000);
-        }
-    }, 200);
-    _vvNodTimer = setTimeout(function() {
-        clearInterval(checkInterval);
-        if (!_vvNodDetected) { updateVVNodOverlay('notfound'); logVVNodEvent(false); }
-        setTimeout(function() { stopVVNodScan(); }, 1800);
-    }, VV_NOD_DURATION - VV_NOD_EMIT);
-}
+// startVVNodScan inlocuit de startVVNodMode cu selector EMITE/SCANEAZĂ
+function startVVNodScan() { showVVNodModeSelector(); }
 
 function stopVVNodScan() {
     _vvNodActive = false; clearTimeout(_vvNodTimer);
