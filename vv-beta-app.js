@@ -1382,7 +1382,7 @@ function hideMaintenanceScreen() {
 // ================================================================
 var _vvNodActive = false, _vvNodAudioCtx = null, _vvNodAnalyser = null;
 var _vvNodMicStream = null, _vvNodOscillator = null, _vvNodTimer = null, _vvNodDetected = false;
-var VV_NOD_FREQ = 18500, VV_NOD_DURATION = 10000, VV_NOD_EMIT = 3000, VV_NOD_THRESHOLD = 0.015;
+var VV_NOD_FREQ = 15000, VV_NOD_DURATION = 10000, VV_NOD_EMIT = 3000, VV_NOD_THRESHOLD = 0.015;
 
 function injectVVNodButton() {
     var sidebar = document.getElementById('action-hub');
