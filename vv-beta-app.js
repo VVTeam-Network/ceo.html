@@ -1,354 +1,388 @@
 // ================================================================
-// VV BETA — FOUNDER PATCH
-// Adaugă după ultima linie din vv-beta-app.js
+// VV NOD — PROXIMITY SCAN ULTRASONIC
+// Adaugă la finalul vv-beta-app.js
 // ================================================================
 
-// ── FOUNDER DATA — citit din Firebase la login ────────────────
-var founderData = null; // { isFounder, founderNum, vvCoreId, vvId, alias }
+var _vvNodActive = false;
+var _vvNodAudioCtx = null;
+var _vvNodAnalyser = null;
+var _vvNodMicStream = null;
+var _vvNodOscillator = null;
+var _vvNodTimer = null;
+var _vvNodDetected = false;
 
-// Apelat din loadUserData după ce citim documentul user
-function loadFounderData(userData) {
-  if (!userData || !userData.isFounder) return;
-  founderData = {
-    isFounder: true,
-    founderNum: userData.founderNum || null,
-    vvCoreId:   userData.vvCoreId   || null,
-    vvId:       userData.vvId       || null,
-    alias:      userData.alias      || localStorage.getItem('vv_alias') || 'INSIDER'
-  };
-  injectFounderUI();
+// Frecvența unică VV — 18.5kHz, invizibilă pentru ureche umană
+var VV_NOD_FREQ = 18500;
+var VV_NOD_DURATION = 10000; // 10 secunde total
+var VV_NOD_EMIT = 3000;      // 3 secunde emisie
+var VV_NOD_THRESHOLD = 0.015; // prag detecție
+
+// ── BUTON VV NOD — injectat în action-sidebar ─────────────────
+function injectVVNodButton() {
+    var sidebar = document.getElementById('action-hub');
+    if (!sidebar || document.getElementById('fab-vv-nod')) return;
+
+    var btn = document.createElement('div');
+    btn.id = 'fab-vv-nod';
+    btn.className = 'fab-btn';
+    btn.title = 'VV NOD Scan';
+    btn.style.cssText = 'order:-1;'; // apare primul în sidebar
+    btn.innerHTML = '<span style="font-size:18px;color:rgba(255,255,255,0.8);line-height:1;">⬡</span>';
+    btn.onclick = function() { startVVNodScan(); };
+
+    // Inserăm primul în sidebar
+    sidebar.insertBefore(btn, sidebar.firstChild);
 }
 
-// ── INJECT FOUNDER UI în profilul existent ────────────────────
-function injectFounderUI() {
-  if (!founderData) return;
-  // Evităm dubluri
-  if (document.getElementById('vv-founder-card')) return;
+// ── OVERLAY RADAR PREMIUM ─────────────────────────────────────
+function showVVNodOverlay(phase) {
+    var old = document.getElementById('vv-nod-overlay');
+    if (old && phase === 'remove') { old.remove(); return; }
+    if (old) { updateVVNodOverlay(phase); return; }
 
-  // 1. Badge ⬡ lângă numele din profil
-  var nameEl = document.getElementById('profile-main-name');
-  if (nameEl && !nameEl.querySelector('.founder-badge-inline')) {
-    var badge = document.createElement('span');
-    badge.className = 'founder-badge-inline';
-    badge.innerHTML = ' ⬡';
-    badge.style.cssText = 'color:#D4AF37;font-size:0.75em;vertical-align:middle;text-shadow:0 0 8px rgba(212,175,55,0.5);';
-    nameEl.appendChild(badge);
-  }
+    var overlay = document.createElement('div');
+    overlay.id = 'vv-nod-overlay';
+    overlay.style.cssText = [
+        'position:fixed;inset:0;z-index:99998;',
+        'background:rgba(0,0,0,0.92);',
+        'backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);',
+        'display:flex;flex-direction:column;',
+        'align-items:center;justify-content:center;',
+        'padding:40px;',
+        'animation:vvNodFadeIn .4s cubic-bezier(0.16,1,0.3,1);'
+    ].join('');
 
-  // 2. Card fondator în profil — inserat după hero card balanta
-  var profileScreen = document.getElementById('profile-screen');
-  if (!profileScreen) return;
+    overlay.innerHTML = [
+        // CSS animații
+        '<style>',
+        '@keyframes vvNodFadeIn{from{opacity:0}to{opacity:1}}',
+        '@keyframes vvRing1{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:.15}}',
+        '@keyframes vvRing2{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.2);opacity:.1}}',
+        '@keyframes vvRing3{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.25);opacity:.06}}',
+        '@keyframes vvRing4{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(1.3);opacity:.03}}',
+        '@keyframes vvCorePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.2)}50%{box-shadow:0 0 0 12px rgba(255,255,255,0)}}',
+        '@keyframes vvScanLine{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}',
+        '@keyframes vvDetected{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}',
+        '</style>',
 
-  // Găsim primul child după profile-header
-  var heroCard = profileScreen.querySelector('[style*="VV COINS"]');
-  var insertAfter = heroCard ? heroCard.parentElement : null;
+        // Radar container
+        '<div id="vv-nod-radar" style="',
+            'position:relative;width:220px;height:220px;',
+            'margin-bottom:40px;',
+        '">',
 
-  var card = document.createElement('div');
-  card.id = 'vv-founder-card';
-  card.style.cssText = [
-    'background:linear-gradient(135deg,rgba(212,175,55,0.1),rgba(212,175,55,0.03))',
-    'border:1px solid rgba(212,175,55,0.3)',
-    'border-radius:22px',
-    'padding:22px 20px',
-    'margin-bottom:16px',
-    'position:relative',
-    'overflow:hidden'
-  ].join(';');
+            // Ring 4 — cel mai exterior
+            '<div style="position:absolute;inset:-44px;border-radius:50%;',
+                'background:transparent;border:1px solid rgba(255,255,255,0.04);',
+                'animation:vvRing4 2.4s ease-in-out infinite .9s;"></div>',
 
-  card.innerHTML = [
-    // Shine top
-    '<div style="position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent);"></div>',
+            // Ring 3
+            '<div style="position:absolute;inset:-22px;border-radius:50%;',
+                'background:transparent;border:1px solid rgba(255,255,255,0.07);',
+                'animation:vvRing3 2.4s ease-in-out infinite .6s;"></div>',
 
-    // Header
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">',
-      '<div>',
-        '<div style="font-size:9px;color:rgba(212,175,55,0.55);letter-spacing:3px;font-weight:700;margin-bottom:4px;">VV · INNER CIRCLE</div>',
-        '<div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:-0.5px;">',
-          '⬡ ' + (founderData.alias || 'FONDATOR'),
+            // Ring 2
+            '<div style="position:absolute;inset:0;border-radius:50%;',
+                'background:transparent;border:1px solid rgba(255,255,255,0.1);',
+                'animation:vvRing2 2.4s ease-in-out infinite .3s;"></div>',
+
+            // Ring 1 — cel mai interior
+            '<div style="position:absolute;inset:22px;border-radius:50%;',
+                'background:transparent;border:1px solid rgba(255,255,255,0.15);',
+                'animation:vvRing1 2.4s ease-in-out infinite;"></div>',
+
+            // Linie de scan rotativă
+            '<div id="vv-scan-line" style="',
+                'position:absolute;inset:0;border-radius:50%;overflow:hidden;',
+            '">',
+                '<div style="',
+                    'position:absolute;top:50%;left:50%;',
+                    'width:50%;height:1px;',
+                    'transform-origin:left center;',
+                    'background:linear-gradient(90deg,rgba(255,255,255,0.4),transparent);',
+                    'animation:vvScanLine 2s linear infinite;',
+                '"></div>',
+            '</div>',
+
+            // Core central
+            '<div id="vv-nod-core" style="',
+                'position:absolute;inset:44px;border-radius:50%;',
+                'background:rgba(255,255,255,0.06);',
+                'border:1px solid rgba(255,255,255,0.2);',
+                'display:flex;align-items:center;justify-content:center;',
+                'animation:vvCorePulse 2s infinite;',
+            '">',
+                '<span style="font-size:28px;color:rgba(255,255,255,0.9);">⬡</span>',
+            '</div>',
+
+            // Puncte insideri detectați — apar dinamic
+            '<div id="vv-nod-dots" style="position:absolute;inset:0;border-radius:50%;pointer-events:none;"></div>',
+
         '</div>',
-      '</div>',
-      '<div style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);border-radius:10px;padding:6px 12px;text-align:center;">',
-        '<div style="font-size:9px;color:rgba(212,175,55,0.6);letter-spacing:2px;font-weight:700;">FONDATOR</div>',
-        '<div style="font-size:18px;font-weight:900;color:#D4AF37;">#' + (founderData.founderNum || '—') + '</div>',
-        '<div style="font-size:8px;color:rgba(212,175,55,0.4);">DIN 100</div>',
-      '</div>',
-    '</div>',
 
-    // Divider
-    '<div style="height:1px;background:linear-gradient(90deg,rgba(212,175,55,0.3),transparent);margin-bottom:14px;"></div>',
+        // Status text
+        '<div id="vv-nod-title" style="',
+            'font-size:11px;color:rgba(255,255,255,0.3);',
+            'letter-spacing:4px;font-weight:700;',
+            'margin-bottom:10px;text-align:center;',
+        '">VV NOD · BETA</div>',
 
-    // VV CORE ID
-    '<div style="margin-bottom:10px;">',
-      '<div style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;font-weight:700;margin-bottom:4px;">VV·CORE·ID</div>',
-      '<div style="font-family:Courier New,monospace;font-size:18px;font-weight:700;color:#D4AF37;letter-spacing:2px;text-shadow:0 0 10px rgba(212,175,55,0.3);">',
-        founderData.vvCoreId || 'VV·CORE·----',
-      '</div>',
-    '</div>',
+        '<div id="vv-nod-status" style="',
+            'font-size:17px;font-weight:800;color:#fff;',
+            'letter-spacing:.5px;margin-bottom:8px;',
+            'text-align:center;min-height:26px;',
+        '">Inițializare...</div>',
 
-    // VV ID
-    '<div style="margin-bottom:16px;">',
-      '<div style="font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;font-weight:700;margin-bottom:4px;">VV·ID</div>',
-      '<div style="display:flex;align-items:center;gap:8px;">',
-        '<div style="font-family:Courier New,monospace;font-size:15px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:1px;">',
-          founderData.vvId || 'VV·ID·------',
+        '<div id="vv-nod-sub" style="',
+            'font-size:12px;color:rgba(255,255,255,0.3);',
+            'text-align:center;line-height:1.6;',
+            'max-width:260px;margin-bottom:32px;',
+        '">Se pregătește scanarea...</div>',
+
+        // Progress bar
+        '<div style="width:200px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:32px;">',
+            '<div id="vv-nod-progress" style="',
+                'height:100%;width:0%;border-radius:2px;',
+                'background:rgba(255,255,255,0.6);',
+                'transition:width .3s linear;',
+            '"></div>',
         '</div>',
-        '<div style="background:rgba(52,199,89,0.08);border:1px solid rgba(52,199,89,0.2);border-radius:20px;padding:3px 10px;font-size:8px;font-weight:700;color:#34c759;letter-spacing:1px;">',
-          'ÎN FORMARE',
+
+        // Buton anulare
+        '<div onclick="stopVVNodScan()" style="',
+            'padding:12px 32px;',
+            'background:transparent;',
+            'border:1px solid rgba(255,255,255,0.1);',
+            'border-radius:12px;',
+            'font-size:12px;color:rgba(255,255,255,0.3);',
+            'cursor:pointer;letter-spacing:1px;',
+            'font-weight:600;',
+            '-webkit-tap-highlight-color:transparent;',
+        '">ANULEAZĂ</div>',
+
+        // Notă legală discretă
+        '<div style="',
+            'position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));',
+            'font-size:9px;color:rgba(255,255,255,0.12);',
+            'text-align:center;letter-spacing:1px;',
+            'max-width:280px;line-height:1.6;',
+        '">',
+            'Semnal audio ultrasonic · Fără înregistrare · Opt-in manual<br>',
+            'Fază de testare Beta · VV NOD 1.0 în dezvoltare',
         '</div>',
-      '</div>',
-      '<div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:4px;line-height:1.5;">',
-        'Identitatea ta se formează din activitate — misiuni, locații, streak-uri.',
-      '</div>',
-    '</div>',
 
-    // Buton salvare card
-    '<button onclick="openFounderCardSave()" style="',
-      'width:100%;padding:13px;',
-      'background:rgba(212,175,55,0.1);',
-      'border:1px solid rgba(212,175,55,0.25);',
-      'border-radius:12px;',
-      'color:#D4AF37;font-family:inherit;',
-      'font-size:12px;font-weight:700;',
-      'cursor:pointer;letter-spacing:1px;',
-    '">⬡ SALVEAZĂ CARDUL VV·CORE</button>',
+    ].join('');
 
-  ].join('');
-
-  // Inserăm cardul în profil — după balanta hero
-  var referenceNode = profileScreen.querySelector('#onyx-progress-card');
-  if (referenceNode) {
-    profileScreen.insertBefore(card, referenceNode);
-  } else {
-    profileScreen.appendChild(card);
-  }
+    document.body.appendChild(overlay);
 }
 
-// ── DESCHIDE SAVE CARD din profil ────────────────────────────
-function openFounderCardSave() {
-  if (!founderData) return;
-  // Refolosim logica din Inner Circle — generăm canvas direct
-  showFounderCardOverlay();
+function updateVVNodOverlay(phase) {
+    var status = document.getElementById('vv-nod-status');
+    var sub = document.getElementById('vv-nod-sub');
+    var core = document.getElementById('vv-nod-core');
+    var progress = document.getElementById('vv-nod-progress');
+    var scanLine = document.getElementById('vv-scan-line');
+
+    if (phase === 'emit') {
+        if (status) status.textContent = 'Se emite semnal VV...';
+        if (sub) sub.textContent = 'Frecvență ultrasonică activă · 18.5kHz';
+        if (core) core.style.background = 'rgba(255,255,255,0.12)';
+        if (progress) progress.style.width = '30%';
+    } else if (phase === 'listen') {
+        if (status) status.textContent = 'Se ascultă rețeaua...';
+        if (sub) sub.textContent = 'Scanare proximitate · ~10 metri';
+        if (core) core.style.background = 'rgba(255,255,255,0.06)';
+        if (progress) progress.style.width = '65%';
+    } else if (phase === 'found') {
+        if (status) {
+            status.textContent = 'Insider detectat ⬡';
+            status.style.color = '#fff';
+        }
+        if (sub) sub.textContent = 'VV Network activ în proximitate';
+        if (core) {
+            core.style.background = 'rgba(255,255,255,0.15)';
+            core.style.animation = 'vvDetected .6s ease-in-out 3, vvCorePulse 2s infinite';
+            core.style.border = '1px solid rgba(255,255,255,0.5)';
+        }
+        if (scanLine) scanLine.style.opacity = '0.5';
+        if (progress) progress.style.width = '100%';
+        addNodDot();
+    } else if (phase === 'notfound') {
+        if (status) status.textContent = 'Niciun Insider în rază';
+        if (sub) sub.textContent = 'Încearcă într-o zonă cu mai mulți Insideri VV';
+        if (progress) progress.style.width = '100%';
+    } else if (phase === 'done') {
+        if (progress) progress.style.width = '100%';
+        setTimeout(function() { showVVNodOverlay('remove'); }, 1500);
+    }
 }
 
-function showFounderCardOverlay() {
-  var old = document.getElementById('vv-founder-save-overlay');
-  if (old) old.remove();
-
-  var overlay = document.createElement('div');
-  overlay.id = 'vv-founder-save-overlay';
-  overlay.style.cssText = [
-    'position:fixed;inset:0;background:#000;',
-    'z-index:999999;display:flex;flex-direction:column;',
-    'align-items:center;justify-content:center;padding:24px;gap:16px;'
-  ].join('');
-
-  var spinner = document.createElement('div');
-  spinner.id = 'founder-spinner';
-  spinner.style.cssText = 'width:44px;height:44px;border:2px solid rgba(212,175,55,0.2);border-top-color:rgba(212,175,55,0.8);border-radius:50%;animation:spin .8s linear infinite;';
-
-  var img = document.createElement('img');
-  img.id = 'founder-save-img';
-  img.style.cssText = 'display:none;width:100%;max-width:340px;border-radius:24px;-webkit-user-select:none;user-select:none;box-shadow:0 0 40px rgba(212,175,55,0.15);';
-  img.alt = 'VV CORE Card';
-
-  var msgEl = document.createElement('div');
-  msgEl.id = 'founder-save-msg';
-  msgEl.style.cssText = 'font-size:14px;color:rgba(255,255,255,0.5);text-align:center;line-height:1.7;max-width:280px;';
-  msgEl.textContent = 'Se generează cardul...';
-
-  var closeBtn = document.createElement('button');
-  closeBtn.style.cssText = 'padding:12px 36px;background:transparent;border:.5px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;font-family:inherit;display:none;min-height:44px;';
-  closeBtn.textContent = '✕ Închide';
-  closeBtn.onclick = function() { overlay.remove(); };
-
-  overlay.appendChild(spinner);
-  overlay.appendChild(img);
-  overlay.appendChild(msgEl);
-  overlay.appendChild(closeBtn);
-  document.body.appendChild(overlay);
-
-  // Generăm canvas după 100ms
-  setTimeout(function() { generateFounderCanvas(img, spinner, msgEl, closeBtn); }, 100);
+function addNodDot() {
+    var dotsEl = document.getElementById('vv-nod-dots');
+    if (!dotsEl) return;
+    // Adaugă un punct animat la poziție aleatorie pe cerc
+    var angle = Math.random() * Math.PI * 2;
+    var r = 65 + Math.random() * 25; // px de la centru
+    var cx = 110 + Math.cos(angle) * r;
+    var cy = 110 + Math.sin(angle) * r;
+    var dot = document.createElement('div');
+    dot.style.cssText = [
+        'position:absolute;',
+        'width:8px;height:8px;',
+        'border-radius:50%;',
+        'background:rgba(255,255,255,0.9);',
+        'box-shadow:0 0 12px rgba(255,255,255,0.6),0 0 24px rgba(255,255,255,0.2);',
+        'left:' + (cx-4) + 'px;top:' + (cy-4) + 'px;',
+        'animation:vvCorePulse 1.5s infinite;',
+        'transition:all .3s;'
+    ].join('');
+    dotsEl.appendChild(dot);
 }
 
-function generateFounderCanvas(imgEl, spinnerEl, msgEl, closeBtn) {
-  var W = 1080, H = 1920;
-  var cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;
-  var cx = cv.getContext('2d');
+// ── START SCAN ────────────────────────────────────────────────
+async function startVVNodScan() {
+    if (_vvNodActive) return;
+    _vvNodActive = true;
+    _vvNodDetected = false;
 
-  // Fundal
-  var bg = cx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,'#03030a'); bg.addColorStop(0.5,'#07070f'); bg.addColorStop(1,'#03030a');
-  cx.fillStyle = bg; cx.fillRect(0,0,W,H);
+    showVVNodOverlay('init');
 
-  // Glow ambient
-  var gl = cx.createRadialGradient(0,0,0,0,0,700);
-  gl.addColorStop(0,'rgba(212,175,55,0.07)'); gl.addColorStop(1,'transparent');
-  cx.fillStyle = gl; cx.fillRect(0,0,W,H);
+    // Cerem permisiunea microfonului
+    try {
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        _vvNodMicStream = stream;
+    } catch(e) {
+        _vvNodActive = false;
+        showVVNodOverlay('remove');
+        showToast('🎙 Microfonul e necesar pentru VV NOD Scan.');
+        return;
+    }
 
-  // Card centrat
-  var CX=80, CY=500, CW=W-160, CH=920, CR=48;
-  var cbg = cx.createLinearGradient(CX,CY,CX+CW,CY+CH);
-  cbg.addColorStop(0,'rgba(255,255,255,0.07)');
-  cbg.addColorStop(1,'rgba(212,175,55,0.06)');
-  rrCanvas(cx,CX,CY,CW,CH,CR); cx.fillStyle=cbg; cx.fill();
-  rrCanvas(cx,CX,CY,CW,CH,CR); cx.strokeStyle='rgba(212,175,55,0.35)'; cx.lineWidth=1.5; cx.stroke();
+    // Creăm AudioContext
+    try {
+        _vvNodAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+        _vvNodActive = false;
+        stopVVNodScan();
+        showToast('AudioContext indisponibil pe acest dispozitiv.');
+        return;
+    }
 
-  // Shine top card
-  var csh = cx.createLinearGradient(CX,0,CX+CW,0);
-  csh.addColorStop(0,'transparent'); csh.addColorStop(0.5,'rgba(212,175,55,0.55)'); csh.addColorStop(1,'transparent');
-  cx.fillStyle=csh; cx.fillRect(CX+CR,CY,CW-CR*2,2);
+    // ── FAZA 1: EMIT (0-3s) ──────────────────────────────────
+    updateVVNodOverlay('emit');
+    _vvNodOscillator = _vvNodAudioCtx.createOscillator();
+    var gainNode = _vvNodAudioCtx.createGain();
+    _vvNodOscillator.type = 'sine';
+    _vvNodOscillator.frequency.setValueAtTime(VV_NOD_FREQ, _vvNodAudioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.3, _vvNodAudioCtx.currentTime);
+    _vvNodOscillator.connect(gainNode);
+    gainNode.connect(_vvNodAudioCtx.destination);
+    _vvNodOscillator.start();
 
-  var PL=CX+64, y=CY+90;
-
-  // VV
-  cx.font='900 110px -apple-system,sans-serif'; cx.fillStyle='#ffffff'; cx.letterSpacing='16px';
-  cx.shadowColor='rgba(255,255,255,0.15)'; cx.shadowBlur=30;
-  cx.fillText('VV',PL,y); cx.shadowBlur=0; y+=28;
-
-  // Eco
-  cx.font='700 22px -apple-system,sans-serif'; cx.fillStyle='rgba(212,175,55,0.6)'; cx.letterSpacing='5px';
-  cx.fillText('HYBRID UNIVERS  ·  INNER CIRCLE',PL,y); y+=44;
-
-  // Divider
-  var dv=cx.createLinearGradient(PL,0,CX+CW-64,0);
-  dv.addColorStop(0,'rgba(212,175,55,0.5)'); dv.addColorStop(1,'transparent');
-  cx.strokeStyle=dv; cx.lineWidth=1;
-  cx.beginPath(); cx.moveTo(PL,y); cx.lineTo(CX+CW-64,y); cx.stroke(); y+=40;
-
-  // Label
-  cx.font='700 20px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.3)'; cx.letterSpacing='5px';
-  cx.fillText('IDENTITATE FONDATOR',PL,y); y+=54;
-
-  // CORE ID
-  cx.font='700 56px Courier New,monospace'; cx.fillStyle='#D4AF37'; cx.letterSpacing='3px';
-  cx.shadowColor='rgba(212,175,55,0.5)'; cx.shadowBlur=24;
-  cx.fillText(founderData.vvCoreId||'VV·CORE·----',PL,y); cx.shadowBlur=0; y+=36;
-
-  // Founder num
-  cx.font='600 22px -apple-system,sans-serif'; cx.fillStyle='rgba(212,175,55,0.55)'; cx.letterSpacing='3px';
-  cx.fillText('FONDATOR #'+(founderData.founderNum||'—')+' DIN 100',PL,y); y+=44;
-
-  // Alias
-  cx.font='700 38px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.88)'; cx.letterSpacing='1px';
-  cx.fillText(founderData.alias||'INSIDER',PL,y); y+=52;
-
-  // VV ID
-  cx.font='400 22px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.35)'; cx.letterSpacing='0';
-  cx.fillText(founderData.vvId||'VV·ID·------',PL,y); y+=52;
-
-  // Motto — linie aurie stânga
-  cx.strokeStyle='rgba(212,175,55,0.45)'; cx.lineWidth=4;
-  var motto = '"Ești parte din ce construim. Ești parte din noi."';
-  var mlines = wrapCanvasTxt(cx, motto, CW-160, 26);
-  cx.beginPath(); cx.moveTo(PL,y-24); cx.lineTo(PL,y+mlines.length*38-6); cx.stroke();
-  cx.font='italic 26px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.45)';
-  for(var li=0;li<mlines.length;li++){cx.fillText(mlines[li],PL+20,y+li*38);} y+=mlines.length*38+44;
-
-  // Badge NUCLEU ACTIV
-  var bx=PL, by=y, bw=270, bh=46;
-  rrCanvas(cx,bx,by,bw,bh,23); cx.fillStyle='rgba(52,199,89,0.1)'; cx.fill();
-  rrCanvas(cx,bx,by,bw,bh,23); cx.strokeStyle='rgba(52,199,89,0.35)'; cx.lineWidth=1; cx.stroke();
-  cx.beginPath(); cx.arc(bx+26,by+bh/2,6,0,Math.PI*2); cx.fillStyle='#34c759'; cx.fill();
-  cx.font='700 18px -apple-system,sans-serif'; cx.fillStyle='#34c759'; cx.letterSpacing='3px';
-  cx.fillText('NUCLEU ACTIV',bx+42,by+bh/2+6);
-
-  // Footer card
-  var cfy=CY+CH-50;
-  cx.strokeStyle='rgba(255,255,255,0.07)'; cx.lineWidth=1;
-  cx.beginPath(); cx.moveTo(CX+40,cfy); cx.lineTo(CX+CW-40,cfy); cx.stroke();
-  cx.font='400 18px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.12)'; cx.letterSpacing='0';
-  cx.fillText('vv-technologies.github.io',PL,CY+CH-18);
-  cx.font='400 16px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.08)'; cx.textAlign='right';
-  cx.fillText('Contribuție voluntară · GDPR · UE 679/2016',CX+CW-64,CY+CH-18);
-  cx.textAlign='left';
-
-  // CTA jos
-  var ctaY=CY+CH+80;
-  cx.font='700 28px -apple-system,sans-serif'; cx.fillStyle='rgba(212,175,55,0.5)'; cx.letterSpacing='4px';
-  cx.textAlign='center'; cx.fillText('VV HYBRID UNIVERS',W/2,ctaY); ctaY+=38;
-  cx.font='400 22px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.25)'; cx.letterSpacing='2px';
-  cx.fillText('100 fondatori · Inner Circle',W/2,ctaY); ctaY+=38;
-  cx.font='400 20px -apple-system,sans-serif'; cx.fillStyle='rgba(255,255,255,0.15)'; cx.letterSpacing='1px';
-  cx.fillText('vv-technologies.github.io/vv-nexus',W/2,ctaY);
-  cx.textAlign='left';
-
-  // Afișare
-  var dataUrl = cv.toDataURL('image/png');
-  imgEl.src = dataUrl;
-  imgEl.style.display = 'block';
-  spinnerEl.style.display = 'none';
-
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if(isIOS){
-    msgEl.innerHTML = '<strong style="color:rgba(212,175,55,0.85);display:block;font-size:16px;margin-bottom:6px;">Ține apăsat pe imagine ↑</strong>apoi „Adaugă în Poze"';
-  } else {
-    var a=document.createElement('a');
-    a.download='VV-CORE-'+(founderData.vvCoreId||'card')+'.png';
-    a.href=dataUrl;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    msgEl.textContent='✓ Salvat în galerie!';
-  }
-  closeBtn.style.display='block';
+    // Oprim emisie după 3 secunde
+    _vvNodTimer = setTimeout(function() {
+        if (_vvNodOscillator) {
+            try { _vvNodOscillator.stop(); } catch(e) {}
+            _vvNodOscillator = null;
+        }
+        // ── FAZA 2: LISTEN (3-10s) ──────────────────────────
+        updateVVNodOverlay('listen');
+        startListening();
+    }, VV_NOD_EMIT);
 }
 
-// Helpers canvas
-function rrCanvas(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
-}
-function wrapCanvasTxt(ctx,text,maxW,fs){
-  ctx.font='italic '+fs+'px -apple-system,sans-serif';
-  var words=text.split(' '),lines=[],line='';
-  for(var i=0;i<words.length;i++){
-    var test=line+(line?' ':'')+words[i];
-    if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=words[i];}
-    else line=test;
-  }
-  if(line)lines.push(line);
-  return lines.slice(0,4);
+function startListening() {
+    if (!_vvNodAudioCtx || !_vvNodMicStream) return;
+
+    var source = _vvNodAudioCtx.createMediaStreamSource(_vvNodMicStream);
+    _vvNodAnalyser = _vvNodAudioCtx.createAnalyser();
+    _vvNodAnalyser.fftSize = 8192;
+    _vvNodAnalyser.smoothingTimeConstant = 0.8;
+    source.connect(_vvNodAnalyser);
+
+    var bufferLength = _vvNodAnalyser.frequencyBinCount;
+    var dataArray = new Float32Array(bufferLength);
+
+    var checkInterval = setInterval(function() {
+        if (!_vvNodActive || !_vvNodAnalyser) { clearInterval(checkInterval); return; }
+        _vvNodAnalyser.getFloatFrequencyData(dataArray);
+
+        // Calculăm bin-ul pentru frecvența VV NOD
+        var sampleRate = _vvNodAudioCtx.sampleRate;
+        var binIndex = Math.round(VV_NOD_FREQ / (sampleRate / _vvNodAnalyser.fftSize));
+        var binRange = 3; // ±3 bins în jurul frecvenței țintă
+        var maxVal = -Infinity;
+        for (var i = binIndex - binRange; i <= binIndex + binRange; i++) {
+            if (i >= 0 && i < dataArray.length) {
+                var linear = Math.pow(10, dataArray[i] / 20);
+                if (linear > maxVal) maxVal = linear;
+            }
+        }
+
+        if (maxVal > VV_NOD_THRESHOLD && !_vvNodDetected) {
+            _vvNodDetected = true;
+            clearInterval(checkInterval);
+            updateVVNodOverlay('found');
+            logVVNodEvent(true);
+            setTimeout(function() {
+                stopVVNodScan();
+                showToast('⬡ Insider VV detectat în proximitate!');
+            }, 2000);
+        }
+    }, 200);
+
+    // Timeout total — 7 secunde de ascultare
+    _vvNodTimer = setTimeout(function() {
+        clearInterval(checkInterval);
+        if (!_vvNodDetected) {
+            updateVVNodOverlay('notfound');
+            logVVNodEvent(false);
+        }
+        setTimeout(function() { stopVVNodScan(); }, 1800);
+    }, VV_NOD_DURATION - VV_NOD_EMIT);
 }
 
-// ── MARKER FONDATOR pe hartă ─────────────────────────────────
-// Înlocuiește iconița misiunilor create de fondatori cu una distinctă
-function getFounderMissionIcon(reward, isFounderMission) {
-  var color = isFounderMission ? 'rgba(212,175,55,0.9)' : 'rgba(255,59,48,0.85)';
-  var shadow = isFounderMission ? 'rgba(212,175,55,0.5)' : 'rgba(255,59,48,0.4)';
-  var emoji = isFounderMission ? '⬡' : '🎯';
-  var border = isFounderMission ? 'rgba(212,175,55,0.6)' : 'rgba(255,100,80,0.6)';
+// ── STOP SCAN ─────────────────────────────────────────────────
+function stopVVNodScan() {
+    _vvNodActive = false;
+    clearTimeout(_vvNodTimer);
 
-  return L.divIcon({
-    className: '',
-    html: '<div style="' +
-      'background:' + color + ';' +
-      'backdrop-filter:blur(10px);' +
-      '-webkit-backdrop-filter:blur(10px);' +
-      'border:2px solid ' + border + ';' +
-      'border-radius:50%;' +
-      'width:38px;height:38px;' +
-      'display:flex;align-items:center;justify-content:center;' +
-      'font-size:' + (isFounderMission ? '18px' : '16px') + ';' +
-      'box-shadow:0 0 16px ' + shadow + ';' +
-      'animation:missionPulse 2s infinite;' +
-    '">' + emoji + '</div>',
-    iconSize: [38,38],
-    iconAnchor: [19,19]
-  });
+    if (_vvNodOscillator) {
+        try { _vvNodOscillator.stop(); } catch(e) {}
+        _vvNodOscillator = null;
+    }
+    if (_vvNodMicStream) {
+        _vvNodMicStream.getTracks().forEach(function(t) { t.stop(); });
+        _vvNodMicStream = null;
+    }
+    if (_vvNodAudioCtx) {
+        try { _vvNodAudioCtx.close(); } catch(e) {}
+        _vvNodAudioCtx = null;
+    }
+    _vvNodAnalyser = null;
+    showVVNodOverlay('remove');
 }
 
-// ── PATCH loadUserData — injectăm citirea founderData ─────────
-// Adăugăm un listener pe onSnapshot care verifică isFounder
-var _origLoadUserData = loadUserData;
-loadUserData = function() {
-  _origLoadUserData.apply(this, arguments);
-  // Citim și founder data separat dacă nu e deja injectat
-  if (currentUser && !founderData) {
-    db.collection('users').doc(currentUser.uid).get().then(function(doc) {
-      if (doc.exists) loadFounderData(doc.data());
-    }).catch(function(){});
-  }
-};
+// ── LOG EVENT în Firebase ─────────────────────────────────────
+function logVVNodEvent(detected) {
+    if (typeof db === 'undefined' || typeof currentUser === 'undefined' || !currentUser) return;
+    db.collection('vvhi_dataset').add({
+        action: 'VV_NOD_SCAN',
+        context: {
+            detected: detected,
+            frequency: VV_NOD_FREQ,
+            uid: currentUser.uid,
+            alias: localStorage.getItem('vv_alias') || 'INSIDER'
+        },
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function() {});
+}
+
+// ── INIT — pornit când app e gata ────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(injectVVNodButton, 2000);
+});
+// Fallback dacă DOMContentLoaded deja a trecut
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(injectVVNodButton, 2000);
+}
