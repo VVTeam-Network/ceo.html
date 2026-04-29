@@ -1491,7 +1491,6 @@ async function startVVPulse() {
 async function searchNearbyInsiders(myLat, myLng, myUid, myAlias) {
     try {
         var now = new Date();
-        // Cauta useri cu pulse activ
         var snap = await db.collection('vv_pulse')
             .where('expiresAt', '>', firebase.firestore.Timestamp.fromDate(now))
             .get();
@@ -1499,7 +1498,7 @@ async function searchNearbyInsiders(myLat, myLng, myUid, myAlias) {
         var nearby = [];
         snap.forEach(function(doc) {
             var d = doc.data();
-            if (doc.id === myUid) return; // Nu eu
+            if (doc.id === myUid) return;
             var latDiff = Math.abs(d.lat - myLat);
             var lngDiff = Math.abs(d.lng - myLng);
             if (latDiff < VV_PULSE_RADIUS && lngDiff < VV_PULSE_RADIUS) {
@@ -1508,32 +1507,25 @@ async function searchNearbyInsiders(myLat, myLng, myUid, myAlias) {
         });
 
         if (nearby.length === 0) {
-            // Continua sa scaneze pana la timeout
-            showVVPulseOverlay('scanning');
-            // Re-scanare la 5 secunde
+            // Continua sa scaneze la 5 secunde
             setTimeout(function() {
                 if (_vvPulseActive) searchNearbyInsiders(myLat, myLng, myUid, myAlias);
             }, 5000);
             return;
         }
 
-        // Gasit! Trimite handshake
+        // ── CONFIRMARE AUTOMATA ──
+        // Daca ambii sunt in Firebase cu GPS in raza → asta e confirmarea
         var target = nearby[0];
         showVVPulseOverlay('found', target.alias);
 
-        // Scrie handshake request in Firebase
-        await db.collection('vv_pulse_handshake').add({
-            from: myUid,
-            fromAlias: myAlias,
-            to: target.uid,
-            toAlias: target.alias,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            expiresAt: firebase.firestore.Timestamp.fromDate(new Date(Date.now() + VV_PULSE_CONFIRM_TIMEOUT))
-        });
-
-        // Asculta confirmare
-        listenForHandshakeConfirm(myUid, target);
+        // Asteptam 2 secunde ca sa fie sigur ca si celalalt a detectat
+        setTimeout(function() {
+            if (_vvPulseActive) {
+                clearTimeout(_vvPulseTimer);
+                awardVVPulseBonus(myUid, target);
+            }
+        }, 2000);
 
     } catch(e) {
         console.warn('[VV Pulse]', e);
@@ -1545,29 +1537,6 @@ async function searchNearbyInsiders(myLat, myLng, myUid, myAlias) {
     }
 }
 
-// ── ASCULTA CONFIRMARE HANDSHAKE ─────────────────────────────
-function listenForHandshakeConfirm(myUid, target) {
-    var listener = db.collection('vv_pulse_handshake')
-        .where('from', '==', target.uid)
-        .where('to', '==', myUid)
-        .where('status', '==', 'confirmed')
-        .onSnapshot(function(snap) {
-            if (!snap.empty && _vvPulseActive) {
-                listener(); // detach
-                clearTimeout(_vvPulseTimer);
-                awardVVPulseBonus(myUid, target);
-            }
-        });
-
-    // Timeout handshake
-    setTimeout(function() {
-        try { listener(); } catch(e) {}
-        if (_vvPulseActive) {
-            showVVPulseOverlay('timeout');
-            setTimeout(function() { endVVPulse(myUid, false); }, 2000);
-        }
-    }, VV_PULSE_CONFIRM_TIMEOUT);
-}
 
 // ── ACORDA BONUS VV COINS ─────────────────────────────────────
 async function awardVVPulseBonus(myUid, target) {
