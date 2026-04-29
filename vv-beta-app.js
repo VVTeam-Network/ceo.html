@@ -1378,7 +1378,378 @@ function hideMaintenanceScreen() {
 }
 
 // ================================================================
-// VV PULSE — GPS PROXIMITY (inlocuieste VV NOD ultrasonic)
+// NEXUS — Sistem de Intenție Urban
+// ================================================================
+var _nexusGPS = null;
+var _nexusOpen = false;
+
+function openNexus() {
+    _nexusOpen = true;
+    var modal = document.getElementById('nexus-modal');
+    var sheet = document.getElementById('nexus-sheet');
+    if (!modal || !sheet) return;
+    modal.style.display = 'flex';
+    setTimeout(function() { sheet.style.transform = 'translateY(0)'; }, 10);
+    // Activam GPS in fundal imediat
+    activateNexusGPS();
+    // Focus pe input
+    setTimeout(function() {
+        var inp = document.getElementById('nexus-input');
+        if (inp) inp.focus();
+    }, 400);
+}
+
+function closeNexus() {
+    _nexusOpen = false;
+    var sheet = document.getElementById('nexus-sheet');
+    var modal = document.getElementById('nexus-modal');
+    if (sheet) sheet.style.transform = 'translateY(100%)';
+    setTimeout(function() { if (modal) modal.style.display = 'none'; }, 400);
+    // Reset
+    var inp = document.getElementById('nexus-input');
+    var resp = document.getElementById('nexus-response');
+    var btn = document.getElementById('nexus-send-btn');
+    if (inp) inp.value = '';
+    if (resp) resp.style.display = 'none';
+    if (btn) { btn.textContent = '⬡ LANSEAZĂ MISIUNEA'; btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function activateNexusGPS() {
+    var dot = document.getElementById('nexus-gps-dot');
+    var txt = document.getElementById('nexus-gps-text');
+    if (dot) dot.style.background = 'rgba(255,149,0,0.8)';
+    if (txt) txt.textContent = 'Se obține locația...';
+    if (!navigator.geolocation) {
+        if (txt) txt.textContent = 'GPS indisponibil';
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        _nexusGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (dot) { dot.style.background = '#34c759'; dot.style.boxShadow = '0 0 6px rgba(52,199,89,0.8)'; }
+        if (txt) txt.textContent = 'Locație: ' + _nexusGPS.lat.toFixed(4) + ', ' + _nexusGPS.lng.toFixed(4);
+        // Update global
+        userCurrentLat = _nexusGPS.lat;
+        userCurrentLng = _nexusGPS.lng;
+    }, function() {
+        if (dot) dot.style.background = '#ff3b30';
+        if (txt) txt.textContent = 'GPS indisponibil — misiunea va fi generală';
+        if (userCurrentLat) _nexusGPS = { lat: userCurrentLat, lng: userCurrentLng };
+    }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function nexusInputChange(el) {
+    var btn = document.getElementById('nexus-send-btn');
+    if (!btn) return;
+    btn.style.opacity = el.value.trim().length > 0 ? '1' : '0.5';
+}
+
+function nexusSuggest(text) {
+    var inp = document.getElementById('nexus-input');
+    if (inp) {
+        inp.value = text;
+        nexusInputChange(inp);
+        inp.focus();
+    }
+}
+
+async function submitNexus() {
+    var inp = document.getElementById('nexus-input');
+    var query = inp ? inp.value.trim() : '';
+    if (!query) { showToast('Scrie ce vrei să afli!'); return; }
+
+    var btn = document.getElementById('nexus-send-btn');
+    var resp = document.getElementById('nexus-response');
+    var respText = document.getElementById('nexus-response-text');
+    var actionBtns = document.getElementById('nexus-action-btns');
+
+    if (btn) { btn.textContent = 'NEXUS PROCESEAZĂ...'; btn.disabled = true; btn.style.opacity = '0.6'; }
+
+    // ── Moderare locala inainte de orice ──
+    var blocked = ['porn','sex explicit','drog','cocain','heroina','arma','bomba','secta','frauda','hack'];
+    var lower = query.toLowerCase();
+    var isBlocked = blocked.some(function(k){ return lower.includes(k); });
+    if (isBlocked) {
+        if (btn) { btn.textContent = '⬡ LANSEAZĂ MISIUNEA'; btn.disabled = false; btn.style.opacity = '1'; }
+        showToast('Această cerere nu este permisă în ecosistemul VV.');
+        return;
+    }
+
+    // ── Gaseste locatie relevanta via Nominatim ──
+    var locationContext = '';
+    var suggestedLat = null, suggestedLng = null, suggestedName = '';
+    if (_nexusGPS) {
+        try {
+            var searchTerms = extractSearchTerm(query);
+            if (searchTerms) {
+                var nomRes = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(searchTerms) + '&limit=3&countrycodes=ro&viewbox=' + (_nexusGPS.lng-0.05) + ',' + (_nexusGPS.lat+0.05) + ',' + (_nexusGPS.lng+0.05) + ',' + (_nexusGPS.lat-0.05) + '&bounded=1&accept-language=ro');
+                var nomData = await nomRes.json();
+                if (nomData && nomData.length > 0) {
+                    suggestedLat = parseFloat(nomData[0].lat);
+                    suggestedLng = parseFloat(nomData[0].lon);
+                    suggestedName = nomData[0].display_name.split(',')[0];
+                    locationContext = suggestedName;
+                }
+            }
+        } catch(e) {}
+    }
+
+    // ── Construieste raspunsul Nexus ──
+    var nexusReply = buildNexusReply(query, locationContext, suggestedName);
+
+    if (resp) resp.style.display = 'block';
+    if (respText) respText.textContent = nexusReply;
+
+    // ── Butoane de actiune ──
+    if (actionBtns) {
+        actionBtns.style.display = 'flex';
+        actionBtns.innerHTML = '';
+
+        if (suggestedLat && suggestedName) {
+            // Buton lansare misiune directa
+            var btnM = document.createElement('button');
+            btnM.style.cssText = 'flex:1;padding:12px;background:rgba(255,255,255,0.92);color:#000;border:none;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;min-height:44px;';
+            btnM.textContent = '⬡ Lansează misiunea';
+            (function(lat,lng,name,q){
+                btnM.onclick = function() {
+                    closeNexus();
+                    missionLat = lat; missionLng = lng;
+                    setTimeout(function(){
+                        document.getElementById('mission-desc').value = q;
+                        openModal('create-mission-modal');
+                        // Zboara harta la locatie
+                        if (map) map.flyTo([lat,lng],16,{duration:1.5});
+                    }, 300);
+                    // Log VVhi
+                    logNexusAction(q, name, lat, lng);
+                };
+            })(suggestedLat, suggestedLng, suggestedName, query);
+            actionBtns.appendChild(btnM);
+
+            // Buton navigare hibrida
+            var btnN = document.createElement('button');
+            btnN.style.cssText = 'padding:12px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;white-space:nowrap;';
+            btnN.textContent = '🗺 Navighează';
+            (function(lat,lng){
+                btnN.onclick = function() {
+                    var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (isIOS) {
+                        window.location.href = 'maps://maps.apple.com/?daddr=' + lat + ',' + lng + '&dirflg=w';
+                    } else {
+                        window.open('https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=walking','_blank');
+                    }
+                };
+            })(suggestedLat, suggestedLng);
+            actionBtns.appendChild(btnN);
+        } else {
+            // Fara locatie gasita — misiune generala
+            var btnG = document.createElement('button');
+            btnG.style.cssText = 'width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;min-height:44px;';
+            btnG.textContent = '⬡ Lansează ca misiune generală';
+            btnG.onclick = function() {
+                closeNexus();
+                document.getElementById('mission-desc').value = query;
+                openModal('create-mission-modal');
+            };
+            actionBtns.appendChild(btnG);
+        }
+    }
+
+    if (btn) { btn.textContent = '⬡ LANSEAZĂ MISIUNEA'; btn.disabled = false; btn.style.opacity = '1'; }
+
+    // ── Update VVhi Core Stats ──
+    updateVVhiCoreStats('nexus_query');
+}
+
+function extractSearchTerm(query) {
+    var keywords = {
+        'supermarket': 'supermarket', 'kaufland': 'Kaufland', 'lidl': 'Lidl',
+        'penny': 'Penny Market', 'profi': 'Profi', 'mega': 'Mega Image',
+        'teren': 'teren fotbal', 'fotbal': 'teren fotbal sport', 'sport': 'sala sport',
+        'parcare': 'parcare auto', 'parc': 'parc', 'cafenea': 'cafenea coffee',
+        'restaurant': 'restaurant', 'pizza': 'pizza', 'farmacie': 'farmacie',
+        'spital': 'spital', 'benzinarie': 'benzinarie', 'atm': 'bancomat ATM',
+        'piata': 'piata agroalimentara', 'mall': 'mall centru comercial',
+        'club': 'club', 'bar': 'bar pub'
+    };
+    var lower = query.toLowerCase();
+    for (var key in keywords) {
+        if (lower.includes(key)) return keywords[key];
+    }
+    // Fallback — primele 3 cuvinte
+    return query.split(' ').slice(0,3).join(' ');
+}
+
+function buildNexusReply(query, locationFound, locationName) {
+    var lower = query.toLowerCase();
+    if (locationFound) {
+        return 'Am găsit ' + locationName + ' în zona ta. Lansează o misiune și un Insider verifică situația în timp real.';
+    }
+    if (lower.includes('coadă') || lower.includes('aglomerat') || lower.includes('liber')) {
+        return 'Misiunea ta va fi lansată în zona ta curentă. Un Insider din rețea va verifica și va trimite dovada.';
+    }
+    if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) {
+        return 'Atmosphera unei zone se validează prin prezență fizică. Lansează misiunea și primești un VV PROOF în câteva minute.';
+    }
+    return 'Înțeles. Lansez misiunea în zona ta. Un Insider va verifica și vei primi dovada în Intelligence Inbox.';
+}
+
+function logNexusAction(query, locationName, lat, lng) {
+    if (typeof db === 'undefined' || !currentUser) return;
+    db.collection('vvhi_dataset').add({
+        action: 'NEXUS_QUERY',
+        context: {
+            query: query.substring(0,100),
+            location: locationName,
+            lat: lat ? parseFloat(lat.toFixed(3)) : null,
+            lng: lng ? parseFloat(lng.toFixed(3)) : null,
+            uid: currentUser.uid,
+            hour: new Date().getHours()
+        },
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(){});
+}
+
+// ================================================================
+// VVhi CORE STATS — Evoluția Personală
+// ================================================================
+var _vvhiCoreStats = null;
+
+function initVVhiCoreStats(userData) {
+    if (!userData) return;
+    _vvhiCoreStats = userData.vvhi_core_stats || {
+        experience_level: 1,
+        total_xp: 0,
+        specialization: 'explorer',
+        missions_done: 0,
+        pulses_done: 0,
+        nexus_queries: 0
+    };
+    renderVVhiCoreLevel();
+}
+
+function updateVVhiCoreStats(action) {
+    if (!currentUser || !_vvhiCoreStats) return;
+    var xpGain = { 'mission_done': 15, 'pulse_connect': 10, 'nexus_query': 3 };
+    var gain = xpGain[action] || 5;
+    _vvhiCoreStats.total_xp = (_vvhiCoreStats.total_xp || 0) + gain;
+    if (action === 'mission_done') _vvhiCoreStats.missions_done = (_vvhiCoreStats.missions_done || 0) + 1;
+    if (action === 'pulse_connect') _vvhiCoreStats.pulses_done = (_vvhiCoreStats.pulses_done || 0) + 1;
+    if (action === 'nexus_query') _vvhiCoreStats.nexus_queries = (_vvhiCoreStats.nexus_queries || 0) + 1;
+    // Level up la fiecare 100 XP
+    var newLevel = Math.floor(_vvhiCoreStats.total_xp / 100) + 1;
+    var levelUp = newLevel > (_vvhiCoreStats.experience_level || 1);
+    _vvhiCoreStats.experience_level = newLevel;
+    // Specialization bazata pe actiuni
+    var m = _vvhiCoreStats.missions_done || 0;
+    var p = _vvhiCoreStats.pulses_done || 0;
+    var n = _vvhiCoreStats.nexus_queries || 0;
+    if (m >= p && m >= n) _vvhiCoreStats.specialization = 'explorer';
+    else if (p >= m && p >= n) _vvhiCoreStats.specialization = 'connector';
+    else _vvhiCoreStats.specialization = 'analyst';
+    // Salveaza in Firebase
+    db.collection('users').doc(currentUser.uid).update({
+        vvhi_core_stats: _vvhiCoreStats
+    }).catch(function(){});
+    if (levelUp) {
+        showToast('⬡ VVhi Core Level ' + newLevel + '! +' + gain + ' XP');
+    }
+    renderVVhiCoreLevel();
+}
+
+function renderVVhiCoreLevel() {
+    var el = document.getElementById('vvhi-core-widget');
+    if (!el || !_vvhiCoreStats) return;
+    var specs = { explorer: '🗺 Explorer', connector: '⬡ Connector', analyst: '🧠 Analyst', ghost: '👁 Ghost' };
+    el.innerHTML = [
+        '<div style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:3px;font-weight:700;margin-bottom:6px;">VVhi CORE</div>',
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">',
+            '<div style="font-size:13px;font-weight:700;color:#fff;">Level ' + (_vvhiCoreStats.experience_level||1) + '</div>',
+            '<div style="font-size:11px;color:rgba(255,255,255,0.4);">' + (specs[_vvhiCoreStats.specialization]||'Explorer') + '</div>',
+        '</div>',
+        '<div style="background:rgba(255,255,255,0.06);border-radius:6px;height:4px;overflow:hidden;">',
+            '<div style="height:100%;border-radius:6px;background:rgba(255,255,255,0.6);width:' + ((_vvhiCoreStats.total_xp % 100)) + '%;transition:width .5s;"></div>',
+        '</div>',
+        '<div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:4px;">' + (_vvhiCoreStats.total_xp||0) + ' XP total</div>',
+    ].join('');
+}
+
+// ================================================================
+// BON DIGITAL — Istoric tranzactii in profil user
+// ================================================================
+async function loadUserTransactions() {
+    if (!currentUser) return;
+    var el = document.getElementById('user-transactions-list');
+    if (!el) return;
+
+    try {
+        var snap = await db.collection('transactions')
+            .where('uid', '==', currentUser.uid)
+            .orderBy('timestamp', 'desc')
+            .limit(10)
+            .get();
+
+        if (snap.empty) {
+            el.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);text-align:center;padding:10px;">Nicio tranzacție încă.</div>';
+            return;
+        }
+
+        var html = '';
+        snap.forEach(function(doc) {
+            var t = doc.data();
+            var date = t.timestamp ? t.timestamp.toDate().toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+            var isPlus = t.amount > 0;
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">';
+            html += '<div><div style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:600;">' + (t.source||'VV Sistem') + '</div>';
+            html += '<div style="font-size:10px;color:rgba(255,255,255,0.2);">' + date + '</div></div>';
+            html += '<div style="font-size:14px;font-weight:900;color:' + (isPlus?'#34c759':'#ff3b30') + '">' + (isPlus?'+':'') + t.amount + ' VV</div>';
+            html += '</div>';
+        });
+        el.innerHTML = html;
+    } catch(e) {}
+}
+
+// ================================================================
+// PATCH loadUserData — integreaza VVhi Core + Bon Digital
+// ================================================================
+var _vvOrigLoadUserData2 = typeof loadUserData === 'function' ? loadUserData : null;
+if (_vvOrigLoadUserData2) {
+    loadUserData = function() {
+        _vvOrigLoadUserData2.apply(this, arguments);
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            db.collection('users').doc(currentUser.uid).get().then(function(doc) {
+                if (doc.exists) {
+                    var data = doc.data();
+                    // VVhi Core
+                    initVVhiCoreStats(data);
+                    // Founder
+                    if (data.isFounder && typeof loadFounderData === 'function') loadFounderData(data);
+                }
+            }).catch(function(){});
+            // Tranzactii
+            setTimeout(loadUserTransactions, 2000);
+        }
+    };
+}
+
+// ── Inchide Nexus la click pe backdrop ───────────────────────
+document.addEventListener('click', function(e) {
+    var modal = document.getElementById('nexus-modal');
+    var sheet = document.getElementById('nexus-sheet');
+    if (modal && modal.style.display === 'flex' && e.target === modal) {
+        closeNexus();
+    }
+});
+
+// ── Update VVhi la actiuni existente ─────────────────────────
+var _origAwardVVPulseBonus = typeof awardVVPulseBonus === 'function' ? awardVVPulseBonus : null;
+if (_origAwardVVPulseBonus) {
+    awardVVPulseBonus = function() {
+        var result = _origAwardVVPulseBonus.apply(this, arguments);
+        updateVVhiCoreStats('pulse_connect');
+        return result;
+    };
+}
+
 // Detecteaza Insideri in raza de 50m prin GPS + Firebase
 // Legal 100%, fara permisiuni extra, functioneaza pe orice iPhone
 // ================================================================
