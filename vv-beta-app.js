@@ -1378,170 +1378,346 @@ function hideMaintenanceScreen() {
 }
 
 // ================================================================
-// VV NOD — PROXIMITY SCAN ULTRASONIC
+// VV PULSE — GPS PROXIMITY (inlocuieste VV NOD ultrasonic)
+// Detecteaza Insideri in raza de 50m prin GPS + Firebase
+// Legal 100%, fara permisiuni extra, functioneaza pe orice iPhone
 // ================================================================
-var _vvNodActive = false, _vvNodAudioCtx = null, _vvNodAnalyser = null;
-var _vvNodMicStream = null, _vvNodOscillator = null, _vvNodTimer = null, _vvNodDetected = false;
-var VV_NOD_FREQ = 15000, VV_NOD_DURATION = 10000, VV_NOD_EMIT = 3000, VV_NOD_THRESHOLD = 0.015;
+var _vvPulseActive = false;
+var _vvPulseTimer = null;
+var VV_PULSE_RADIUS = 0.0005;   // ~50m in grade lat/lng
+var VV_PULSE_MAX_PER_DAY = 3;   // max 3 pulse-uri pe zi
+var VV_PULSE_BONUS = [10, 7, 5]; // VV Coins per pulse (1st, 2nd, 3rd)
+var VV_PULSE_TIMEOUT = 60000;   // 60 secunde timeout
+var VV_PULSE_CONFIRM_TIMEOUT = 30000; // 30 sec pentru handshake
 
+// ── INJECTEAZA BUTON ⬡ in sidebar ────────────────────────────
 function injectVVNodButton() {
     var sidebar = document.getElementById('action-hub');
     if (!sidebar || document.getElementById('fab-vv-nod')) return;
     var btn = document.createElement('div');
-    btn.id = 'fab-vv-nod'; btn.className = 'fab-btn'; btn.title = 'VV NOD Scan';
+    btn.id = 'fab-vv-nod';
+    btn.className = 'fab-btn';
+    btn.title = 'VV Pulse';
     btn.innerHTML = '<span style="font-size:18px;color:rgba(255,255,255,0.8);line-height:1;">⬡</span>';
-    btn.onclick = function() { showVVNodModeSelector(); };
+    btn.onclick = function() { startVVPulse(); };
     sidebar.insertBefore(btn, sidebar.firstChild);
 }
 
-// ── SELECTOR MOD: EMITE sau SCANEAZĂ ────────────────────────
-function showVVNodModeSelector() {
-    var old = document.getElementById('vv-nod-mode-modal');
-    if (old) old.remove();
-    var modal = document.createElement('div');
-    modal.id = 'vv-nod-mode-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:flex-end;justify-content:center;';
-    modal.innerHTML = '<div style="width:100%;max-width:430px;background:rgba(14,14,18,0.98);border:1px solid rgba(255,255,255,0.09);border-radius:26px 26px 0 0;padding:28px 22px calc(28px + env(safe-area-inset-bottom,0px));">' +
-        '<div style="width:32px;height:3px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 22px;"></div>' +
-        '<div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:4px;font-weight:700;margin-bottom:8px;text-align:center;">VV NOD · BETA</div>' +
-        '<div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:6px;text-align:center;">Cum vrei să scanezi?</div>' +
-        '<div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:24px;line-height:1.6;">Unul emite, celălalt scanează.<br>Nu simultan.</div>' +
-        '<div onclick="startVVNodMode(\'emit\')" style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' +
-            '<div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📡</div>' +
-            '<div><div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;">EMITE semnal</div><div style="font-size:11px;color:rgba(255,255,255,0.35);">Telefonul tău fluieră 10 secunde · Alt Insider scanează</div></div>' +
-        '</div>' +
-        '<div onclick="startVVNodMode(\'scan\')" style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;margin-bottom:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' +
-            '<div style="width:44px;height:44px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🔍</div>' +
-            '<div><div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;">SCANEAZĂ zonă</div><div style="font-size:11px;color:rgba(255,255,255,0.35);">Asculți 10 secunde · Alt Insider emite</div></div>' +
-        '</div>' +
-        '<button onclick="document.getElementById(\'vv-nod-mode-modal\').remove();" style="width:100%;padding:14px;background:rgba(255,255,255,0.06);border:none;border-radius:14px;color:rgba(255,255,255,0.4);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">ANULEAZĂ</button>' +
-    '</div>';
-    document.body.appendChild(modal);
+// ── VERIFICA LIMITA ZILNICA ───────────────────────────────────
+function getVVPulseUsesToday() {
+    var key = 'vv_pulse_' + new Date().toISOString().split('T')[0];
+    return parseInt(localStorage.getItem(key) || '0');
+}
+function incrementVVPulseUses() {
+    var key = 'vv_pulse_' + new Date().toISOString().split('T')[0];
+    localStorage.setItem(key, String(getVVPulseUsesToday() + 1));
+}
+function canUseVVPulse() {
+    return getVVPulseUsesToday() < VV_PULSE_MAX_PER_DAY;
 }
 
-async function startVVNodMode(mode) {
-    var modeModal = document.getElementById('vv-nod-mode-modal');
-    if (modeModal) modeModal.remove();
-    if (_vvNodActive) return;
-    _vvNodActive = true; _vvNodDetected = false;
-    showVVNodOverlay('init');
+// ── START VV PULSE ────────────────────────────────────────────
+async function startVVPulse() {
+    if (_vvPulseActive) return;
 
-    // Microfon necesar pentru ambele moduri
+    // Verifica limita zilnica
+    if (!canUseVVPulse()) {
+        showToast('⬡ Ai folosit cele ' + VV_PULSE_MAX_PER_DAY + ' Pulse-uri de azi. Revin mâine.');
+        return;
+    }
+
+    // Verifica GPS
+    if (!navigator.geolocation) {
+        showToast('GPS indisponibil pe acest dispozitiv.');
+        return;
+    }
+
+    _vvPulseActive = true;
+    showVVPulseOverlay('scanning');
+
+    // Obtine GPS proaspat
+    var pos;
     try {
-        var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        _vvNodMicStream = stream;
-    } catch(e) { _vvNodActive = false; showVVNodOverlay('remove'); showToast('🎙 Microfonul e necesar pentru VV NOD.'); return; }
+        pos = await new Promise(function(resolve, reject) {
+            navigator.geolocation.getCurrentPosition(
+                function(p) { resolve(p); },
+                function(e) { reject(e); },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        });
+    } catch(e) {
+        _vvPulseActive = false;
+        showVVPulseOverlay('remove');
+        showToast('GPS indisponibil. Activeaza locatia.');
+        return;
+    }
 
-    try { _vvNodAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch(e) { _vvNodActive = false; stopVVNodScan(); showToast('Audio indisponibil.'); return; }
+    var myLat = parseFloat(pos.coords.latitude.toFixed(4));  // rotunjit pt privacy
+    var myLng = parseFloat(pos.coords.longitude.toFixed(4));
+    var alias = localStorage.getItem('vv_alias') || 'INSIDER';
+    var uid = currentUser ? currentUser.uid : null;
+    if (!uid) { _vvPulseActive = false; showVVPulseOverlay('remove'); return; }
 
-    if (mode === 'emit') {
-        // EMITE 10 secunde, nu ascultă
-        updateVVNodOverlay('emit');
-        _vvNodOscillator = _vvNodAudioCtx.createOscillator();
-        var gainNode = _vvNodAudioCtx.createGain();
-        _vvNodOscillator.type = 'sine';
-        _vvNodOscillator.frequency.setValueAtTime(VV_NOD_FREQ, _vvNodAudioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.4, _vvNodAudioCtx.currentTime);
-        _vvNodOscillator.connect(gainNode); gainNode.connect(_vvNodAudioCtx.destination);
-        _vvNodOscillator.start();
-        // Progress bar
-        var pct = 0;
-        var progInterval = setInterval(function() {
-            pct += 1;
-            var p = document.getElementById('vv-nod-progress');
-            if (p) p.style.width = pct + '%';
-            if (pct >= 100) clearInterval(progInterval);
-        }, 100);
-        _vvNodTimer = setTimeout(function() {
-            clearInterval(progInterval);
-            if (_vvNodOscillator) { try { _vvNodOscillator.stop(); } catch(e) {} _vvNodOscillator = null; }
-            var s = document.getElementById('vv-nod-status');
-            var sub = document.getElementById('vv-nod-sub');
-            if (s) s.textContent = 'Semnal emis ✓';
-            if (sub) sub.textContent = 'Cere celuilalt să scaneze acum';
-            logVVNodEvent('emit_complete');
-            setTimeout(function() { stopVVNodScan(); }, 1800);
-        }, 10000);
+    // Scrie pozitia in Firebase cu TTL de 90 secunde
+    var pulseRef = db.collection('vv_pulse').doc(uid);
+    var expiresAt = new Date(Date.now() + 90000);
+    try {
+        await pulseRef.set({
+            uid: uid,
+            alias: alias,
+            lat: myLat,
+            lng: myLng,
+            activatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
+            vveilConsent: localStorage.getItem('vv_vveil_consent') || 'auto'
+        });
+    } catch(e) {
+        _vvPulseActive = false;
+        showVVPulseOverlay('remove');
+        showToast('Eroare conexiune. Incearca din nou.');
+        return;
+    }
 
-    } else {
-        // SCANEAZĂ 10 secunde
-        updateVVNodOverlay('listen');
-        var source = _vvNodAudioCtx.createMediaStreamSource(_vvNodMicStream);
-        _vvNodAnalyser = _vvNodAudioCtx.createAnalyser();
-        _vvNodAnalyser.fftSize = 8192; _vvNodAnalyser.smoothingTimeConstant = 0.8;
-        source.connect(_vvNodAnalyser);
-        var dataArray = new Float32Array(_vvNodAnalyser.frequencyBinCount);
-        var pct2 = 0;
-        var progInterval2 = setInterval(function() {
-            pct2 += 1;
-            var p = document.getElementById('vv-nod-progress');
-            if (p) p.style.width = pct2 + '%';
-            if (pct2 >= 100) clearInterval(progInterval2);
-        }, 100);
-        var checkInterval = setInterval(function() {
-            if (!_vvNodActive || !_vvNodAnalyser) { clearInterval(checkInterval); return; }
-            _vvNodAnalyser.getFloatFrequencyData(dataArray);
-            var binIndex = Math.round(VV_NOD_FREQ / (_vvNodAudioCtx.sampleRate / _vvNodAnalyser.fftSize));
-            var maxVal = -Infinity;
-            for (var i = binIndex-3; i <= binIndex+3; i++) {
-                if (i >= 0 && i < dataArray.length) { var linear = Math.pow(10, dataArray[i]/20); if (linear > maxVal) maxVal = linear; }
+    // Cauta alti Insideri in raza
+    searchNearbyInsiders(myLat, myLng, uid, alias);
+
+    // Timeout global
+    _vvPulseTimer = setTimeout(function() {
+        endVVPulse(uid, false);
+    }, VV_PULSE_TIMEOUT);
+}
+
+// ── CAUTA INSIDERI IN RAZA ────────────────────────────────────
+async function searchNearbyInsiders(myLat, myLng, myUid, myAlias) {
+    try {
+        var now = new Date();
+        // Cauta useri cu pulse activ
+        var snap = await db.collection('vv_pulse')
+            .where('expiresAt', '>', firebase.firestore.Timestamp.fromDate(now))
+            .get();
+
+        var nearby = [];
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            if (doc.id === myUid) return; // Nu eu
+            var latDiff = Math.abs(d.lat - myLat);
+            var lngDiff = Math.abs(d.lng - myLng);
+            if (latDiff < VV_PULSE_RADIUS && lngDiff < VV_PULSE_RADIUS) {
+                nearby.push({ uid: doc.id, alias: d.alias || 'INSIDER' });
             }
-            if (maxVal > VV_NOD_THRESHOLD && !_vvNodDetected) {
-                _vvNodDetected = true; clearInterval(checkInterval); clearInterval(progInterval2);
-                updateVVNodOverlay('found'); logVVNodEvent('detected');
-                setTimeout(function() { stopVVNodScan(); showToast('⬡ Insider VV detectat în proximitate!'); }, 2000);
-            }
-        }, 200);
-        _vvNodTimer = setTimeout(function() {
-            clearInterval(checkInterval); clearInterval(progInterval2);
-            if (!_vvNodDetected) { updateVVNodOverlay('notfound'); logVVNodEvent('scan_empty'); }
-            setTimeout(function() { stopVVNodScan(); }, 1800);
-        }, 10000);
+        });
+
+        if (nearby.length === 0) {
+            // Continua sa scaneze pana la timeout
+            showVVPulseOverlay('scanning');
+            // Re-scanare la 5 secunde
+            setTimeout(function() {
+                if (_vvPulseActive) searchNearbyInsiders(myLat, myLng, myUid, myAlias);
+            }, 5000);
+            return;
+        }
+
+        // Gasit! Trimite handshake
+        var target = nearby[0];
+        showVVPulseOverlay('found', target.alias);
+
+        // Scrie handshake request in Firebase
+        await db.collection('vv_pulse_handshake').add({
+            from: myUid,
+            fromAlias: myAlias,
+            to: target.uid,
+            toAlias: target.alias,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expiresAt: firebase.firestore.Timestamp.fromDate(new Date(Date.now() + VV_PULSE_CONFIRM_TIMEOUT))
+        });
+
+        // Asculta confirmare
+        listenForHandshakeConfirm(myUid, target);
+
+    } catch(e) {
+        console.warn('[VV Pulse]', e);
+        if (_vvPulseActive) {
+            setTimeout(function() {
+                if (_vvPulseActive) searchNearbyInsiders(myLat, myLng, myUid, myAlias);
+            }, 5000);
+        }
     }
 }
 
-function showVVNodOverlay(phase) {
-    var old = document.getElementById('vv-nod-overlay');
+// ── ASCULTA CONFIRMARE HANDSHAKE ─────────────────────────────
+function listenForHandshakeConfirm(myUid, target) {
+    var listener = db.collection('vv_pulse_handshake')
+        .where('from', '==', target.uid)
+        .where('to', '==', myUid)
+        .where('status', '==', 'confirmed')
+        .onSnapshot(function(snap) {
+            if (!snap.empty && _vvPulseActive) {
+                listener(); // detach
+                clearTimeout(_vvPulseTimer);
+                awardVVPulseBonus(myUid, target);
+            }
+        });
+
+    // Timeout handshake
+    setTimeout(function() {
+        try { listener(); } catch(e) {}
+        if (_vvPulseActive) {
+            showVVPulseOverlay('timeout');
+            setTimeout(function() { endVVPulse(myUid, false); }, 2000);
+        }
+    }, VV_PULSE_CONFIRM_TIMEOUT);
+}
+
+// ── ACORDA BONUS VV COINS ─────────────────────────────────────
+async function awardVVPulseBonus(myUid, target) {
+    var usesAzi = getVVPulseUsesToday();
+    var bonus = VV_PULSE_BONUS[Math.min(usesAzi, VV_PULSE_BONUS.length - 1)];
+    incrementVVPulseUses();
+
+    try {
+        var batch = db.batch();
+        // Bonus pentru amandoi
+        batch.update(db.collection('users').doc(myUid), {
+            balance: firebase.firestore.FieldValue.increment(bonus)
+        });
+        batch.update(db.collection('users').doc(target.uid), {
+            balance: firebase.firestore.FieldValue.increment(bonus)
+        });
+        // Log in vvhi_dataset
+        batch.set(db.collection('vvhi_dataset').doc(), {
+            action: 'VV_PULSE_CONNECT',
+            context: {
+                userA: myUid,
+                userB: target.uid,
+                aliasA: localStorage.getItem('vv_alias') || 'INSIDER',
+                aliasB: target.alias,
+                bonus: bonus
+            },
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await batch.commit();
+    } catch(e) { console.warn('[VV Pulse bonus]', e); }
+
+    showVVPulseOverlay('connected', target.alias, bonus);
+    endVVPulse(myUid, true);
+}
+
+// ── END PULSE ─────────────────────────────────────────────────
+async function endVVPulse(uid, success) {
+    _vvPulseActive = false;
+    clearTimeout(_vvPulseTimer);
+    // Sterge pozitia din Firebase
+    try { await db.collection('vv_pulse').doc(uid).delete(); } catch(e) {}
+    if (!success) {
+        setTimeout(function() { showVVPulseOverlay('remove'); }, 1500);
+    } else {
+        setTimeout(function() { showVVPulseOverlay('remove'); }, 3000);
+    }
+}
+
+// ── OVERLAY VV PULSE ─────────────────────────────────────────
+function showVVPulseOverlay(phase, targetAlias, bonus) {
+    var old = document.getElementById('vv-pulse-overlay');
     if (old && phase === 'remove') { old.remove(); return; }
-    if (old) { updateVVNodOverlay(phase); return; }
+    if (old) { updateVVPulseOverlay(phase, targetAlias, bonus); return; }
+
+    var remaining = VV_PULSE_MAX_PER_DAY - getVVPulseUsesToday();
     var overlay = document.createElement('div');
-    overlay.id = 'vv-nod-overlay';
+    overlay.id = 'vv-pulse-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;';
-    overlay.innerHTML = '<style>@keyframes vvNodFadeIn{from{opacity:0}to{opacity:1}}@keyframes vvRing1{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:.15}}@keyframes vvRing2{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.2);opacity:.1}}@keyframes vvRing3{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.25);opacity:.06}}@keyframes vvRing4{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(1.3);opacity:.03}}@keyframes vvCorePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.2)}50%{box-shadow:0 0 0 12px rgba(255,255,255,0)}}@keyframes vvScanLine{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style><div id="vv-nod-radar" style="position:relative;width:220px;height:220px;margin-bottom:40px;"><div style="position:absolute;inset:-44px;border-radius:50%;border:1px solid rgba(255,255,255,0.04);animation:vvRing4 2.4s ease-in-out infinite .9s;"></div><div style="position:absolute;inset:-22px;border-radius:50%;border:1px solid rgba(255,255,255,0.07);animation:vvRing3 2.4s ease-in-out infinite .6s;"></div><div style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,0.1);animation:vvRing2 2.4s ease-in-out infinite .3s;"></div><div style="position:absolute;inset:22px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);animation:vvRing1 2.4s ease-in-out infinite;"></div><div id="vv-scan-line" style="position:absolute;inset:0;border-radius:50%;overflow:hidden;"><div style="position:absolute;top:50%;left:50%;width:50%;height:1px;transform-origin:left center;background:linear-gradient(90deg,rgba(255,255,255,0.4),transparent);animation:vvScanLine 2s linear infinite;"></div></div><div id="vv-nod-core" style="position:absolute;inset:44px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;animation:vvCorePulse 2s infinite;"><span style="font-size:28px;color:rgba(255,255,255,0.9);">⬡</span></div><div id="vv-nod-dots" style="position:absolute;inset:0;border-radius:50%;pointer-events:none;"></div></div><div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:4px;font-weight:700;margin-bottom:10px;text-align:center;">VV NOD · BETA</div><div id="vv-nod-status" style="font-size:17px;font-weight:800;color:#fff;letter-spacing:.5px;margin-bottom:8px;text-align:center;min-height:26px;">Inițializare...</div><div id="vv-nod-sub" style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;max-width:260px;margin-bottom:32px;">Se pregătește scanarea...</div><div style="width:200px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:32px;"><div id="vv-nod-progress" style="height:100%;width:0%;border-radius:2px;background:rgba(255,255,255,0.6);transition:width .3s linear;"></div></div><div onclick="stopVVNodScan()" style="padding:12px 32px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:12px;color:rgba(255,255,255,0.3);cursor:pointer;letter-spacing:1px;font-weight:600;">ANULEAZĂ</div><div style="position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));font-size:9px;color:rgba(255,255,255,0.12);text-align:center;letter-spacing:1px;max-width:280px;line-height:1.6;">Semnal audio ultrasonic · Fără înregistrare · Opt-in manual<br>Fază de testare Beta · VV NOD 1.0 în dezvoltare</div>';
+    overlay.innerHTML = [
+        '<style>',
+        '@keyframes vpFadeIn{from{opacity:0}to{opacity:1}}',
+        '@keyframes vpRing1{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.12);opacity:.15}}',
+        '@keyframes vpRing2{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.18);opacity:.1}}',
+        '@keyframes vpRing3{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.24);opacity:.06}}',
+        '@keyframes vpCore{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.2)}50%{box-shadow:0 0 0 14px rgba(255,255,255,0)}}',
+        '@keyframes vpScan{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}',
+        '</style>',
+        // Radar
+        '<div style="position:relative;width:220px;height:220px;margin-bottom:40px;">',
+            '<div style="position:absolute;inset:-44px;border-radius:50%;border:1px solid rgba(255,255,255,0.04);animation:vpRing3 2.4s ease-in-out infinite .9s;"></div>',
+            '<div style="position:absolute;inset:-22px;border-radius:50%;border:1px solid rgba(255,255,255,0.07);animation:vpRing2 2.4s ease-in-out infinite .6s;"></div>',
+            '<div style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,0.1);animation:vpRing1 2.4s ease-in-out infinite .3s;"></div>',
+            // Linie scan
+            '<div style="position:absolute;inset:0;border-radius:50%;overflow:hidden;">',
+                '<div style="position:absolute;top:50%;left:50%;width:50%;height:1px;transform-origin:left center;background:linear-gradient(90deg,rgba(255,255,255,0.4),transparent);animation:vpScan 2s linear infinite;"></div>',
+            '</div>',
+            // Core
+            '<div id="vvp-core" style="position:absolute;inset:44px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;animation:vpCore 2s infinite;">',
+                '<span style="font-size:28px;color:rgba(255,255,255,0.9);">⬡</span>',
+            '</div>',
+            '<div id="vvp-dots" style="position:absolute;inset:0;border-radius:50%;pointer-events:none;"></div>',
+        '</div>',
+        // Text
+        '<div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:4px;font-weight:700;margin-bottom:10px;text-align:center;">VV PULSE · BETA</div>',
+        '<div id="vvp-status" style="font-size:17px;font-weight:800;color:#fff;letter-spacing:.5px;margin-bottom:8px;text-align:center;min-height:26px;">Se scanează zona...</div>',
+        '<div id="vvp-sub" style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;max-width:260px;margin-bottom:32px;">Detectare GPS · Raza ~50m</div>',
+        // Progress
+        '<div style="width:200px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:32px;">',
+            '<div id="vvp-progress" style="height:100%;width:0%;border-radius:2px;background:rgba(255,255,255,0.6);transition:width .5s linear;"></div>',
+        '</div>',
+        // Pulsuri ramase
+        '<div style="font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:20px;letter-spacing:1px;">' + remaining + ' Pulse-uri rămase azi</div>',
+        // Anuleaza
+        '<div id="vvp-cancel-btn" onclick="cancelVVPulse()" style="padding:12px 32px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:12px;color:rgba(255,255,255,0.3);cursor:pointer;letter-spacing:1px;font-weight:600;-webkit-tap-highlight-color:transparent;">ANULEAZĂ</div>',
+        // Legal
+        '<div style="position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));font-size:9px;color:rgba(255,255,255,0.12);text-align:center;letter-spacing:1px;max-width:280px;line-height:1.6;">Detectare GPS anonimizată · Coordonate rotunjite · GDPR</div>',
+    ].join('');
+
     document.body.appendChild(overlay);
+    // Animeaza progress
+    var pct = 0;
+    var pi = setInterval(function() {
+        pct += 100/60; // 60 secunde
+        var p = document.getElementById('vvp-progress');
+        if (p) p.style.width = Math.min(pct,100) + '%';
+        if (pct >= 100 || !_vvPulseActive) clearInterval(pi);
+    }, 1000);
 }
 
-function updateVVNodOverlay(phase) {
-    var status=document.getElementById('vv-nod-status'), sub=document.getElementById('vv-nod-sub'), core=document.getElementById('vv-nod-core'), progress=document.getElementById('vv-nod-progress'), scanLine=document.getElementById('vv-scan-line');
-    if (phase==='emit'){if(status)status.textContent='Se emite semnal VV...';if(sub)sub.textContent='Frecvență ultrasonică activă · 15kHz';if(core)core.style.background='rgba(255,255,255,0.12)';if(progress)progress.style.width='30%';}
-    else if(phase==='listen'){if(status)status.textContent='Se ascultă rețeaua...';if(sub)sub.textContent='Scanare proximitate · ~10 metri';if(core)core.style.background='rgba(255,255,255,0.06)';if(progress)progress.style.width='65%';}
-    else if(phase==='found'){if(status){status.textContent='Insider detectat ⬡';status.style.color='#fff';}if(sub)sub.textContent='VV Network activ în proximitate';if(core){core.style.background='rgba(255,255,255,0.15)';core.style.border='1px solid rgba(255,255,255,0.5)';}if(progress)progress.style.width='100%';addNodDot();}
-    else if(phase==='notfound'){if(status)status.textContent='Niciun Insider în rază';if(sub)sub.textContent='Încearcă într-o zonă cu mai mulți Insideri VV';if(progress)progress.style.width='100%';}
+function updateVVPulseOverlay(phase, targetAlias, bonus) {
+    var status = document.getElementById('vvp-status');
+    var sub = document.getElementById('vvp-sub');
+    var core = document.getElementById('vvp-core');
+    var cancelBtn = document.getElementById('vvp-cancel-btn');
+    var dots = document.getElementById('vvp-dots');
+
+    if (phase === 'found') {
+        if (status) status.textContent = 'Insider detectat ⬡';
+        if (sub) sub.innerHTML = '<strong style="color:#fff;">' + (targetAlias||'INSIDER') + '</strong> e în proximitate<br>Confirmare în curs...';
+        if (core) { core.style.background = 'rgba(255,255,255,0.15)'; core.style.border = '1px solid rgba(255,255,255,0.5)'; }
+        // Adauga dot
+        if (dots) {
+            var dot = document.createElement('div');
+            var angle = Math.random() * Math.PI * 2;
+            var r = 70 + Math.random() * 20;
+            dot.style.cssText = 'position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 14px rgba(255,255,255,0.7);left:' + (110+Math.cos(angle)*r-5) + 'px;top:' + (110+Math.sin(angle)*r-5) + 'px;';
+            dots.appendChild(dot);
+        }
+    } else if (phase === 'connected') {
+        if (status) { status.textContent = 'Conectat! +' + bonus + ' VV ⬡'; status.style.color = '#fff'; }
+        if (sub) sub.innerHTML = 'Conexiune cu <strong style="color:#fff;">' + (targetAlias||'INSIDER') + '</strong> confirmată!';
+        if (core) { core.style.background = 'rgba(255,255,255,0.2)'; core.style.border = '1px solid rgba(255,255,255,0.7)'; }
+        if (cancelBtn) cancelBtn.style.display = 'none';
+    } else if (phase === 'timeout') {
+        if (status) status.textContent = 'Niciun Insider în rază';
+        if (sub) sub.textContent = 'Încearcă în zone cu mai mulți Insideri VV';
+    }
 }
 
-function addNodDot() {
-    var dotsEl=document.getElementById('vv-nod-dots'); if(!dotsEl) return;
-    var angle=Math.random()*Math.PI*2, r=65+Math.random()*25, cx=110+Math.cos(angle)*r, cy=110+Math.sin(angle)*r;
-    var dot=document.createElement('div');
-    dot.style.cssText='position:absolute;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 12px rgba(255,255,255,0.6);left:'+(cx-4)+'px;top:'+(cy-4)+'px;';
-    dotsEl.appendChild(dot);
+function cancelVVPulse() {
+    _vvPulseActive = false;
+    clearTimeout(_vvPulseTimer);
+    if (currentUser) {
+        db.collection('vv_pulse').doc(currentUser.uid).delete().catch(function(){});
+    }
+    showVVPulseOverlay('remove');
 }
 
-// startVVNodScan inlocuit de startVVNodMode cu selector EMITE/SCANEAZĂ
-function startVVNodScan() { showVVNodModeSelector(); }
-
-function stopVVNodScan() {
-    _vvNodActive = false; clearTimeout(_vvNodTimer);
-    if (_vvNodOscillator) { try { _vvNodOscillator.stop(); } catch(e) {} _vvNodOscillator = null; }
-    if (_vvNodMicStream) { _vvNodMicStream.getTracks().forEach(function(t) { t.stop(); }); _vvNodMicStream = null; }
-    if (_vvNodAudioCtx) { try { _vvNodAudioCtx.close(); } catch(e) {} _vvNodAudioCtx = null; }
-    _vvNodAnalyser = null; showVVNodOverlay('remove');
-}
-
-function logVVNodEvent(detected) {
-    if (typeof db === 'undefined' || !currentUser) return;
-    db.collection('vvhi_dataset').add({ action: 'VV_NOD_SCAN', context: { detected, frequency: VV_NOD_FREQ, uid: currentUser.uid, alias: localStorage.getItem('vv_alias')||'INSIDER' }, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(function(){});
-}
+// Alias pentru compatibilitate cu HTML
+function startVVNodScan() { startVVPulse(); }
+function stopVVNodScan() { cancelVVPulse(); }
 
 setTimeout(injectVVNodButton, 2500);
