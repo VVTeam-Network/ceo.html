@@ -22,7 +22,18 @@
     <link rel="stylesheet" href="vv-beta-style.css">
 
     <style>
-    /* ── FOUNDER STYLES — Jobs/minimalist ── */
+    /* ── SPLASH SCREEN NOU ── */
+    #splash-screen {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+        padding-top: max(60px, env(safe-area-inset-top, 40px));
+    }
     .founder-dot {
         display: inline-block;
         width: 6px; height: 6px;
@@ -218,34 +229,119 @@
 
 <!-- ========== SPLASH SCREEN ========== -->
 <div id="splash-screen">
-    <div class="vv-massive-logo" style="letter-spacing:18px;padding-left:18px;">VV</div>
-    <div class="glass-premium">PREMIUM BETA</div>
-    <div class="slogan-text">THE ERA OF FAKE REALITY IS OVER</div>
-    <div class="rules-container">
-        <h3>ACORDUL DE UTILIZARE VV BETA</h3>
-        <div style="font-size:11px;color:rgba(212,175,55,0.7);letter-spacing:2px;margin-bottom:14px;text-align:center;">ADEVĂRUL ÎN TIMP REAL. ZERO FAKE. ZERO FILTRE.</div>
-        <ul>
-            <li><strong>1. PURĂ REALITATE — LIVE ONLY:</strong> Este strict interzisă utilizarea filtrelor, materialelor preînregistrate sau a conținutului din galerie. Tot ce transmiți prin VV trebuie capturat live, la fața locului, în timp real.</li>
-            <li><strong>2. RESPECTUL PENTRU INTIMITATE:</strong> Ești 100% responsabil pentru ceea ce captezi. Este strict interzisă fotografierea persoanelor fără consimțământ și filmarea prin ferestre sau în proprietăți private.</li>
-            <li><strong>3. SIGURANȚA TA — PRIORITATEA ZERO:</strong> Nicio misiune nu merită un risc. Interzisă pătrunderea ilegală pe proprietăți private. VV nu răspunde pentru accidentări sau amenzi.</li>
-            <li><strong>4. TOLERANȚĂ ZERO — FRAUDĂ:</strong> Orice tentativă de fraudă duce la ban permanent pe dispozitiv și anularea balanței.</li>
-            <li><strong>5. TRANSPARENȚĂ TOTALĂ — GDPR:</strong> VV funcționează pe principiul „Aici și Acum". Conținutul vizual se autodistruge după validare. Datele sunt procesate conform Regulamentului UE 679/2016.</li>
-            <li><strong>6. INDEPENDENȚĂ & DREPTURI DE AUTOR:</strong> Îți păstrezi drepturile de autor asupra dovezilor, dar oferi VV dreptul de afișare. Câștigurile intră în responsabilitatea ta fiscală.</li>
-            <li><strong>7. VV COINS — ECONOMIA BETA:</strong> Sistem de recompensă intern, exclusiv pentru Beta. Nu constituie monedă electronică. Conversia în valută fiat — exclusiv la VV 1.0.</li>
-            <li><strong>8. CONȚINUT ILEGAL — INTERZIS:</strong> Strict interzis. VVTeam colaborează cu autoritățile. Responsabilitatea revine exclusiv utilizatorului.</li>
-            <li><strong>9. VÂRSTA MINIMĂ — 18 ANI:</strong> Utilizarea este permisă exclusiv persoanelor cu vârsta de minimum 18 ani.</li>
-            <li><strong>10. VV PULSE — DETECTARE PROXIMITATE:</strong> Aplicația folosește GPS anonimizat pentru a detecta alți Insideri VV în raza de ~50m. Coordonatele sunt rotunjite și șterse automat după 90 secunde. Activarea e manuală, opt-in, maxim 3 utilizări pe zi. Această funcție există în faza Beta ca testare — în viitor VV NOD va crea o rețea independentă de internet. Datele procesate sunt exclusiv semnale de prezență anonimizată.</li>
-            <li><strong>11. JURISDICȚIE & DSA:</strong> Guvernat de legislația română și Actul privind Serviciile Digitale al UE. VVTeam acționează exclusiv ca intermediar tehnic (Safe Harbor).</li>
-        </ul>
-        <div style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:14px;line-height:1.6;text-align:center;">Prin apăsarea butonului „DECRIPTEZ & INTRU", confirmi că ai înțeles și îți asumi responsabilitatea legală pentru activitatea ta în VV.</div>
+
+    <!-- ── HERO SECTION ── -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 0 32px;">
+
+        <!-- Logo VV principal -->
+        <div style="position:relative;margin-bottom:16px;">
+            <!-- Glow subtil în spate -->
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;background:radial-gradient(circle,rgba(255,255,255,0.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
+            <div style="font-size:86px;font-weight:900;color:#fff;letter-spacing:12px;padding-left:12px;line-height:1;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;">VV</div>
+        </div>
+
+        <!-- Tagline principal -->
+        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">A hybrid experience</div>
+
+        <!-- VV Beta byline -->
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.12);border-radius:20px;">
+            <div style="width:5px;height:5px;border-radius:50%;background:#34c759;box-shadow:0 0 6px rgba(52,199,89,0.8);"></div>
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:2px;">by VV Beta</span>
+        </div>
     </div>
-    <div class="tc-box">
-        <input type="checkbox" id="tc-checkbox" class="custom-checkbox">
-        <label for="tc-checkbox" class="custom-label">Am citit, înțeles și accept în totalitate Regulamentul și Termenii Legali VV Beta. Îmi asum responsabilitatea deplină.</label>
+
+    <!-- ── ACORD DE UTILIZARE — compact, scrollabil ── -->
+    <div style="
+        width:100%;
+        background:rgba(255,255,255,0.03);
+        border:0.5px solid rgba(255,255,255,0.08);
+        border-radius:20px 20px 0 0;
+        padding:20px 20px 0;
+        max-height:42vh;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+    ">
+        <!-- Header acord -->
+        <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:4px;">ACORD DE UTILIZARE</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.5;">Citește înainte de a intra în ecosistemul VV.</div>
+        </div>
+
+        <!-- Articole — compact -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">📸</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">Doar realitate live</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Fără filtre, fără galerie. Tot conținutul trebuie capturat live, la fața locului.</div></div>
+            </div>
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">🛡</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">Respect & Intimitate</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Ești 100% responsabil. Interzisă fotografierea persoanelor fără consimțământ.</div></div>
+            </div>
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">⚡</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">Toleranță zero fraudă</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Orice fraudă = ban permanent pe dispozitiv și anularea balanței VV.</div></div>
+            </div>
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">📍</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">VV Pulse — GPS anonim</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Detectare proximitate ~50m. Coordonate rotunjite, șterse după 90s. Opt-in manual.</div></div>
+            </div>
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">⬡</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">VV Coins — puncte interne</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Nu sunt monedă electronică. Sistem de loialitate intern, exclusiv Beta.</div></div>
+            </div>
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">🔞</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">Vârsta minimă 18 ani</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Prin continuare confirmi că ai minimum 18 ani. VV Charter Art. 8.</div></div>
+            </div>
+
+            <div style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;">
+                <div style="font-size:16px;flex-shrink:0;margin-top:1px;">⚖️</div>
+                <div><div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;">GDPR & DSA</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">Conform Reg. UE 679/2016 și DSA. VVTeam — intermediar tehnic (Safe Harbor).</div></div>
+            </div>
+        </div>
+
+        <!-- Gradient fade bottom -->
+        <div style="height:24px;background:linear-gradient(transparent,rgba(0,0,0,0.8));margin:0 -20px;pointer-events:none;"></div>
     </div>
-    <input type="text" class="key-input" id="access-key" placeholder="CHEIE DE ACCES">
-    <button class="btn-main" id="btn-accept" onclick="try{startBootSequence();}catch(e){document.getElementById('key-error-msg-fallback').textContent='Eroare: '+e.message;document.getElementById('key-error-msg-fallback').style.display='block';}">DECRIPTEZ & INTRU</button>
-    <div id="key-error-msg-fallback" style="display:none;color:#ff3b30;font-size:13px;text-align:center;margin-top:10px;padding:10px;background:rgba(255,59,48,0.1);border-radius:10px;"></div>
+
+    <!-- ── ACTIUNI — checkbox + cheie + buton ── -->
+    <div style="width:100%;background:#000;padding:16px 20px calc(16px + env(safe-area-inset-bottom,0px));">
+
+        <!-- Checkbox acord -->
+        <label style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;cursor:pointer;padding:12px 14px;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;">
+            <input type="checkbox" id="tc-checkbox" class="custom-checkbox" style="margin-top:2px;flex-shrink:0;width:18px;height:18px;accent-color:#fff;cursor:pointer;">
+            <span style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;">Am citit și accept acordul de utilizare VV. Confirm că am <strong style="color:rgba(255,255,255,0.75);">minimum 18 ani</strong> și îmi asum responsabilitatea legală.</span>
+        </label>
+
+        <!-- Input cheie -->
+        <div style="position:relative;margin-bottom:12px;">
+            <input type="text" class="key-input" id="access-key"
+                placeholder="CHEIE DE ACCES"
+                style="width:100%;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.12);border-radius:14px;padding:15px 18px;color:#fff;font-size:15px;font-family:-apple-system,monospace;letter-spacing:2px;outline:none;-webkit-appearance:none;text-transform:uppercase;">
+        </div>
+
+        <!-- Buton principal -->
+        <button class="btn-main" id="btn-accept"
+            onclick="try{startBootSequence();}catch(e){document.getElementById('key-error-msg-fallback').textContent='Eroare: '+e.message;document.getElementById('key-error-msg-fallback').style.display='block';}"
+            style="width:100%;padding:17px;background:rgba(255,255,255,0.95);color:#000;border:none;border-radius:16px;font-size:15px;font-weight:800;letter-spacing:0.5px;cursor:pointer;font-family:-apple-system,sans-serif;min-height:54px;-webkit-appearance:none;transition:opacity .15s;">
+            Intră în VV
+        </button>
+
+        <div id="key-error-msg-fallback" style="display:none;color:#ff3b30;font-size:12px;text-align:center;margin-top:10px;padding:10px;background:rgba(255,59,48,0.08);border:0.5px solid rgba(255,59,48,0.2);border-radius:10px;"></div>
+
+        <!-- Legal footer -->
+        <div style="text-align:center;margin-top:14px;">
+            <span style="font-size:10px;color:rgba(255,255,255,0.15);line-height:1.6;">VV · A hybrid experience by VV Beta<br>GDPR · DSA · © 2026 VV Technologies</span>
+        </div>
+    </div>
+
 </div>
 
 <!-- ========== ALIAS SCREEN ========== -->
