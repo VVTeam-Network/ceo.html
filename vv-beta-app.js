@@ -1750,6 +1750,117 @@ if (_origAwardVVPulseBonus) {
     };
 }
 
+// ================================================================
+// VOICE INPUT — Nexus ascultă
+// ================================================================
+var _voiceRecognition = null;
+var _voiceActive = false;
+
+function toggleVoiceInput() {
+    var micBtn = document.getElementById('nexus-mic-btn');
+    var statusEl = document.getElementById('nexus-voice-status');
+    var inp = document.getElementById('nexus-input');
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showToast('Voice input indisponibil pe acest browser.'); return;
+    }
+    if (_voiceActive) { stopVoiceInput(); return; }
+    _voiceActive = true;
+    if (micBtn) { micBtn.style.background='rgba(255,59,48,0.2)'; micBtn.style.border='1px solid rgba(255,59,48,0.4)'; micBtn.textContent='⏹'; }
+    if (statusEl) statusEl.style.display='block';
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    _voiceRecognition = new SR();
+    _voiceRecognition.lang='ro-RO'; _voiceRecognition.continuous=false; _voiceRecognition.interimResults=true; _voiceRecognition.maxAlternatives=1;
+    _voiceRecognition.onresult = function(event) {
+        var transcript = event.results[event.results.length-1][0].transcript;
+        if (inp) { inp.value=transcript; nexusInputChange(inp); }
+        if (event.results[event.results.length-1].isFinal) stopVoiceInput();
+    };
+    _voiceRecognition.onerror = function(e) { stopVoiceInput(); if(e.error!=='no-speech') showToast('Eroare microfon: '+e.error); };
+    _voiceRecognition.onend = function() { stopVoiceInput(); };
+    try { _voiceRecognition.start(); } catch(e) { stopVoiceInput(); }
+}
+
+function stopVoiceInput() {
+    _voiceActive = false;
+    var micBtn=document.getElementById('nexus-mic-btn'); var statusEl=document.getElementById('nexus-voice-status');
+    if(micBtn){micBtn.style.background='rgba(255,255,255,0.06)';micBtn.style.border='1px solid rgba(255,255,255,0.1)';micBtn.textContent='🎙';}
+    if(statusEl) statusEl.style.display='none';
+    if(_voiceRecognition){try{_voiceRecognition.stop();}catch(e){}_voiceRecognition=null;}
+}
+
+// ================================================================
+// GHOST MODE — Invizibil pe VV Pulse 30 min
+// ================================================================
+function isGhostModeActive() {
+    return Date.now() < parseInt(localStorage.getItem('vv_ghost_expires')||'0');
+}
+
+function toggleGhostMode() {
+    if (isGhostModeActive()) {
+        localStorage.removeItem('vv_ghost_expires');
+        updateGhostModeUI(false);
+        showToast('👁 Ghost Mode dezactivat.');
+    } else {
+        localStorage.setItem('vv_ghost_expires', String(Date.now()+30*60*1000));
+        updateGhostModeUI(true);
+        showToast('👁 Ghost Mode activ — 30 minute.');
+        if (currentUser) db.collection('vv_pulse').doc(currentUser.uid).delete().catch(function(){});
+        setTimeout(function(){ localStorage.removeItem('vv_ghost_expires'); updateGhostModeUI(false); showToast('👁 Ghost Mode expirat.'); }, 30*60*1000);
+    }
+}
+
+function updateGhostModeUI(active) {
+    var toggle=document.getElementById('ghost-toggle'); var dot=document.getElementById('ghost-toggle-dot');
+    var label=document.getElementById('ghost-mode-label'); var row=document.getElementById('ghost-mode-row');
+    if(active){
+        if(toggle) toggle.style.background='rgba(255,255,255,0.7)';
+        if(dot){dot.style.background='#000';dot.style.left='21px';}
+        if(label){label.textContent='ACTIV · Ești invizibil pe Pulse';label.style.color='rgba(255,255,255,0.6)';}
+        if(row) row.style.borderColor='rgba(255,255,255,0.2)';
+    } else {
+        if(toggle) toggle.style.background='rgba(255,255,255,0.1)';
+        if(dot){dot.style.background='rgba(255,255,255,0.4)';dot.style.left='3px';}
+        if(label){label.textContent='Invizibil pe VV Pulse · 30 min';label.style.color='rgba(255,255,255,0.3)';}
+        if(row) row.style.borderColor='rgba(255,255,255,0.08)';
+    }
+}
+
+var _origOpenSettings = typeof openSettings==='function'?openSettings:null;
+if(_origOpenSettings){ openSettings=function(){ _origOpenSettings.apply(this,arguments); updateGhostModeUI(isGhostModeActive()); }; }
+
+var _origStartVVPulse = typeof startVVPulse==='function'?startVVPulse:null;
+if(_origStartVVPulse){ startVVPulse=function(){ if(isGhostModeActive()){showToast('👁 Ghost Mode activ — Pulse dezactivat.');return;} return _origStartVVPulse.apply(this,arguments); }; }
+
+// ================================================================
+// PULSE ECHO — Memoria intersectiilor
+// ================================================================
+function savePulseEcho(targetAlias, targetLevel, targetSpec) {
+    if (!currentUser) return;
+    var now=new Date();
+    var timeStr=now.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    db.collection('vvhi_dataset').add({
+        action:'PULSE_ECHO',
+        context:{ uid:currentUser.uid, myAlias:localStorage.getItem('vv_alias')||'INSIDER', targetAlias:targetAlias||'INSIDER', targetLevel:targetLevel||1, targetSpec:targetSpec||'explorer', timeStr, lat:userCurrentLat?parseFloat(userCurrentLat.toFixed(3)):null, lng:userCurrentLng?parseFloat(userCurrentLng.toFixed(3)):null },
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(){});
+    var echos=[];
+    try{echos=JSON.parse(localStorage.getItem('vv_pulse_echos')||'[]');}catch(e){}
+    echos.unshift({alias:targetAlias,level:targetLevel,spec:targetSpec,time:timeStr});
+    localStorage.setItem('vv_pulse_echos',JSON.stringify(echos.slice(0,10)));
+    renderPulseEchos();
+}
+
+function renderPulseEchos() {
+    var el=document.getElementById('pulse-echo-list'); if(!el) return;
+    var echos=[];
+    try{echos=JSON.parse(localStorage.getItem('vv_pulse_echos')||'[]');}catch(e){}
+    var specs={explorer:'🗺',connector:'⬡',analyst:'🧠',ghost:'👁'};
+    if(echos.length===0){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,0.25);text-align:center;padding:10px;">Nicio intersecție înregistrată.</div>';return;}
+    el.innerHTML=echos.map(function(e){return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><div style="width:32px;height:32px;background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">'+(specs[e.spec]||'⬡')+'</div><div style="flex:1;min-width:0;"><div style="font-size:12px;color:rgba(255,255,255,0.7);font-weight:600;">Insider '+(e.spec||'Explorer')+' · Level '+(e.level||1)+'</div><div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:1px;">'+(e.time||'—')+'</div></div><div style="font-size:9px;color:rgba(10,132,255,0.5);font-weight:700;letter-spacing:1px;">ECHO</div></div>';}).join('');
+}
+
+setTimeout(renderPulseEchos, 2500);
+
 // Detecteaza Insideri in raza de 50m prin GPS + Firebase
 // Legal 100%, fara permisiuni extra, functioneaza pe orice iPhone
 // ================================================================
@@ -1940,6 +2051,20 @@ async function awardVVPulseBonus(myUid, target) {
     } catch(e) { console.warn('[VV Pulse bonus]', e); }
 
     showVVPulseOverlay('connected', target.alias, bonus);
+    // Salveaza Pulse Echo cu level si specializare target
+    var targetLevel = 1, targetSpec = 'explorer';
+    if (typeof _vvhiCoreStats !== 'undefined' && _vvhiCoreStats) {
+        // Incercam sa citim stats din Firebase pentru target
+        db.collection('users').doc(target.uid).get().then(function(doc) {
+            if (doc.exists && doc.data().vvhi_core_stats) {
+                targetLevel = doc.data().vvhi_core_stats.experience_level || 1;
+                targetSpec = doc.data().vvhi_core_stats.specialization || 'explorer';
+            }
+            savePulseEcho(target.alias, targetLevel, targetSpec);
+        }).catch(function() { savePulseEcho(target.alias, 1, 'explorer'); });
+    } else {
+        savePulseEcho(target.alias, 1, 'explorer');
+    }
     endVVPulse(myUid, true);
 }
 
