@@ -1514,7 +1514,7 @@ function showVVNodOverlay(phase) {
 
 function updateVVNodOverlay(phase) {
     var status=document.getElementById('vv-nod-status'), sub=document.getElementById('vv-nod-sub'), core=document.getElementById('vv-nod-core'), progress=document.getElementById('vv-nod-progress'), scanLine=document.getElementById('vv-scan-line');
-    if (phase==='emit'){if(status)status.textContent='Se emite semnal VV...';if(sub)sub.textContent='Frecvență ultrasonică activă · 18.5kHz';if(core)core.style.background='rgba(255,255,255,0.12)';if(progress)progress.style.width='30%';}
+    if (phase==='emit'){if(status)status.textContent='Se emite semnal VV...';if(sub)sub.textContent='Frecvență ultrasonică activă · 15kHz';if(core)core.style.background='rgba(255,255,255,0.12)';if(progress)progress.style.width='30%';}
     else if(phase==='listen'){if(status)status.textContent='Se ascultă rețeaua...';if(sub)sub.textContent='Scanare proximitate · ~10 metri';if(core)core.style.background='rgba(255,255,255,0.06)';if(progress)progress.style.width='65%';}
     else if(phase==='found'){if(status){status.textContent='Insider detectat ⬡';status.style.color='#fff';}if(sub)sub.textContent='VV Network activ în proximitate';if(core){core.style.background='rgba(255,255,255,0.15)';core.style.border='1px solid rgba(255,255,255,0.5)';}if(progress)progress.style.width='100%';addNodDot();}
     else if(phase==='notfound'){if(status)status.textContent='Niciun Insider în rază';if(sub)sub.textContent='Încearcă într-o zonă cu mai mulți Insideri VV';if(progress)progress.style.width='100%';}
