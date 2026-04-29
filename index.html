@@ -551,6 +551,17 @@
             <div style="font-size:12px;color:rgba(255,255,255,0.3);">Se încarcă...</div>
         </div>
 
+        <!-- PULSE ECHO — Istoricul intersectiilor -->
+        <div style="background:rgba(10,132,255,0.04);border:1px solid rgba(10,132,255,0.12);border-radius:18px;padding:16px 20px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div style="font-size:9px;color:rgba(10,132,255,0.6);letter-spacing:3px;font-weight:700;">PULSE ECHO · INTERSECȚII</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.2);">Local</div>
+            </div>
+            <div id="pulse-echo-list">
+                <div style="font-size:12px;color:rgba(255,255,255,0.25);text-align:center;padding:10px;">Nicio intersecție înregistrată.</div>
+            </div>
+        </div>
+
         <!-- BON DIGITAL — ISTORIC TRANZACTII -->
         <div style="background:rgba(52,199,89,0.04);border:1px solid rgba(52,199,89,0.12);border-radius:18px;padding:16px 20px;margin-bottom:16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -614,20 +625,34 @@
             <div onclick="closeNexus()" style="margin-left:auto;width:32px;height:32px;background:rgba(255,255,255,0.06);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.4);font-size:14px;">✕</div>
         </div>
 
-        <!-- Input -->
+        <!-- Input + Voice -->
         <div style="position:relative;margin-bottom:14px;">
             <textarea id="nexus-input" placeholder="Ex: E coadă la Kaufland? Terenul de fotbal e liber? Cum e zona Lipscani acum?" style="
                 width:100%;min-height:80px;
                 background:rgba(255,255,255,0.05);
                 border:1px solid rgba(255,255,255,0.1);
                 border-radius:16px;
-                padding:14px 16px;
+                padding:14px 50px 14px 16px;
                 color:#fff;font-size:14px;
                 font-family:inherit;outline:none;
                 resize:none;line-height:1.6;
                 -webkit-appearance:none;
             " oninput="nexusInputChange(this)"></textarea>
+            <!-- Buton microfon -->
+            <div id="nexus-mic-btn" onclick="toggleVoiceInput()" style="
+                position:absolute;right:10px;top:10px;
+                width:34px;height:34px;
+                background:rgba(255,255,255,0.06);
+                border:1px solid rgba(255,255,255,0.1);
+                border-radius:10px;
+                display:flex;align-items:center;justify-content:center;
+                cursor:pointer;font-size:15px;
+                -webkit-tap-highlight-color:transparent;
+                transition:all .2s;
+            " title="Vorbește cu Nexus">🎙</div>
         </div>
+        <!-- Status voice -->
+        <div id="nexus-voice-status" style="display:none;font-size:11px;color:rgba(255,59,48,0.7);text-align:center;margin-bottom:10px;letter-spacing:1px;font-weight:600;">● ASCULTĂ...</div>
 
         <!-- GPS status -->
         <div id="nexus-gps-row" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:14px;">
@@ -690,6 +715,19 @@
         <div onclick="closeModal('settings-modal');openVVeilSettings();" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;">
             <div style="display:flex;align-items:center;gap:12px;"><i class="fas fa-shield-alt" style="color:rgba(255,255,255,0.5);font-size:16px;"></i><div><div style="color:#fff;font-size:14px;font-weight:600;">VVeil · Protecție Identitate</div><div id="vveil-status-label" style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:2px;">Se încarcă...</div></div></div>
             <i class="fas fa-chevron-right" style="color:rgba(255,255,255,0.2);"></i>
+        </div>
+        <!-- GHOST MODE -->
+        <div id="ghost-mode-row" onclick="toggleGhostMode()" style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:16px;">👁</span>
+                <div>
+                    <div style="color:#fff;font-size:14px;font-weight:600;">Ghost Mode</div>
+                    <div id="ghost-mode-label" style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:2px;">Invizibil pe VV Pulse · 30 min</div>
+                </div>
+            </div>
+            <div id="ghost-toggle" style="width:44px;height:26px;background:rgba(255,255,255,0.1);border-radius:13px;position:relative;flex-shrink:0;transition:background .2s;">
+                <div id="ghost-toggle-dot" style="width:20px;height:20px;background:rgba(255,255,255,0.4);border-radius:50%;position:absolute;left:3px;top:3px;transition:all .2s;"></div>
+            </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
             <div style="display:flex;align-items:center;gap:12px;"><i class="fas fa-moon" style="color:rgba(255,255,255,0.5);font-size:16px;"></i><div><div style="color:#fff;font-size:14px;font-weight:600;">Dark Mode</div><div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:2px;">Activat · Blocat în VV Premium</div></div></div>
