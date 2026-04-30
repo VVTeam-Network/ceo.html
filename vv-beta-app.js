@@ -929,6 +929,8 @@ async function uploadPhotoToCEO() {
         document.getElementById('photo-msg').value = '';
         currentMissionId = null; capturedImageBlob = null; capturedGPS = null;
         closeCamera();
+        // Edge Profile — oferta dupa prima misiune
+        setTimeout(maybeOfferEdgeProfile, 2000);
         setTimeout(function() { switchTab('map'); }, 1500);
     } catch(err) { showToast('Eroare: ' + (err.message || 'necunoscută')); }
     finally { resetBtn(); }
@@ -1315,6 +1317,131 @@ async function checkExpiredMissions() {
 setInterval(checkExpiredMissions, 2*60*1000);
 setTimeout(checkExpiredMissions, 15000);
 
+// ================================================================
+// AUTO-APROBARE MISIUNI — după 24h fără respingere
+// Moderare Charter ART-3 — flaguri roșii merg la CEO
+// ================================================================
+var BLOCKED_AUTO_APPROVE = ['porn','sex','drog','arma','bomba','secta','frauda','hack','ura','rasism'];
+
+function isContentSafe(text) {
+    if (!text) return true;
+    var lower = text.toLowerCase();
+    return !BLOCKED_AUTO_APPROVE.some(function(k){ return lower.includes(k); });
+}
+
+async function checkAutoApproveMissions() {
+    if (!currentUser) return;
+    var now = new Date();
+    var threshold = new Date(now.getTime() - 24*60*60*1000); // 24 ore in urma
+    try {
+        // Cauta inbox-uri cu poze trimise de useri care asteapta aprobare
+        var snap = await db.collection('inbox')
+            .where('to', '==', 'CEO')
+            .where('read', '==', false)
+            .get();
+
+        for (var i = 0; i < snap.docs.length; i++) {
+            var doc = snap.docs[i];
+            var msg = doc.data();
+            if (!msg.photoUrl) continue;
+            if (!msg.createdAt) continue;
+            var createdAt = msg.createdAt.toDate();
+            if (createdAt > threshold) continue; // Nu a trecut 24h
+
+            // Moderare automata Charter ART-3
+            var textToCheck = (msg.message || '') + ' ' + (msg.description || '');
+            if (!isContentSafe(textToCheck)) {
+                // Flagat — trimite la CEO pentru verificare manuala
+                await db.collection('inbox').doc(doc.id).update({
+                    flagged: true,
+                    flagReason: 'charter_art3',
+                    read: true
+                });
+                // Notifica CEO
+                await db.collection('inbox').add({
+                    to: currentUser.uid,
+                    from: 'SISTEM',
+                    alias: 'VV Charter',
+                    type: 'official_warning',
+                    message: '🚨 Conținut flagat de Charter ART-3. Necesită verificare manuală.',
+                    missionId: msg.missionId || null,
+                    read: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                continue;
+            }
+
+            // CONTINUT SIGUR — auto-aproba
+            var reward = msg.reward || 0;
+            var fromUid = msg.from || null;
+            var missionId = msg.missionId || null;
+
+            try {
+                var batch = db.batch();
+                // Plateste userul
+                if (fromUid && reward > 0) {
+                    batch.update(db.collection('users').doc(fromUid), {
+                        balance: firebase.firestore.FieldValue.increment(reward)
+                    });
+                }
+                // Marcheaza misiunea ca rezolvata
+                if (missionId) {
+                    batch.update(db.collection('missions').doc(missionId), {
+                        status: 'completed',
+                        autoApproved: true,
+                        autoApprovedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                // Marcheaza inbox CEO ca citit
+                batch.update(db.collection('inbox').doc(doc.id), {
+                    read: true,
+                    status: 'auto_approved',
+                    reward: 0
+                });
+                // Notifica userul
+                if (fromUid) {
+                    batch.set(db.collection('inbox').doc(), {
+                        to: fromUid,
+                        from: 'SISTEM',
+                        alias: 'VV Sistem',
+                        type: 'reward_notification',
+                        message: '✅ Misiunea ta a fost validată automat după 24h. +' + reward + ' VV Coins adăugați.',
+                        missionId: missionId,
+                        reward: reward,
+                        read: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                // Bon digital automat
+                if (fromUid && reward > 0) {
+                    var txChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    var txId = 'VV-TX-';
+                    for (var j = 0; j < 8; j++) txId += txChars[Math.floor(Math.random()*txChars.length)];
+                    batch.set(db.collection('transactions').doc(), {
+                        txId: txId,
+                        uid: fromUid,
+                        alias: msg.alias || 'INSIDER',
+                        amount: reward,
+                        source: 'AUTO_APPROVED_MISSION',
+                        missionId: missionId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        expiresAt: firebase.firestore.Timestamp.fromDate(new Date(Date.now()+90*24*60*60*1000))
+                    });
+                }
+                await batch.commit();
+                // XP pentru misiune completata
+                if (fromUid === currentUser.uid) {
+                    updateVVhiCoreStats('mission_done');
+                }
+            } catch(e) { console.warn('[AutoApprove]', e); }
+        }
+    } catch(e) {}
+}
+
+// Ruleaza la fiecare 30 minute
+setInterval(checkAutoApproveMissions, 30*60*1000);
+setTimeout(checkAutoApproveMissions, 30000);
+
 // ================= REMOTE CONFIG =================
 var _localVersion = localStorage.getItem('vv_app_version') || '1.0.0';
 var _remoteConfigActive = false;
@@ -1616,6 +1743,7 @@ function buildNexusReply(query, locationFound, locationName) {
     var lower = query.toLowerCase();
     var mode = getNexusMode();
     var lvl = getNexusLevel();
+    var edge = getEdgeContextForNexus();
 
     if (mode === 'sense' || mode === 'sense_pro' || mode === 'vision') {
         var prefix = mode === 'vision' ? '⧆ Nexus Vision · Level ' + lvl + '\n'
@@ -1627,17 +1755,24 @@ function buildNexusReply(query, locationFound, locationName) {
             var oraTip = ora >= 6 && ora < 12 ? 'dimineata' : ora >= 12 && ora < 18 ? 'dupa-amiaza' : ora >= 18 && ora < 22 ? 'seara' : 'noaptea';
             contextExtra = ' La aceasta ora (' + oraTip + '), zona tinde sa fie ' + (Math.random() > 0.5 ? 'mai aglomerata.' : 'mai linistita.');
         }
-        if (locationFound) return prefix + 'Am identificat ' + locationName + ' in proximitatea ta.' + contextExtra + ' Lanseaza misiunea.';
-        if (lower.includes('coada') || lower.includes('aglomerat') || lower.includes('liber')) return prefix + 'Inteleg intentia. Lansez misiunea in zona ta — Insiderii valideaza fizic.';
-        if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) return prefix + 'Atmosfera se citeste prin prezenta. Lansez misiunea — dovada live in minute.';
-        return prefix + 'Cererea ta e inregistrata. Lansez misiunea in zona ta.';
+        var edgeSuffix = '';
+        if (edge) {
+            if (edge.isActiveTime) edgeSuffix = ' Esti in intervalul tau preferat.';
+            if (edge.isConnector && !locationFound) edgeSuffix += ' Verific si Insideri activi in zona.';
+            if (edge.isAnalyst) edgeSuffix += ' Analiza completa dupa confirmare fizica.';
+        }
+        if (locationFound) return prefix + 'Am identificat ' + locationName + ' in proximitatea ta.' + contextExtra + edgeSuffix + ' Lanseaza misiunea.';
+        if (lower.includes('coada') || lower.includes('aglomerat') || lower.includes('liber')) return prefix + 'Inteleg intentia. Lansez misiunea in zona ta.' + edgeSuffix;
+        if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) return prefix + 'Atmosfera se citeste prin prezenta. Lansez misiunea.' + edgeSuffix;
+        return prefix + 'Cererea ta e inregistrata. Lansez misiunea in zona ta.' + edgeSuffix;
     }
 
     var baseReply;
-    if (locationFound) baseReply = 'Am gasit ' + locationName + ' in zona ta. Lanseaza o misiune si un Insider verifica situatia in timp real.';
-    else if (lower.includes('coada') || lower.includes('aglomerat') || lower.includes('liber')) baseReply = 'Misiunea ta va fi lansata in zona ta curenta. Un Insider din retea va verifica si va trimite dovada.';
-    else if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) baseReply = 'Atmosfera unei zone se valideaza prin prezenta fizica. Lanseaza misiunea si primesti un VV PROOF in cateva minute.';
-    else baseReply = 'Inteles. Lansez misiunea in zona ta. Un Insider va verifica si vei primi dovada in Intelligence Inbox.';
+    if (locationFound) baseReply = 'Am gasit ' + locationName + ' in zona ta. Lanseaza o misiune si un Insider verifica in timp real.';
+    else if (lower.includes('coada') || lower.includes('aglomerat') || lower.includes('liber')) baseReply = 'Misiunea ta va fi lansata in zona ta. Un Insider va verifica si va trimite dovada.';
+    else if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) baseReply = 'Atmosfera se valideaza prin prezenta fizica. Lanseaza si primesti VV PROOF in cateva minute.';
+    else baseReply = 'Inteles. Lansez misiunea in zona ta. Vei primi dovada in Intelligence Inbox.';
+    if (edge && edge.isActiveTime) baseReply += ' Esti activ la ora ta preferata.';
     return maybeInsertSpark(baseReply);
 }
 
@@ -2260,3 +2395,186 @@ function startVVNodScan() { startVVPulse(); }
 function stopVVNodScan() { cancelVVPulse(); }
 
 setTimeout(injectVVNodButton, 2500);
+
+// ================================================================
+// EDGE PROFILE — Personalizare Nexus dupa prima misiune
+// Date stocate DOAR local — zero transmisie identificabila
+// ================================================================
+function getEdgeProfile() {
+    try { return JSON.parse(localStorage.getItem('vv_edge_profile') || 'null'); } catch(e) { return null; }
+}
+
+function maybeOfferEdgeProfile() {
+    // Nu oferi daca e deja configurat
+    if (getEdgeProfile()) return;
+    // Nu oferi daca e prima sesiune — verifica daca a facut cel putin o misiune
+    var missionsDone = parseInt(localStorage.getItem('vv_missions_sent') || '0');
+    var newCount = missionsDone + 1;
+    localStorage.setItem('vv_missions_sent', String(newCount));
+    // Oferta dupa prima misiune
+    if (newCount >= 1) {
+        setTimeout(showEdgeProfileOffer, 1500);
+    }
+}
+
+function showEdgeProfileOffer() {
+    if (getEdgeProfile()) return;
+    var old = document.getElementById('edge-profile-modal');
+    if (old) return;
+
+    var modal = document.createElement('div');
+    modal.id = 'edge-profile-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:flex-end;justify-content:center;';
+
+    modal.innerHTML = '<div id="edge-sheet" style="width:100%;max-width:430px;background:rgba(6,6,10,0.98);border:1px solid rgba(255,255,255,0.1);border-radius:28px 28px 0 0;padding:28px 22px calc(32px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .4s cubic-bezier(0.16,1,0.3,1);">' +
+        '<div style="width:36px;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 24px;"></div>' +
+        '<div style="text-align:center;margin-bottom:28px;">' +
+            '<div style="font-size:28px;margin-bottom:12px;">⬡</div>' +
+            '<div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;">Nexus vrea să te cunoască</div>' +
+            '<div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.6;">3 întrebări. Răspunsurile rămân pe telefonul tău.<br>Niciodată pe serverele VV.</div>' +
+        '</div>' +
+        '<div id="edge-step-1">' +
+            '<div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:3px;font-weight:700;text-align:center;margin-bottom:16px;">CÂND EȘTI ACTIV?</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+                edgeOptionBtn('time', 'morning', '🌅', 'Dimineața', '6:00 - 12:00') +
+                edgeOptionBtn('time', 'afternoon', '☀️', 'După-amiaza', '12:00 - 18:00') +
+                edgeOptionBtn('time', 'evening', '🌆', 'Seara', '18:00 - 22:00') +
+                edgeOptionBtn('time', 'night', '🌙', 'Noaptea', '22:00 - 6:00') +
+            '</div>' +
+        '</div>' +
+        '<div id="edge-step-2" style="display:none;">' +
+            '<div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:3px;font-weight:700;text-align:center;margin-bottom:16px;">CE TE INTERESEAZĂ?</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+                edgeOptionBtn('interest', 'locations', '📍', 'Locații & Vibe', 'Atmosfera orașului') +
+                edgeOptionBtn('interest', 'missions', '⬡', 'Misiuni', 'Recompense VV') +
+                edgeOptionBtn('interest', 'pulse', '🔵', 'Conexiuni', 'Pulse & Insideri') +
+                edgeOptionBtn('interest', 'all', '🌆', 'Tot', 'Totul mă interesează') +
+            '</div>' +
+        '</div>' +
+        '<div id="edge-step-3" style="display:none;">' +
+            '<div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:3px;font-weight:700;text-align:center;margin-bottom:16px;">CUM TE AJUT?</div>' +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+                edgeOptionBtnFull('style', 'finder', '🔍', 'Găsitor', 'Găsește-mi locuri și verifică situații') +
+                edgeOptionBtnFull('style', 'connector', '⬡', 'Conector', 'Ajută-mă să conectez cu Insideri') +
+                edgeOptionBtnFull('style', 'analyst', '🧠', 'Analist', 'Explică-mi ce se întâmplă în oraș') +
+            '</div>' +
+        '</div>' +
+        '<button onclick="skipEdgeProfile()" style="width:100%;padding:14px;background:transparent;border:none;color:rgba(255,255,255,0.2);font-size:12px;cursor:pointer;font-family:inherit;margin-top:16px;">Nu acum</button>' +
+    '</div>';
+
+    document.body.appendChild(modal);
+    setTimeout(function() {
+        var sheet = document.getElementById('edge-sheet');
+        if (sheet) sheet.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+function edgeOptionBtn(type, value, icon, title, desc) {
+    return '<div onclick="selectEdgeOption(\'' + type + '\',\'' + value + '\',this)" style="padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;cursor:pointer;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent;" data-type="' + type + '" data-value="' + value + '">' +
+        '<div style="font-size:22px;margin-bottom:6px;">' + icon + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">' + title + '</div>' +
+        '<div style="font-size:10px;color:rgba(255,255,255,0.3);">' + desc + '</div>' +
+    '</div>';
+}
+
+function edgeOptionBtnFull(type, value, icon, title, desc) {
+    return '<div onclick="selectEdgeOption(\'' + type + '\',\'' + value + '\',this)" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;" data-type="' + type + '" data-value="' + value + '">' +
+        '<div style="font-size:22px;flex-shrink:0;">' + icon + '</div>' +
+        '<div><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">' + title + '</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.35);">' + desc + '</div></div>' +
+    '</div>';
+}
+
+var _edgeAnswers = {};
+var _edgeCurrentStep = 1;
+
+function selectEdgeOption(type, value, el) {
+    // Highlight selectat
+    var container = el.parentElement;
+    container.querySelectorAll('[data-type="' + type + '"]').forEach(function(btn) {
+        btn.style.background = 'rgba(255,255,255,0.04)';
+        btn.style.borderColor = 'rgba(255,255,255,0.08)';
+    });
+    el.style.background = 'rgba(255,255,255,0.12)';
+    el.style.borderColor = 'rgba(255,255,255,0.3)';
+    _edgeAnswers[type] = value;
+
+    // Avans automat la pasul urmator dupa 400ms
+    setTimeout(function() { advanceEdgeStep(); }, 400);
+}
+
+function advanceEdgeStep() {
+    _edgeCurrentStep++;
+    if (_edgeCurrentStep === 2) {
+        document.getElementById('edge-step-1').style.display = 'none';
+        document.getElementById('edge-step-2').style.display = 'block';
+    } else if (_edgeCurrentStep === 3) {
+        document.getElementById('edge-step-2').style.display = 'none';
+        document.getElementById('edge-step-3').style.display = 'block';
+    } else {
+        saveEdgeProfile();
+    }
+}
+
+function saveEdgeProfile() {
+    var profile = {
+        time: _edgeAnswers.time || 'evening',
+        interest: _edgeAnswers.interest || 'all',
+        style: _edgeAnswers.style || 'finder',
+        configuredAt: new Date().toISOString()
+    };
+    localStorage.setItem('vv_edge_profile', JSON.stringify(profile));
+
+    // Trimite DOAR flag-uri anonime la Firebase — fara UID, fara identificare
+    if (typeof db !== 'undefined') {
+        db.collection('vvhi_dataset').add({
+            action: 'EDGE_PROFILE_SET',
+            context: {
+                pref_time: profile.time,
+                pref_interest: profile.interest,
+                pref_style: profile.style
+                // intentionat fara uid — anonim complet
+            },
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(){});
+    }
+
+    // Inchide modal cu animatie
+    var sheet = document.getElementById('edge-sheet');
+    if (sheet) sheet.style.transform = 'translateY(100%)';
+    setTimeout(function() {
+        var modal = document.getElementById('edge-profile-modal');
+        if (modal) modal.remove();
+        showToast('⬡ Nexus te cunoaște acum. Experiența ta e personalizată.');
+        // XP social pentru configurare
+        updateVVhiCoreStats('feedback_sent');
+    }, 400);
+}
+
+function skipEdgeProfile() {
+    localStorage.setItem('vv_edge_profile_skipped', 'true');
+    var sheet = document.getElementById('edge-sheet');
+    if (sheet) sheet.style.transform = 'translateY(100%)';
+    setTimeout(function() {
+        var modal = document.getElementById('edge-profile-modal');
+        if (modal) modal.remove();
+    }, 400);
+}
+
+// ── Nexus citeste Edge Profile la fiecare query ───────────────
+function getEdgeContextForNexus() {
+    var profile = getEdgeProfile();
+    if (!profile) return null;
+    var ora = new Date().getHours();
+    var oraCurenta = ora >= 6 && ora < 12 ? 'morning' : ora >= 12 && ora < 18 ? 'afternoon' : ora >= 18 && ora < 22 ? 'evening' : 'night';
+    return {
+        profile: profile,
+        isActiveTime: profile.time === oraCurenta,
+        wantsVibe: profile.interest === 'locations' || profile.interest === 'all',
+        wantsMissions: profile.interest === 'missions' || profile.interest === 'all',
+        wantsPulse: profile.interest === 'pulse' || profile.interest === 'all',
+        isFinder: profile.style === 'finder',
+        isConnector: profile.style === 'connector',
+        isAnalyst: profile.style === 'analyst'
+    };
+}
