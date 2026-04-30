@@ -1579,18 +1579,66 @@ function extractSearchTerm(query) {
     return query.split(' ').slice(0,3).join(' ');
 }
 
+function getNexusLevel() {
+    if (!_vvhiCoreStats) return 1;
+    return _vvhiCoreStats.experience_level || 1;
+}
+
+function getNexusMode() {
+    var lvl = getNexusLevel();
+    if (lvl >= 16) return 'vision';
+    if (lvl >= 11) return 'sense_pro';
+    if (lvl >= 6)  return 'sense';
+    return 'base';
+}
+
+var _sparkUsedToday = false;
+var SPARK_MOMENTS = [
+    'Stiu ca esti la inceput. Incearca sa cauti ceva ce chiar ai nevoie acum.',
+    'Fiecare misiune pe care o lansezi ma face sa inteleg mai bine orasul tau.',
+    'La Level 6 voi simti contextul diferit. Dar si acum — ce anume vrei sa stii?',
+    'Suntem la inceput. Tu construiesti Nexus-ul tau prin fiecare cerere.'
+];
+
+function maybeInsertSpark(reply) {
+    var lvl = getNexusLevel();
+    if (lvl >= 6) return reply;
+    if (_sparkUsedToday) return reply;
+    if (Math.random() < 0.25) {
+        _sparkUsedToday = true;
+        var spark = SPARK_MOMENTS[Math.floor(Math.random() * SPARK_MOMENTS.length)];
+        return reply + '\n\n— ' + spark;
+    }
+    return reply;
+}
+
 function buildNexusReply(query, locationFound, locationName) {
     var lower = query.toLowerCase();
-    if (locationFound) {
-        return 'Am găsit ' + locationName + ' în zona ta. Lansează o misiune și un Insider verifică situația în timp real.';
+    var mode = getNexusMode();
+    var lvl = getNexusLevel();
+
+    if (mode === 'sense' || mode === 'sense_pro' || mode === 'vision') {
+        var prefix = mode === 'vision' ? '⧆ Nexus Vision · Level ' + lvl + '\n'
+                   : mode === 'sense_pro' ? '⧆ Nexus Sense Pro · Level ' + lvl + '\n'
+                   : '⧆ Nexus Sense · Level ' + lvl + '\n';
+        var contextExtra = '';
+        if ((mode === 'sense_pro' || mode === 'vision') && locationFound) {
+            var ora = new Date().getHours();
+            var oraTip = ora >= 6 && ora < 12 ? 'dimineata' : ora >= 12 && ora < 18 ? 'dupa-amiaza' : ora >= 18 && ora < 22 ? 'seara' : 'noaptea';
+            contextExtra = ' La aceasta ora (' + oraTip + '), zona tinde sa fie ' + (Math.random() > 0.5 ? 'mai aglomerata.' : 'mai linistita.');
+        }
+        if (locationFound) return prefix + 'Am identificat ' + locationName + ' in proximitatea ta.' + contextExtra + ' Lanseaza misiunea.';
+        if (lower.includes('coada') || lower.includes('aglomerat') || lower.includes('liber')) return prefix + 'Inteleg intentia. Lansez misiunea in zona ta — Insiderii valideaza fizic.';
+        if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) return prefix + 'Atmosfera se citeste prin prezenta. Lansez misiunea — dovada live in minute.';
+        return prefix + 'Cererea ta e inregistrata. Lansez misiunea in zona ta.';
     }
-    if (lower.includes('coadă') || lower.includes('aglomerat') || lower.includes('liber')) {
-        return 'Misiunea ta va fi lansată în zona ta curentă. Un Insider din rețea va verifica și va trimite dovada.';
-    }
-    if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) {
-        return 'Atmosphera unei zone se validează prin prezență fizică. Lansează misiunea și primești un VV PROOF în câteva minute.';
-    }
-    return 'Înțeles. Lansez misiunea în zona ta. Un Insider va verifica și vei primi dovada în Intelligence Inbox.';
+
+    var baseReply;
+    if (locationFound) baseReply = 'Am gasit ' + locationName + ' in zona ta. Lanseaza o misiune si un Insider verifica situatia in timp real.';
+    else if (lower.includes('coada') || lower.includes('aglomerat') || lower.includes('liber')) baseReply = 'Misiunea ta va fi lansata in zona ta curenta. Un Insider din retea va verifica si va trimite dovada.';
+    else if (lower.includes('cum e') || lower.includes('atmosfer') || lower.includes('vibe')) baseReply = 'Atmosfera unei zone se valideaza prin prezenta fizica. Lanseaza misiunea si primesti un VV PROOF in cateva minute.';
+    else baseReply = 'Inteles. Lansez misiunea in zona ta. Un Insider va verifica si vei primi dovada in Intelligence Inbox.';
+    return maybeInsertSpark(baseReply);
 }
 
 function logNexusAction(query, locationName, lat, lng) {
@@ -1629,7 +1677,22 @@ function initVVhiCoreStats(userData) {
 
 function updateVVhiCoreStats(action) {
     if (!currentUser || !_vvhiCoreStats) return;
-    var xpGain = { 'mission_done': 15, 'pulse_connect': 10, 'nexus_query': 3 };
+    // ── XP MULTI-SURSA (ART-13 — Accesibilitate Universala) ──
+    var xpGain = {
+        // Fizic — actiune in oras
+        'mission_done':    15,
+        'pulse_connect':   10,
+        'nexus_query':      3,
+        // Digital — contributie din casa
+        'inbox_validate':   8,  // aproba o dovada din inbox
+        'bug_report':       5,  // raporteaza un bug
+        'feedback_sent':    3,  // trimite feedback
+        // Social — cresti reteaua
+        'invite_activated': 20, // prietenul tau a folosit cheia
+        'mission_created':   5, // lansezi o misiune (nu trebuie sa fii fizic acolo)
+        // Temporal — loialitate
+        'daily_login':       2  // intri in aplicatie in zile consecutive
+    };
     var gain = xpGain[action] || 5;
     _vvhiCoreStats.total_xp = (_vvhiCoreStats.total_xp || 0) + gain;
     if (action === 'mission_done') _vvhiCoreStats.missions_done = (_vvhiCoreStats.missions_done || 0) + 1;
@@ -1860,6 +1923,17 @@ function renderPulseEchos() {
 }
 
 setTimeout(renderPulseEchos, 2500);
+
+// ── DAILY LOGIN XP ────────────────────────────────────────────
+function checkDailyLoginXP() {
+    var today = new Date().toISOString().split('T')[0];
+    var lastLogin = localStorage.getItem('vv_last_login');
+    if (lastLogin !== today) {
+        localStorage.setItem('vv_last_login', today);
+        setTimeout(function() { updateVVhiCoreStats('daily_login'); }, 3000);
+    }
+}
+setTimeout(checkDailyLoginXP, 2000);
 
 // Detecteaza Insideri in raza de 50m prin GPS + Firebase
 // Legal 100%, fara permisiuni extra, functioneaza pe orice iPhone
